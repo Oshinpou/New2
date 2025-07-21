@@ -1,0 +1,93 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Panel - Global Accounts</title>
+  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background: white;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ccc;
+      text-align: center;
+    }
+    button {
+      padding: 5px 10px;
+      background-color: #d9534f;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #c9302c;
+    }
+  </style>
+</head>
+<body>
+  <h1>Admin Panel - Manage Global Accounts</h1>
+  <table>
+    <thead>
+      <tr>
+        <th>Username</th>
+        <th>Country Code</th>
+        <th>Phone Number</th>
+        <th>Email</th>
+        <th>Password</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="userTableBody"></tbody>
+  </table>  <script>
+    const gun = Gun();
+    const user = gun.user();
+    const users = gun.get('users');
+
+    const userTableBody = document.getElementById("userTableBody");
+
+    users.map().once((data, id) => {
+      if (!data || !data.username || !data.email) return;
+      const row = document.createElement("tr");
+
+      row.innerHTML = `
+        <td>${data.username}</td>
+        <td>${data.countryCode || ''}</td>
+        <td>${data.phoneNumber || ''}</td>
+        <td>${data.email}</td>
+        <td>${data.password || ''}</td>
+        <td>
+          <button onclick="confirmDelete('${id}', '${data.username}', '${data.email}', '${data.password}')">Delete</button>
+        </td>
+      `;
+      userTableBody.appendChild(row);
+    });
+
+    function confirmDelete(id, username, email, password) {
+      const confirmUser = prompt("Confirm Username:");
+      const confirmEmail = prompt("Confirm Email:");
+      const confirmPassword = prompt("Confirm Password:");
+
+      if (
+        confirmUser === username &&
+        confirmEmail === email &&
+        confirmPassword === password
+      ) {
+        gun.get('users').get(id).put(null);
+        alert("Account deleted successfully.");
+        location.reload();
+      } else {
+        alert("Credentials do not match. Account NOT deleted.");
+      }
+    }
+  </script></body>
+</html>
