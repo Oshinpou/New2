@@ -1,74 +1,96 @@
-// app.js const gun = Gun({ peers: ['https://gun-manhattan.herokuapp.com/gun'], }); const user = gun.user(); const usersDB = gun.get('users'); const adminKey = 'admin-secret'; // secure admin access
+document.addEventListener("DOMContentLoaded", function () { const db = Gun();
 
-function showMessage(msg) { document.getElementById('msg').innerText = msg; }
+const users = db.get('users');
 
-function getInput(id) { return document.getElementById(id).value.trim(); }
+function getUserKey(username) { return username.toLowerCase(); }
 
-function clearInputs() { ['username', 'password', 'email', 'country', 'phone'].forEach(id => document.getElementById(id).value = ''); }
+// Register function window.register = function () { const username = document.getElementById("reg-username").value.trim(); const email = document.getElementById("reg-email").value.trim(); const password = document.getElementById("reg-password").value.trim(); const phone = document.getElementById("reg-phone").value.trim(); const country = document.getElementById("reg-country").value.trim();
 
-function getFullPhone(country, phone) { return ${country}-${phone}; }
+if (!username || !email || !password || !phone || !country) {
+  alert("All fields are required.");
+  return;
+}
 
-window.register = function () { const username = getInput('username'); const password = getInput('password'); const email = getInput('email'); const country = getInput('country'); const phone = getInput('phone'); const fullPhone = getFullPhone(country, phone);
+const fullPhone = `${country}-${phone}`;
 
-if (!username || !password || !email || !country || !phone) return showMessage("All fields required");
-
-usersDB.get(username).once(data => { if (data) return showMessage("Username already exists");
-
-usersDB.map().once((u, k) => {
-  if (u) {
-    if (u.email === email) return showMessage("Email already used");
-    if (u.phone === fullPhone) return showMessage("Phone number already used");
+users.map().once(data => {
+  if (data) {
+    if (
+      data.username === username ||
+      data.email === email ||
+      data.phone === fullPhone
+    ) {
+      alert("Username, email, or phone number already exists.");
+      throw new Error("Duplicate registration");
+    }
   }
 });
 
-user.create(username, password, ack => {
-  if (ack.err) return showMessage("Register failed: " + ack.err);
-  usersDB.get(username).put({ email, phone: fullPhone, created: Date.now() });
-  showMessage("Registered successfully! Login now.");
+const userKey = getUserKey(username);
+
+users.set({
+  username,
+  email,
+  password,
+  phone: fullPhone,
+  createdAt: Date.now()
 });
 
-}); }
+alert("Registration successful");
 
-window.login = function () { const username = getInput('username'); const password = getInput('password');
+};
 
-user.auth(username, password, ack => { if (ack.err) return showMessage("Login failed: " + ack.err); showMessage("Logged in as " + username); document.getElementById('status').innerText = User: ${username}; }); }
+// Login function window.login = function () { const username = document.getElementById("login-username").value.trim(); const password = document.getElementById("login-password").value.trim();
 
-window.logout = function () { user.leave(); showMessage("Logged out"); document.getElementById('status').innerText = "Not logged in"; }
+if (!username || !password) {
+  alert("Both fields are required.");
+  return;
+}
 
-window.forgotPassword = function () { const username = getInput('username'); const email = getInput('email'); const country = getInput('country'); const phone = getInput('phone'); const fullPhone = getFullPhone(country, phone);
-
-usersDB.get(username).once(data => { if (!data || data.email !== email || data.phone !== fullPhone) { return showMessage("Invalid credentials for password recovery"); } showMessage("Simulated password reset link sent"); }); }
-
-window.recoverEmail = function () { const username = getInput('username'); const country = getInput('country'); const phone = getInput('phone'); const fullPhone = getFullPhone(country, phone);
-
-usersDB.get(username).once(data => { if (!data || data.phone !== fullPhone) return showMessage("Invalid credentials for email recovery"); showMessage("Registered email: " + data.email); }); }
-
-window.deleteAccount = function () { const username = getInput('username'); const password = getInput('password'); const email = getInput('email'); const country = getInput('country'); const phone = getInput('phone'); const fullPhone = getFullPhone(country, phone);
-
-user.auth(username, password, ack => { if (ack.err) return showMessage("Auth failed: " + ack.err);
-
-usersDB.get(username).once(data => {
-  if (!data || data.email !== email || data.phone !== fullPhone) {
-    return showMessage("Invalid email or phone for deletion");
+users.map().once(data => {
+  if (data && data.username === username && data.password === password) {
+    localStorage.setItem("loggedInUser", JSON.stringify(data));
+    alert("Login successful");
+    return;
   }
-  if (!confirm("Are you sure?")) return;
-  if (!confirm("Really delete account?")) return;
-  if (!confirm("Final confirmation to delete?")) return;
-
-  user.delete(username, password, res => {
-    if (res.err) return showMessage("Deletion failed: " + res.err);
-    usersDB.get(username).put(null);
-    showMessage("Account deleted");
-    logout();
-  });
 });
 
-}); }
+};
 
-window.showAdminPanel = function () { const adminPassword = prompt("Enter admin password"); if (adminPassword !== adminKey) return showMessage("Access Denied");
+// Logout function window.logout = function () { localStorage.removeItem("loggedInUser"); alert("Logged out"); };
 
-let output = "<h3>All Registered Users</h3><ul>"; usersDB.map().once((data, username) => { if (data && username !== null) output += <li><b>${username}</b> — Email: ${data.email || 'N/A'}, Phone: ${data.phone || 'N/A'}, Created: ${new Date(data.created).toLocaleString()}</li>; }); output += "</ul>"; document.getElementById('admin').innerHTML = output; }
+// Recover password window.recoverPassword = function () { const username = document.getElementById("recover-username").value.trim(); const phone = document.getElementById("recover-phone").value.trim(); const country = document.getElementById("recover-country").value.trim();
 
-window.goBack = function () { history.back(); }
+const fullPhone = `${country}-${phone}`;
 
-          
+users.map().once(data => {
+  if (data && data.username === username && data.phone === fullPhone) {
+    alert(`Password for ${username} is: ${data.password}`);
+    return;
+  }
+});
+
+};
+
+// Delete Account window.deleteAccount = function () { const username = document.getElementById("delete-username").value.trim(); const email = document.getElementById("delete-email").value.trim(); const phone = document.getElementById("delete-phone").value.trim(); const country = document.getElementById("delete-country").value.trim(); const password = document.getElementById("delete-password").value.trim();
+
+const fullPhone = `${country}-${phone}`;
+
+users.map().once((data, key) => {
+  if (
+    data &&
+    data.username === username &&
+    data.email === email &&
+    data.phone === fullPhone &&
+    data.password === password
+  ) {
+    db.get('users').get(key).put(null);
+    alert("Account deleted successfully");
+    return;
+  }
+});
+
+};
+
+// Status Check window.showStatus = function () { const user = localStorage.getItem("loggedInUser"); if (user) { alert("Logged in as " + JSON.parse(user).username); } else { alert("Not logged in"); } }; });
+
