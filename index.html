@@ -1,23 +1,77 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>GunDB P2P Auth</title>
+  <title>Global P2P Auth System</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>GunDB P2P Auth</h1>
+  <h1>GunDB Global Auth System</h1>
+
+  <div id="status">Not logged in</div>
 
   <div id="auth">
-    <input type="text" id="username" placeholder="Username" />
-    <input type="password" id="password" placeholder="Password" />
+    <h2>Register / Login</h2>
+
+    <input type="text" id="username" placeholder="Username"><br>
+    <input type="password" id="password" placeholder="Password"><br>
+    <input type="email" id="email" placeholder="Email"><br>
+
+    <input type="text" id="country" placeholder="Country Code (e.g. +91)"><br>
+    <input type="text" id="phone" placeholder="Phone Number"><br>
+
     <button onclick="register()">Register</button>
     <button onclick="login()">Login</button>
+    <button onclick="logout()">Logout</button>
+    <button onclick="goBack()">Go Back</button>
+
     <p id="msg"></p>
   </div>
 
+  <hr>
+
+  <div id="recovery">
+    <h2>Forgot Password</h2>
+    <input type="text" id="username" placeholder="Username"><br>
+    <input type="email" id="email" placeholder="Email"><br>
+    <input type="text" id="country" placeholder="Country Code"><br>
+    <input type="text" id="phone" placeholder="Phone Number"><br>
+    <button onclick="forgotPassword()">Recover Password</button>
+  </div>
+
+  <hr>
+
+  <div id="recover-email">
+    <h2>Recover Email</h2>
+    <input type="text" id="username" placeholder="Username"><br>
+    <input type="text" id="country" placeholder="Country Code"><br>
+    <input type="text" id="phone" placeholder="Phone Number"><br>
+    <button onclick="recoverEmail()">Recover Email</button>
+  </div>
+
+  <hr>
+
+  <div id="delete-account">
+    <h2>Delete Account</h2>
+    <input type="text" id="username" placeholder="Username"><br>
+    <input type="password" id="password" placeholder="Password"><br>
+    <input type="email" id="email" placeholder="Email"><br>
+    <input type="text" id="country" placeholder="Country Code"><br>
+    <input type="text" id="phone" placeholder="Phone Number"><br>
+    <button onclick="deleteAccount()">Delete Account</button>
+  </div>
+
+  <hr>
+
+  <div id="admin-panel">
+    <h2>Admin</h2>
+    <button onclick="showAdminPanel()">Show All Accounts</button>
+    <div id="admin"></div>
+  </div>
+
+  <!-- Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/pouchdb@7.3.0/dist/pouchdb.min.js"></script>
   <script src="app.js"></script>
 </body>
-</html>
+  </html>
