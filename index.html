@@ -1,59 +1,65 @@
-<!DOCTYPE html><html>
+<!DOCTYPE html><html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Global User Registration</title>
-  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/pouchdb@7.2.2/dist/pouchdb.min.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Global Account System</title>
   <style>
-    body { font-family: Arial; padding: 20px; }
+    body { font-family: Arial, sans-serif; margin: 20px; }
     input, button { margin: 5px; padding: 10px; }
-    .form-group { margin-bottom: 10px; }
+    .section { margin-bottom: 30px; padding: 10px; border: 1px solid #ccc; }
+    .hidden { display: none; }
+    .success { color: green; }
+    .error { color: red; }
   </style>
 </head>
 <body>
-  <h2>Signup</h2>
-  <div class="form-group">
-    <input type="text" id="username" placeholder="Username">
-  </div>
-  <div class="form-group">
-    <input type="email" id="email" placeholder="Email">
-  </div>
-  <div class="form-group">
-    <input type="text" id="countryCode" placeholder="Country Code (e.g. +91)">
-    <input type="text" id="phoneNumber" placeholder="Phone Number">
-  </div>
-  <div class="form-group">
-    <input type="password" id="password" placeholder="Password">
-  </div>
-  <button onclick="signup()">Signup</button>  <h2>Login</h2>
-  <div class="form-group">
-    <input type="text" id="loginUsername" placeholder="Username">
-    <input type="password" id="loginPassword" placeholder="Password">
-  </div>
-  <button onclick="login()">Login</button>  <h2>Forgot Password</h2>
-  <div class="form-group">
-    <input type="text" id="forgotUsername" placeholder="Username">
-    <input type="text" id="forgotCountryCode" placeholder="Country Code">
-    <input type="text" id="forgotPhoneNumber" placeholder="Phone Number">
-    <input type="email" id="forgotEmail" placeholder="Email">
-  </div>
-  <button onclick="recoverPassword()">Recover Password</button>  <h2>Delete Account</h2>
-  <div class="form-group">
-    <input type="text" id="deleteUsername" placeholder="Username">
-    <input type="email" id="deleteEmail" placeholder="Email">
-    <input type="text" id="deleteCountryCode" placeholder="Country Code">
-    <input type="text" id="deletePhoneNumber" placeholder="Phone Number">
-    <input type="password" id="deletePassword" placeholder="Password">
-  </div>
-  <button onclick="deleteAccount()">Delete Account</button>  <h2>Recover Email</h2>
-  <div class="form-group">
-    <input type="text" id="recoverUsername" placeholder="Username">
-    <input type="text" id="recoverCountryCode" placeholder="Country Code">
-    <input type="text" id="recoverPhoneNumber" placeholder="Phone Number">
-  </div>
-  <button onclick="recoverEmail()">Recover Email</button>  <div id="status"></div>  <h2>Status</h2>
-  <div id="loggedStatus">Logged out</div>
-  <button onclick="logout()">Logout</button>
-  <button onclick="goBack()">Go Back</button>  <script src="app.js"></script></body>
+  <h1>Global Account Management</h1>  <div class="section" id="register-section">
+    <h2>Register</h2>
+    <input type="text" id="reg-username" placeholder="Username" />
+    <input type="email" id="reg-email" placeholder="Email" />
+    <input type="text" id="reg-country-code" placeholder="Country Code (+91, +1...)" />
+    <input type="text" id="reg-phone" placeholder="Phone Number" />
+    <input type="password" id="reg-password" placeholder="Password" />
+    <button onclick="registerUser()">Register</button>
+    <div id="register-msg"></div>
+  </div>  <div class="section" id="login-section">
+    <h2>Login</h2>
+    <input type="text" id="login-username" placeholder="Username" />
+    <input type="email" id="login-email" placeholder="Email" />
+    <input type="password" id="login-password" placeholder="Password" />
+    <button onclick="loginUser()">Login</button>
+    <div id="login-msg"></div>
+  </div>  <div class="section" id="forgot-password-section">
+    <h2>Forgot Password</h2>
+    <input type="text" id="fp-username" placeholder="Username" />
+    <input type="text" id="fp-country-code" placeholder="Country Code" />
+    <input type="text" id="fp-phone" placeholder="Phone Number" />
+    <input type="email" id="fp-email" placeholder="Email" />
+    <input type="password" id="fp-new-password" placeholder="New Password" />
+    <button onclick="resetPassword()">Reset Password</button>
+    <div id="fp-msg"></div>
+  </div>  <div class="section" id="recover-email-section">
+    <h2>Recover Email</h2>
+    <input type="text" id="re-username" placeholder="Username" />
+    <input type="text" id="re-country-code" placeholder="Country Code" />
+    <input type="text" id="re-phone" placeholder="Phone Number" />
+    <button onclick="recoverEmail()">Recover Email</button>
+    <div id="re-msg"></div>
+  </div>  <div class="section" id="delete-account-section">
+    <h2>Delete Account</h2>
+    <input type="text" id="del-username" placeholder="Username" />
+    <input type="email" id="del-email" placeholder="Email" />
+    <input type="text" id="del-country-code" placeholder="Country Code" />
+    <input type="text" id="del-phone" placeholder="Phone Number" />
+    <input type="password" id="del-password" placeholder="Password" />
+    <button onclick="deleteAccount()">Delete Account</button>
+    <div id="del-msg"></div>
+  </div>  <div class="section" id="status-section">
+    <h2>Status</h2>
+    <p id="user-status">Not logged in</p>
+    <button onclick="logoutUser()">Logout</button>
+    <button onclick="goBack()">Go Back</button>
+  </div>  <div class="section">
+    <a href="admin.html"><button>Admin Panel</button></a>
+  </div>  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>  <script src="https://cdn.jsdelivr.net/npm/pouchdb/dist/pouchdb.min.js"></script>  <script src="app.js"></script></body>
 </html>
