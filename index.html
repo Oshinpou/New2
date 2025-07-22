@@ -26,6 +26,19 @@
     <p id="msg"></p>
   </div>
 
+ <hr>
+<h3>Reset Password</h3>
+<input type="text" id="resetUsername" placeholder="Username" />
+<input type="text" id="resetEmail" placeholder="Registered Email" />
+<div style="display: flex; gap: 5px;">
+  <input type="text" id="resetCountryCode" placeholder="+91" style="width: 70px;" />
+  <input type="text" id="resetPhone" placeholder="Phone Number" />
+</div>
+<input type="password" id="resetNewPassword" placeholder="New Password" />
+<button onclick="resetPassword()">Reset Password</button>
+<p id="resetMsg"></p>
+  
+  
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/pouchdb@7.3.0/dist/pouchdb.min.js"></script>
