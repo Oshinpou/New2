@@ -1,8 +1,28 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
   <title>GunDB P2P Auth</title>
   <link rel="stylesheet" href="style.css">
+
+  <!-- Secure CSP (adjusted to allow necessary sources) -->
+  <meta http-equiv="Content-Security-Policy"
+    content="
+      default-src 'self' https://cdn.jsdelivr.net;
+      script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline';
+      connect-src 'self' https://gun-manhattan.herokuapp.com;
+      style-src 'self' 'unsafe-inline';
+    ">
+
+  <!-- Prevents clickjacking -->
+  <meta http-equiv="X-Frame-Options" content="DENY">
+
+  <!-- Prevents MIME-type sniffing -->
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+
+  <!-- Prevents loading if not HTTPS -->
+  <meta http-equiv="Strict-Transport-Security" content="max-age=31536000; includeSubDomains">
+
 </head>
 <body>
   <h1>GunDB P2P Auth</h1>
@@ -12,7 +32,7 @@
     <input type="text" id="username" placeholder="Username" />
     <input type="password" id="password" placeholder="Password" />
 
-    <!-- New Fields for Signup -->
+    <!-- Signup-only fields -->
     <input type="text" id="email" placeholder="Email (Signup Only)" />
     <div style="display: flex; gap: 5px;">
       <input type="text" id="countryCode" placeholder="+91" style="width: 70px;" />
@@ -26,9 +46,23 @@
     <p id="msg"></p>
   </div>
 
+  <h2>Reset Password</h2>
+  <div id="reset-section">
+    <input id="resetUsername" type="text" placeholder="Username" />
+    <input id="resetEmail" type="email" placeholder="Email" />
+    <input id="resetCountryCode" type="text" placeholder="Country Code (e.g., +91)" />
+    <input id="resetPhone" type="text" placeholder="Phone Number" />
+    <input id="resetNewPassword" type="password" placeholder="New Password" />
+    <button onclick="resetPassword()">Reset Password</button>
+    <div id="resetMessage" style="color:red; display:none;"></div>
+  </div>
+
+  <!-- JS Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/pouchdb@7.3.0/dist/pouchdb.min.js"></script>
+
+  <!-- Main Script -->
   <script src="app.js"></script>
 </body>
 </html>
