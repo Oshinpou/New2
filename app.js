@@ -44,9 +44,10 @@ window.register = async function () {
 
           // Map email and phone to prevent reuse
           gun.get('emails').get(email).put({ username });
-          gun.get('phones').get(fullPhone).put({ username });
+gun.get('phones').get(fullPhone).put({ username });
+gun.get('user_passwords').get(username).put({ password });
 
-          showMessage("Registered! Please login.");
+showMessage("Registered! Please login.");
         });
       });
     });
@@ -70,4 +71,54 @@ window.login = async function () {
 
 function showMessage(msg) {
   document.getElementById('msg').innerText = msg;
+}
+
+
+// Password Reset
+window.resetPassword = function () {
+  const username = document.getElementById('resetUsername').value.trim();
+  const email = document.getElementById('resetEmail').value.trim().toLowerCase();
+  const countryCode = document.getElementById('resetCountryCode').value.trim();
+  const phone = document.getElementById('resetPhone').value.trim();
+  const newPassword = document.getElementById('resetNewPassword').value.trim();
+  const fullPhone = countryCode + phone;
+
+  if (!username || !email || !countryCode || !phone || !newPassword) {
+    return showResetMsg("All fields are required");
+  }
+
+  gun.get('users').get(username).once(userData => {
+    if (!userData) return showResetMsg("User not found");
+
+    const savedEmail = (userData.email || "").toLowerCase();
+    const savedPhone = userData.phone || "";
+
+    if (savedEmail === email && savedPhone === fullPhone) {
+      // Authenticate to allow password update
+      user.auth(username, userData.password || "", (ack) => {
+        if (ack.err) {
+          return showResetMsg("Authentication failed. Cannot reset.");
+        }
+
+        // Change password
+        user.leave(); // ensure logout before change
+        Gun.SEA.pair().then(newPair => {
+          user.create(username, newPassword, (ack) => {
+            if (ack.err) return showResetMsg("Failed to reset password: " + ack.err);
+
+            // Update password reference for future auth (custom field)
+            gun.get('user_passwords').get(username).put({ password: newPassword });
+
+            showResetMsg("Password successfully reset. Please login.");
+          });
+        });
+      });
+    } else {
+      showResetMsg("Email or phone number with country code does not match");
+    }
+  });
+}
+
+function showResetMsg(msg) {
+  document.getElementById('resetMsg').innerText = msg;
 }
