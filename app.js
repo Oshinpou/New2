@@ -74,49 +74,61 @@ function showMessage(msg) {
 }
 
 
-// Password Reset
+// Reset password function
 window.resetPassword = function () {
   const username = document.getElementById('resetUsername').value.trim();
   const email = document.getElementById('resetEmail').value.trim().toLowerCase();
   const countryCode = document.getElementById('resetCountryCode').value.trim();
   const phone = document.getElementById('resetPhone').value.trim();
-  const newPassword = document.getElementById('resetNewPassword').value.trim();
   const fullPhone = countryCode + phone;
+  const newPassword = document.getElementById('resetNewPassword').value.trim();
 
-  if (!username || !email || !countryCode || !phone || !newPassword) {
-    return showResetMsg("All fields are required");
+  if (!username || !email || !phone || !countryCode || !newPassword) {
+    return showResetMsg("All fields are required.");
   }
 
+  // Step 1: Fetch user data
   gun.get('users').get(username).once(userData => {
     if (!userData) return showResetMsg("User not found");
 
     const savedEmail = (userData.email || "").toLowerCase();
     const savedPhone = userData.phone || "";
 
-    if (savedEmail === email && savedPhone === fullPhone) {
-      // Get the previously stored password manually
-      gun.get('user_passwords').get(username).once(passData => {
-        const oldPassword = passData?.password;
-        if (!oldPassword) return showResetMsg("Cannot reset: previous password not found");
+    if (savedEmail !== email || savedPhone !== fullPhone) {
+      return showResetMsg("Credentials don't match");
+    }
 
-        // Authenticate using stored password
-        user.auth(username, oldPassword, (ack) => {
-          if (ack.err) return showResetMsg("Authentication failed. Cannot reset.");
+    // Step 2: Get old password stored manually
+    gun.get('user_passwords').get(username).once(passData => {
+      const oldPassword = passData?.password;
+      if (!oldPassword) return showResetMsg("Old password not found");
 
-          // Now update password
-          user.leave(); // logout first
-          user.create(username, newPassword, (ack) => {
-            if (ack.err) return showResetMsg("Failed to reset password: " + ack.err);
+      // Step 3: Authenticate with old password
+      user.auth(username, oldPassword, ack => {
+        if (ack.err) return showResetMsg("Authentication failed. Cannot reset password.");
 
-            // Store new password manually
-            gun.get('user_passwords').get(username).put({ password: newPassword });
+        // Step 4: Logout and recreate account with new password
+        user.leave();
+        user.create(username, newPassword, createAck => {
+          if (createAck.err) return showResetMsg("Failed to reset password: " + createAck.err);
 
-            showResetMsg("Password successfully reset. Please login.");
-          });
+          // Step 5: Store new password manually
+          gun.get('user_passwords').get(username).put({ password: newPassword });
+
+          showResetMsg("Password reset successfully. Please log in.");
         });
       });
-    } else {
-      showResetMsg("Email or phone number with country code does not match");
-    }
+    });
   });
+}
+
+// Display helper for password reset
+function showResetMsg(msg) {
+  const el = document.getElementById("resetMessage");
+  if (el) {
+    el.innerText = msg;
+    el.style.display = "block";
+  } else {
+    alert(msg);
+  }
 }
