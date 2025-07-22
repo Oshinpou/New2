@@ -27,17 +27,14 @@
     <p id="msg"></p>
   </div>
 
- <hr>
-<h3>Reset Password</h3>
-<input type="text" id="resetUsername" placeholder="Username" />
-<input type="text" id="resetEmail" placeholder="Registered Email" />
-<div style="display: flex; gap: 5px;">
-  <input type="text" id="resetCountryCode" placeholder="+91" style="width: 70px;" />
-  <input type="text" id="resetPhone" placeholder="Phone Number" />
-</div>
-<input type="password" id="resetNewPassword" placeholder="New Password" />
+ <h2>Reset Password</h2>
+<input id="resetUsername" type="text" placeholder="Username" />
+<input id="resetEmail" type="email" placeholder="Email" />
+<input id="resetCountryCode" type="text" placeholder="Country Code (e.g., +91)" />
+<input id="resetPhone" type="text" placeholder="Phone Number" />
+<input id="resetNewPassword" type="password" placeholder="New Password" />
 <button onclick="resetPassword()">Reset Password</button>
-<p id="resetMsg"></p>
+<div id="resetMessage" style="color:red; display:none;"></div>
   
   
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
