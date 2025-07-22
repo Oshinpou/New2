@@ -43,11 +43,10 @@ window.register = async function () {
           });
 
           // Map email and phone to prevent reuse
-          // Map email and phone to prevent reuse
-gun.get('emails').get(email).put({ username });
-gun.get('phones').get(fullPhone).put({ username });
+          gun.get('emails').get(email).put({ username });
+          gun.get('phones').get(fullPhone).put({ username });
 
-showMessage("Registered! Please login.");
+          showMessage("Registered! Please login.");
         });
       });
     });
@@ -72,5 +71,3 @@ window.login = async function () {
 function showMessage(msg) {
   document.getElementById('msg').innerText = msg;
 }
-
-
