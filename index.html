@@ -1,33 +1,19 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>GunDB P2P Auth</title>
   <link rel="stylesheet" href="style.css">
-
-  <!-- Security Policy -->
-  <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self' https://cdn.jsdelivr.net; 
-                 script-src 'self' https://cdn.jsdelivr.net; 
-                 connect-src 'self' https://gun-manhattan.herokuapp.com; 
-                 style-src 'self' 'unsafe-inline';">
-
-  <!-- Additional Security -->
-  <meta http-equiv="X-Content-Type-Options" content="nosniff" />
-  <meta http-equiv="X-Frame-Options" content="DENY" />
-  <meta http-equiv="Referrer-Policy" content="no-referrer" />
 </head>
 <body>
   <h1>GunDB P2P Auth</h1>
 
   <div id="auth">
-    <!-- Login/Register Fields -->
+    <!-- Username & Password -->
     <input type="text" id="username" placeholder="Username" />
     <input type="password" id="password" placeholder="Password" />
 
-    <!-- Extra Fields for Registration -->
-    <input type="text" id="email" placeholder="Email (For Registration)" />
+    <!-- New Fields for Signup -->
+    <input type="text" id="email" placeholder="Email (Signup Only)" />
     <div style="display: flex; gap: 5px;">
       <input type="text" id="countryCode" placeholder="+91" style="width: 70px;" />
       <input type="text" id="phone" placeholder="Phone Number" />
@@ -37,23 +23,9 @@
     <button onclick="register()">Register</button>
     <button onclick="login()">Login</button>
 
-    <p id="msg" style="color:green;"></p>
+    <p id="msg"></p>
   </div>
 
-  <hr>
-
-  <h2>Reset Password</h2>
-  <input type="text" id="resetUsername" placeholder="Username" />
-  <input type="email" id="resetEmail" placeholder="Email" />
-  <div style="display: flex; gap: 5px;">
-    <input type="text" id="resetCountryCode" placeholder="+91" style="width: 70px;" />
-    <input type="text" id="resetPhone" placeholder="Phone Number" />
-  </div>
-  <input type="password" id="resetNewPassword" placeholder="New Password" />
-  <button onclick="resetPassword()">Reset Password</button>
-  <div id="resetMessage" style="color:red; display:none;"></div>
-
-  <!-- GunDB and dependencies -->
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/pouchdb@7.3.0/dist/pouchdb.min.js"></script>
