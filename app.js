@@ -32,7 +32,7 @@ window.register = async function () {
         if (userData) return showMessage("Username already taken.");
 
         // Create account
-        user.create(username, password, (ack) => {
+        user.create(username, password, async (ack) => {
           if (ack.err) return showMessage("Register failed: " + ack.err);
 
           // Save user data and references
@@ -46,8 +46,10 @@ window.register = async function () {
           gun.get('emails').get(email).put({ username });
           gun.get('phones').get(fullPhone).put({ username });
 
-          gun.get('user_passwords').get(username).put({ password });
-          
+          // Encrypt and store password securely
+          const encPass = await Gun.SEA.encrypt(password, password);
+          gun.get('user_passwords').get(username).put({ encPass });
+
           showMessage("Registered! Please login.");
         });
       });
@@ -75,7 +77,7 @@ function showMessage(msg) {
 }
 
 // Password Reset
-window.resetPassword = function () {
+window.resetPassword = async function () {
   const username = document.getElementById('resetUsername').value.trim();
   const email = document.getElementById('resetEmail').value.trim().toLowerCase();
   const countryCode = document.getElementById('resetCountryCode').value.trim();
@@ -88,7 +90,7 @@ window.resetPassword = function () {
   }
 
   // Step 1: Get user data
-  gun.get('users').get(username).once(userData => {
+  gun.get('users').get(username).once(async userData => {
     if (!userData) return showResetMsg("User not found.");
 
     const storedEmail = (userData.email || "").toLowerCase();
@@ -99,36 +101,50 @@ window.resetPassword = function () {
       return showResetMsg("Email or phone number does not match.");
     }
 
-    // Step 3: Try to auth using old password (fallback required)
-    user.auth(username, newPassword, ack => {
-      if (!ack.err) {
-        return showResetMsg("You are already using this password.");
+    // Step 3: Try to fetch and decrypt old password
+    gun.get('user_passwords').get(username).once(async pwData => {
+      const encPass = pwData?.encPass;
+      if (!encPass) return showResetMsg("Old password not found. Cannot authenticate.");
+
+      // Try decrypting with old password (brute-fallback logic)
+      let decrypted;
+      try {
+        decrypted = await Gun.SEA.decrypt(encPass, newPassword);
+        if (decrypted === newPassword) {
+          return showResetMsg("You are already using this password.");
+        }
+      } catch (e) {}
+
+      // Try decrypting with guessed old password (from stored encryption)
+      let oldPassword;
+      try {
+        oldPassword = await Gun.SEA.decrypt(encPass, decrypted);
+      } catch (e) {
+        return showResetMsg("Failed to authenticate old password.");
       }
 
-      // Step 4: Try to find old password for auth (if manually stored)
-      gun.get('user_passwords').get(username).once(pwData => {
-        const oldPassword = pwData?.password;
-        if (!oldPassword) return showResetMsg("Old password not found. Cannot authenticate.");
+      if (!oldPassword) {
+        return showResetMsg("Decryption failed. Cannot authenticate.");
+      }
 
-        user.auth(username, oldPassword, authAck => {
-          if (authAck.err) {
-            return showResetMsg("Authentication failed. Cannot reset.");
+      user.auth(username, oldPassword, async authAck => {
+        if (authAck.err) {
+          return showResetMsg("Authentication failed. Cannot reset.");
+        }
+
+        user.leave();
+
+        // Recreate SEA user with new password
+        user.create(username, newPassword, async createAck => {
+          if (createAck.err) {
+            return showResetMsg("Password reset failed: " + createAck.err);
           }
 
-          // Step 5: Proceed to change password
-          user.leave();
+          // Encrypt and store new password
+          const newEncPass = await Gun.SEA.encrypt(newPassword, newPassword);
+          gun.get('user_passwords').get(username).put({ encPass: newEncPass });
 
-          // SEA: Recreate account with same username and new password
-          user.create(username, newPassword, createAck => {
-            if (createAck.err) {
-              return showResetMsg("Password reset failed: " + createAck.err);
-            }
-
-            // Optional: save new password (manual map if needed)
-            gun.get('user_passwords').get(username).put({ password: newPassword });
-
-            showResetMsg("Password reset successful. Please log in.");
-          });
+          showResetMsg("Password reset successful. Please log in.");
         });
       });
     });
@@ -142,4 +158,4 @@ function showResetMsg(msg) {
     el.innerText = msg;
     el.style.display = "block";
   }
-}
+            }
