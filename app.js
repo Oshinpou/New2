@@ -71,3 +71,73 @@ window.login = async function () {
 function showMessage(msg) {
   document.getElementById('msg').innerText = msg;
 }
+
+// Password Reset
+window.resetPassword = function () {
+  const username = document.getElementById('resetUsername').value.trim();
+  const email = document.getElementById('resetEmail').value.trim().toLowerCase();
+  const countryCode = document.getElementById('resetCountryCode').value.trim();
+  const phone = document.getElementById('resetPhone').value.trim();
+  const fullPhone = countryCode + phone;
+  const newPassword = document.getElementById('resetNewPassword').value.trim();
+
+  if (!username || !email || !countryCode || !phone || !newPassword) {
+    return showResetMsg("All fields are required.");
+  }
+
+  // Step 1: Get user data
+  gun.get('users').get(username).once(userData => {
+    if (!userData) return showResetMsg("User not found.");
+
+    const storedEmail = (userData.email || "").toLowerCase();
+    const storedPhone = userData.phone || "";
+
+    // Step 2: Match credentials
+    if (storedEmail !== email || storedPhone !== fullPhone) {
+      return showResetMsg("Email or phone number does not match.");
+    }
+
+    // Step 3: Try to auth using old password (fallback required)
+    user.auth(username, newPassword, ack => {
+      if (!ack.err) {
+        return showResetMsg("You are already using this password.");
+      }
+
+      // Step 4: Try to find old password for auth (if manually stored)
+      gun.get('user_passwords').get(username).once(pwData => {
+        const oldPassword = pwData?.password;
+        if (!oldPassword) return showResetMsg("Old password not found. Cannot authenticate.");
+
+        user.auth(username, oldPassword, authAck => {
+          if (authAck.err) {
+            return showResetMsg("Authentication failed. Cannot reset.");
+          }
+
+          // Step 5: Proceed to change password
+          user.leave();
+
+          // SEA: Recreate account with same username and new password
+          user.create(username, newPassword, createAck => {
+            if (createAck.err) {
+              return showResetMsg("Password reset failed: " + createAck.err);
+            }
+
+            // Optional: save new password (manual map if needed)
+            gun.get('user_passwords').get(username).put({ password: newPassword });
+
+            showResetMsg("Password reset successful. Please log in.");
+          });
+        });
+      });
+    });
+  });
+}
+
+// Show message in password reset section
+function showResetMsg(msg) {
+  const el = document.getElementById("resetMessage");
+  if (el) {
+    el.innerText = msg;
+    el.style.display = "block";
+  }
+}
