@@ -76,86 +76,55 @@ function showMessage(msg) {
   document.getElementById('msg').innerText = msg;
 }
 
-// Password Reset
-window.resetPassword = async function () {
-  const username = document.getElementById('resetUsername').value.trim();
-  const email = document.getElementById('resetEmail').value.trim().toLowerCase();
-  const countryCode = document.getElementById('resetCountryCode').value.trim();
-  const phone = document.getElementById('resetPhone').value.trim();
-  const fullPhone = countryCode + phone;
-  const newPassword = document.getElementById('resetNewPassword').value.trim();
+function updatePassword() {
+  const username = document.getElementById('updateUsername').value.trim();
+  const email = document.getElementById('updateEmail').value.trim();
+  const countryCode = document.getElementById('updateCountryCode').value.trim();
+  const phone = document.getElementById('updatePhone').value.trim();
+  const newPassword = document.getElementById('updateNewPassword').value;
+
+  const updateMsg = document.getElementById('updateMessage');
+  updateMsg.style.display = 'none';
 
   if (!username || !email || !countryCode || !phone || !newPassword) {
-    return showResetMsg("All fields are required.");
+    updateMsg.textContent = 'All fields are required.';
+    updateMsg.style.display = 'block';
+    return;
   }
 
-  // Step 1: Get user data
-  gun.get('users').get(username).once(async userData => {
-    if (!userData) return showResetMsg("User not found.");
-
-    const storedEmail = (userData.email || "").toLowerCase();
-    const storedPhone = userData.phone || "";
-
-    // Step 2: Match credentials
-    if (storedEmail !== email || storedPhone !== fullPhone) {
-      return showResetMsg("Email or phone number does not match.");
+  gun.get('users').get(username).once(async (data) => {
+    if (!data) {
+      updateMsg.textContent = 'User not found.';
+      updateMsg.style.display = 'block';
+      return;
     }
 
-    // Step 3: Try to fetch and decrypt old password
-    gun.get('user_passwords').get(username).once(async pwData => {
-      const encPass = pwData?.encPass;
-      if (!encPass) return showResetMsg("Old password not found. Cannot authenticate.");
+    const storedEmail = data.email;
+    const storedPhone = data.phone;
+    const storedCode = data.countryCode;
 
-      // Try decrypting with old password (brute-fallback logic)
-      let decrypted;
-      try {
-        decrypted = await Gun.SEA.decrypt(encPass, newPassword);
-        if (decrypted === newPassword) {
-          return showResetMsg("You are already using this password.");
-        }
-      } catch (e) {}
+    if (storedEmail !== email || storedPhone !== phone || storedCode !== countryCode) {
+      updateMsg.textContent = 'Details do not match.';
+      updateMsg.style.display = 'block';
+      return;
+    }
 
-      // Try decrypting with guessed old password (from stored encryption)
-      let oldPassword;
-      try {
-        oldPassword = await Gun.SEA.decrypt(encPass, decrypted);
-      } catch (e) {
-        return showResetMsg("Failed to authenticate old password.");
-      }
-
-      if (!oldPassword) {
-        return showResetMsg("Decryption failed. Cannot authenticate.");
-      }
-
-      user.auth(username, oldPassword, async authAck => {
-        if (authAck.err) {
-          return showResetMsg("Authentication failed. Cannot reset.");
-        }
-
-        user.leave();
-
-        // Recreate SEA user with new password
-        user.create(username, newPassword, async createAck => {
-          if (createAck.err) {
-            return showResetMsg("Password reset failed: " + createAck.err);
-          }
-
-          // Encrypt and store new password
-          const newEncPass = await Gun.SEA.encrypt(newPassword, newPassword);
-          gun.get('user_passwords').get(username).put({ encPass: newEncPass });
-
-          showResetMsg("Password reset successful. Please log in.");
-        });
+    try {
+      const pair = await SEA.pair();
+      const encryptedPassword = await SEA.encrypt(newPassword, pair);
+      gun.get('users').get(username).put({
+        password: encryptedPassword,
+        pub: pair.pub,
+        epub: pair.epub,
+        priv: pair.priv,
+        epriv: pair.epriv
       });
-    });
+      updateMsg.textContent = 'Password updated successfully.';
+      updateMsg.style.color = 'green';
+      updateMsg.style.display = 'block';
+    } catch (err) {
+      updateMsg.textContent = 'Error updating password.';
+      updateMsg.style.display = 'block';
+    }
   });
 }
-
-// Show message in password reset section
-function showResetMsg(msg) {
-  const el = document.getElementById("resetMessage");
-  if (el) {
-    el.innerText = msg;
-    el.style.display = "block";
-  }
-            }
