@@ -76,55 +76,53 @@ function showMessage(msg) {
   document.getElementById('msg').innerText = msg;
 }
 
-function updatePassword() {
-  const username = document.getElementById('updateUsername').value.trim();
-  const email = document.getElementById('updateEmail').value.trim();
-  const countryCode = document.getElementById('updateCountryCode').value.trim();
-  const phone = document.getElementById('updatePhone').value.trim();
-  const newPassword = document.getElementById('updateNewPassword').value;
+  async function updatePassword() {
+    const username = document.getElementById('updateUsername').value.trim();
+    const email = document.getElementById('updateEmail').value.trim().toLowerCase();
+    const countryCode = document.getElementById('updateCountryCode').value.trim();
+    const phone = document.getElementById('updatePhone').value.trim();
+    const newPassword = document.getElementById('newPassword').value.trim();
+    const updateMsg = document.getElementById('updateMsg');
 
-  const updateMsg = document.getElementById('updateMessage');
-  updateMsg.style.display = 'none';
-
-  if (!username || !email || !countryCode || !phone || !newPassword) {
-    updateMsg.textContent = 'All fields are required.';
-    updateMsg.style.display = 'block';
-    return;
-  }
-
-  gun.get('users').get(username).once(async (data) => {
-    if (!data) {
-      updateMsg.textContent = 'User not found.';
+    if (!username || !email || !countryCode || !phone || !newPassword) {
+      updateMsg.textContent = 'All fields are required.';
       updateMsg.style.display = 'block';
       return;
     }
 
-    const storedEmail = data.email;
-    const storedPhone = data.phone;
-    const storedCode = data.countryCode;
+    const fullPhone = countryCode + phone;
 
-    if (storedEmail !== email || storedPhone !== phone || storedCode !== countryCode) {
-      updateMsg.textContent = 'Details do not match.';
-      updateMsg.style.display = 'block';
-      return;
-    }
+    // Retrieve user data
+    gun.get('users').get(username).once(async (data) => {
+      if (!data) {
+        updateMsg.textContent = 'User not found.';
+        updateMsg.style.display = 'block';
+        return;
+      }
 
-    try {
-      const pair = await SEA.pair();
-      const encryptedPassword = await SEA.encrypt(newPassword, pair);
-      gun.get('users').get(username).put({
-        password: encryptedPassword,
-        pub: pair.pub,
-        epub: pair.epub,
-        priv: pair.priv,
-        epriv: pair.epriv
+      const storedEmail = (data.email || '').toLowerCase();
+      const storedPhone = (data.phone || '');
+
+      if (storedEmail !== email || storedPhone !== fullPhone) {
+        updateMsg.textContent = 'Details do not match.';
+        updateMsg.style.display = 'block';
+        return;
+      }
+
+      // Create new credentials
+      user.create(username, newPassword, async (res) => {
+        if (res.err) {
+          updateMsg.textContent = 'Failed to update password: ' + res.err;
+          updateMsg.style.display = 'block';
+        } else {
+          // Encrypt and store the new password
+          const encryptedNew = await SEA.encrypt(newPassword, newPassword);
+          gun.get('user_passwords').get(username).put({ encPass: encryptedNew });
+
+          updateMsg.textContent = 'Password updated successfully.';
+          updateMsg.style.color = 'green';
+          updateMsg.style.display = 'block';
+        }
       });
-      updateMsg.textContent = 'Password updated successfully.';
-      updateMsg.style.color = 'green';
-      updateMsg.style.display = 'block';
-    } catch (err) {
-      updateMsg.textContent = 'Error updating password.';
-      updateMsg.style.display = 'block';
-    }
-  });
-}
+    });
+  }
