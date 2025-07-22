@@ -94,19 +94,21 @@ window.resetPassword = function () {
     const savedPhone = userData.phone || "";
 
     if (savedEmail === email && savedPhone === fullPhone) {
-      // Authenticate to allow password update
-      user.auth(username, userData.password || "", (ack) => {
-        if (ack.err) {
-          return showResetMsg("Authentication failed. Cannot reset.");
-        }
+      // Get the previously stored password manually
+      gun.get('user_passwords').get(username).once(passData => {
+        const oldPassword = passData?.password;
+        if (!oldPassword) return showResetMsg("Cannot reset: previous password not found");
 
-        // Change password
-        user.leave(); // ensure logout before change
-        Gun.SEA.pair().then(newPair => {
+        // Authenticate using stored password
+        user.auth(username, oldPassword, (ack) => {
+          if (ack.err) return showResetMsg("Authentication failed. Cannot reset.");
+
+          // Now update password
+          user.leave(); // logout first
           user.create(username, newPassword, (ack) => {
             if (ack.err) return showResetMsg("Failed to reset password: " + ack.err);
 
-            // Update password reference for future auth (custom field)
+            // Store new password manually
             gun.get('user_passwords').get(username).put({ password: newPassword });
 
             showResetMsg("Password successfully reset. Please login.");
@@ -117,8 +119,4 @@ window.resetPassword = function () {
       showResetMsg("Email or phone number with country code does not match");
     }
   });
-}
-
-function showResetMsg(msg) {
-  document.getElementById('resetMsg').innerText = msg;
 }
