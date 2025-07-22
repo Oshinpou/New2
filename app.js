@@ -43,9 +43,12 @@ window.register = async function () {
           });
 
           // Map email and phone to prevent reuse
-          gun.get('emails').get(email).put({ username });
+          // Map email and phone to prevent reuse
+gun.get('emails').get(email).put({ username });
 gun.get('phones').get(fullPhone).put({ username });
-gun.get('user_passwords').get(username).put({ password });
+
+// Store password for custom reset logic
+gun.get('user_passwords').get(username).put({ password: password });
 
 showMessage("Registered! Please login.");
         });
