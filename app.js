@@ -46,6 +46,8 @@ window.register = async function () {
           gun.get('emails').get(email).put({ username });
           gun.get('phones').get(fullPhone).put({ username });
 
+          gun.get('user_passwords').get(username).put({ password });
+          
           showMessage("Registered! Please login.");
         });
       });
