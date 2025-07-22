@@ -47,9 +47,6 @@ window.register = async function () {
 gun.get('emails').get(email).put({ username });
 gun.get('phones').get(fullPhone).put({ username });
 
-// Store password for custom reset logic
-gun.get('user_passwords').get(username).put({ password: password });
-
 showMessage("Registered! Please login.");
         });
       });
