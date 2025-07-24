@@ -77,52 +77,54 @@ function showMessage(msg) {
 }
 
   async function updatePassword() {
-    const username = document.getElementById('updateUsername').value.trim();
-    const email = document.getElementById('updateEmail').value.trim().toLowerCase();
-    const countryCode = document.getElementById('updateCountryCode').value.trim();
-    const phone = document.getElementById('updatePhone').value.trim();
-    const newPassword = document.getElementById('newPassword').value.trim();
-    const updateMsg = document.getElementById('updateMsg');
+  const username = document.getElementById('updateUsername').value.trim();
+  const email = document.getElementById('updateEmail').value.trim().toLowerCase();
+  const countryCode = document.getElementById('updateCountryCode').value.trim();
+  const phone = document.getElementById('updatePhone').value.trim();
+  const newPassword = document.getElementById('updateNewPassword').value.trim();
+  const updateMsg = document.getElementById('updateMessage');
 
-    if (!username || !email || !countryCode || !phone || !newPassword) {
-      updateMsg.textContent = 'All fields are required.';
-      updateMsg.style.display = 'block';
+  updateMsg.style.color = 'red';
+  updateMsg.style.display = 'block';
+
+  if (!username || !email || !countryCode || !phone || !newPassword) {
+    updateMsg.textContent = 'All fields are required.';
+    return;
+  }
+
+  const fullPhone = countryCode + phone;
+
+  // Retrieve user data
+  gun.get('users').get(username).once(async (data) => {
+    if (!data) {
+      updateMsg.textContent = 'User not found.';
       return;
     }
 
-    const fullPhone = countryCode + phone;
+    const storedEmail = (data.email || '').toLowerCase();
+    const storedPhone = (data.phone || '');
 
-    // Retrieve user data
-    gun.get('users').get(username).once(async (data) => {
-      if (!data) {
-        updateMsg.textContent = 'User not found.';
-        updateMsg.style.display = 'block';
+    if (storedEmail !== email || storedPhone !== fullPhone) {
+      updateMsg.textContent = 'Details do not match.';
+      return;
+    }
+
+    // Generate new keypair
+    const newPair = await Gun.SEA.pair();
+
+    // Authenticate with old account to update it
+    user.auth(username, newPassword, async (authAck) => {
+      if (authAck.err) {
+        updateMsg.textContent = 'Old password needed to authenticate update.';
         return;
       }
 
-      const storedEmail = (data.email || '').toLowerCase();
-      const storedPhone = (data.phone || '');
+      // Encrypt and update password
+      const encPass = await Gun.SEA.encrypt(newPassword, newPassword);
+      gun.get('user_passwords').get(username).put({ encPass });
 
-      if (storedEmail !== email || storedPhone !== fullPhone) {
-        updateMsg.textContent = 'Details do not match.';
-        updateMsg.style.display = 'block';
-        return;
-      }
-
-      // Create new credentials
-      user.create(username, newPassword, async (res) => {
-        if (res.err) {
-          updateMsg.textContent = 'Failed to update password: ' + res.err;
-          updateMsg.style.display = 'block';
-        } else {
-          // Encrypt and store the new password
-          const encryptedNew = await SEA.encrypt(newPassword, newPassword);
-          gun.get('user_passwords').get(username).put({ encPass: encryptedNew });
-
-          updateMsg.textContent = 'Password updated successfully.';
-          updateMsg.style.color = 'green';
-          updateMsg.style.display = 'block';
-        }
-      });
+      updateMsg.textContent = 'Password updated successfully.';
+      updateMsg.style.color = 'green';
     });
+  });
   }
