@@ -81,20 +81,21 @@ function showMessage(msg) {
   const email = document.getElementById('updateEmail').value.trim().toLowerCase();
   const countryCode = document.getElementById('updateCountryCode').value.trim();
   const phone = document.getElementById('updatePhone').value.trim();
+  const oldPassword = document.getElementById('updateOldPassword').value.trim();
   const newPassword = document.getElementById('updateNewPassword').value.trim();
   const updateMsg = document.getElementById('updateMessage');
 
   updateMsg.style.color = 'red';
   updateMsg.style.display = 'block';
 
-  if (!username || !email || !countryCode || !phone || !newPassword) {
+  if (!username || !email || !countryCode || !phone || !oldPassword || !newPassword) {
     updateMsg.textContent = 'All fields are required.';
     return;
   }
 
   const fullPhone = countryCode + phone;
 
-  // Retrieve user data
+  // Retrieve user data for email/phone verification
   gun.get('users').get(username).once(async (data) => {
     if (!data) {
       updateMsg.textContent = 'User not found.';
@@ -109,17 +110,14 @@ function showMessage(msg) {
       return;
     }
 
-    // Generate new keypair
-    const newPair = await Gun.SEA.pair();
-
-    // Authenticate with old account to update it
-    user.auth(username, newPassword, async (authAck) => {
-      if (authAck.err) {
-        updateMsg.textContent = 'Old password needed to authenticate update.';
+    // Authenticate with old password
+    user.auth(username, oldPassword, async (ack) => {
+      if (ack.err) {
+        updateMsg.textContent = 'Old password is incorrect.';
         return;
       }
 
-      // Encrypt and update password
+      // Encrypt and update new password
       const encPass = await Gun.SEA.encrypt(newPassword, newPassword);
       gun.get('user_passwords').get(username).put({ encPass });
 
