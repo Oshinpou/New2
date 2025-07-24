@@ -46,15 +46,15 @@
     <p id="msg"></p>
   </div>
 
-   <h2>Update Password</h2>
-<input id="updateUsername" type="text" placeholder="Username" />
-<input id="updateEmail" type="email" placeholder="Email" />
-<input id="updateCountryCode" type="text" placeholder="Country Code (e.g., +91)" />
-<input id="updatePhone" type="text" placeholder="Phone Number" />
-<input id="updateOldPassword" type="password" placeholder="Old Password" />
-<input id="updateNewPassword" type="password" placeholder="New Password" />
-<button onclick="updatePassword()">Update Password</button>
-<div id="updateMessage" style="color:red; display:none;"></div>
+   <!-- HTML -->
+<form id="updatePasswordForm">
+  <input id="updateUsername" placeholder="Username" required />
+  <input id="updateEmail" placeholder="Email" required />
+  <input id="oldPassword" type="password" placeholder="Old Password" required />
+  <input id="newPassword" type="password" placeholder="New Password" required />
+  <button type="submit">Update Password</button>
+</form>
+<div id="updateMsg"></div>
 
   <!-- JS Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
