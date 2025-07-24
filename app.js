@@ -76,72 +76,63 @@ function showMessage(msg) {
   document.getElementById('msg').innerText = msg;
 }
 
-  async function updatePassword() {
+  // Utility to show message
+function showMessage(msg, success = false) {
+  const msgBox = document.getElementById('updateMsg');
+  msgBox.style.color = success ? 'green' : 'red';
+  msgBox.textContent = msg;
+}
+
+// Main function
+const form = document.getElementById('updatePasswordForm');
+
+form?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+
   const username = document.getElementById('updateUsername').value.trim();
-  const email = document.getElementById('updateEmail').value.trim().toLowerCase();
-  const countryCode = document.getElementById('updateCountryCode').value.trim();
-  const phone = document.getElementById('updatePhone').value.trim();
-  const oldPassword = document.getElementById('updateOldPassword').value.trim();
-  const newPassword = document.getElementById('updateNewPassword').value.trim();
-  const updateMsg = document.getElementById('updateMessage');
+  const email = document.getElementById('updateEmail').value.trim();
+  const oldPassword = document.getElementById('oldPassword').value.trim();
+  const newPassword = document.getElementById('newPassword').value.trim();
 
-  updateMsg.style.color = 'red';
-  updateMsg.style.display = 'block';
-
-  if (!username || !email || !countryCode || !phone || !oldPassword || !newPassword) {
-    updateMsg.textContent = 'All fields are required.';
-    return;
+  if (!username || !email || !oldPassword || !newPassword) {
+    return showMessage("Please fill in all fields");
   }
 
-  const fullPhone = countryCode + phone;
+  // Step 1: Authenticate user with old password
+  user.auth(username, oldPassword, async (authAck) => {
+    if (authAck.err) return showMessage("Old password is incorrect");
 
-  // Step 1: Validate user identity (email and phone)
-  gun.get('users').get(username).once(async (data) => {
-    if (!data) {
-      updateMsg.textContent = 'User not found.';
-      return;
-    }
-
-    const storedEmail = (data.email || '').toLowerCase();
-    const storedPhone = (data.phone || '');
-
-    if (storedEmail !== email || storedPhone !== fullPhone) {
-      updateMsg.textContent = 'Details do not match.';
-      return;
-    }
-
-    // Step 2: Authenticate with old credentials
-    user.auth(username, oldPassword, async (ack) => {
-      if (ack.err) {
-        updateMsg.textContent = 'Old password is incorrect.';
-        return;
+    // Step 2: Check if email matches
+    user.get('email').once((storedEmail) => {
+      if (!storedEmail || storedEmail.toLowerCase() !== email.toLowerCase()) {
+        user.leave();
+        return showMessage("Email does not match");
       }
 
-      try {
-        // Step 3: Generate new SEA pair with new password
-        const newPair = await Gun.SEA.pair();
-        const alias = username;
+      // Step 3: Backup additional user data if needed (currently just email)
+      const backupData = { email: storedEmail };
 
-        // Step 4: Create new user with same alias (overwrite allowed)
-        user.leave(); // logout first
+      // Step 4: Logout current session
+      user.leave();
 
-        user.create(alias, newPassword, async (res) => {
-          if (res.err) {
-            updateMsg.textContent = "Error creating user with new password: " + res.err;
-            return;
-          }
+      // Step 5: Re-create user with same username and new password
+      gun.user().create(username, newPassword, (createAck) => {
+        if (createAck.err && createAck.err.includes('User already created')) {
+          return showMessage("Account already exists. Cannot reset password this way.");
+        }
+        if (createAck.err) return showMessage("Failed to update password: " + createAck.err);
 
-          // Step 5: Restore references
-          gun.get('user_passwords').get(username).put({
-            encPass: await Gun.SEA.encrypt(newPassword, newPassword)
-          });
+        // Step 6: Log in with new password
+        gun.user().auth(username, newPassword, (loginAck) => {
+          if (loginAck.err) return showMessage("Password changed, but login failed");
 
-          updateMsg.style.color = 'green';
-          updateMsg.textContent = '✅ Password updated successfully. Please login again.';
+          // Step 7: Restore backed up user data
+          gun.user().get('email').put(backupData.email);
+
+          showMessage("Password changed successfully", true);
         });
-      } catch (err) {
-        updateMsg.textContent = 'Unexpected error: ' + err.message;
-      }
+      });
     });
   });
-  }
+});
+
