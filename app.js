@@ -95,7 +95,7 @@ function showMessage(msg) {
 
   const fullPhone = countryCode + phone;
 
-  // Retrieve user data for email/phone verification
+  // Step 1: Validate user identity (email and phone)
   gun.get('users').get(username).once(async (data) => {
     if (!data) {
       updateMsg.textContent = 'User not found.';
@@ -110,19 +110,38 @@ function showMessage(msg) {
       return;
     }
 
-    // Authenticate with old password
+    // Step 2: Authenticate with old credentials
     user.auth(username, oldPassword, async (ack) => {
       if (ack.err) {
         updateMsg.textContent = 'Old password is incorrect.';
         return;
       }
 
-      // Encrypt and update new password
-      const encPass = await Gun.SEA.encrypt(newPassword, newPassword);
-      gun.get('user_passwords').get(username).put({ encPass });
+      try {
+        // Step 3: Generate new SEA pair with new password
+        const newPair = await Gun.SEA.pair();
+        const alias = username;
 
-      updateMsg.textContent = 'Password updated successfully.';
-      updateMsg.style.color = 'green';
+        // Step 4: Create new user with same alias (overwrite allowed)
+        user.leave(); // logout first
+
+        user.create(alias, newPassword, async (res) => {
+          if (res.err) {
+            updateMsg.textContent = "Error creating user with new password: " + res.err;
+            return;
+          }
+
+          // Step 5: Restore references
+          gun.get('user_passwords').get(username).put({
+            encPass: await Gun.SEA.encrypt(newPassword, newPassword)
+          });
+
+          updateMsg.style.color = 'green';
+          updateMsg.textContent = '✅ Password updated successfully. Please login again.';
+        });
+      } catch (err) {
+        updateMsg.textContent = 'Unexpected error: ' + err.message;
+      }
     });
   });
   }
