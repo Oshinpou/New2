@@ -5,7 +5,6 @@
   <title>GunDB P2P Auth</title>
   <link rel="stylesheet" href="style.css">
 
-  <!-- Secure CSP (adjusted to allow necessary sources) -->
   <meta http-equiv="Content-Security-Policy"
     content="
       default-src 'self' https://cdn.jsdelivr.net;
@@ -13,47 +12,110 @@
       connect-src 'self' https://gun-manhattan.herokuapp.com;
       style-src 'self' 'unsafe-inline';
     ">
-
-  <!-- Prevents clickjacking -->
   <meta http-equiv="X-Frame-Options" content="DENY">
-
-  <!-- Prevents MIME-type sniffing -->
   <meta http-equiv="X-Content-Type-Options" content="nosniff">
-
-  <!-- Prevents loading if not HTTPS -->
   <meta http-equiv="Strict-Transport-Security" content="max-age=31536000; includeSubDomains">
-
 </head>
 <body>
   <h1>GunDB P2P Auth</h1>
 
+  <!-- LOGIN / LOGOUT -->
   <div id="auth">
-    <!-- Username & Password -->
     <input type="text" id="username" placeholder="Username" />
     <input type="password" id="password" placeholder="Password" />
-
-    <!-- Signup-only fields -->
     <input type="text" id="email" placeholder="Email (Signup Only)" />
     <div style="display: flex; gap: 5px;">
       <input type="text" id="countryCode" placeholder="+91" style="width: 70px;" />
       <input type="text" id="phone" placeholder="Phone Number" />
     </div>
-
-    <!-- Buttons -->
     <button onclick="register()">Register</button>
     <button onclick="login()">Login</button>
-
+    <button onclick="logout()">Logout</button>
     <p id="msg"></p>
   </div>
 
+  <!-- ACCOUNT STATUS -->
+  <div id="account-status">
+    <h3>Account Status</h3>
+    <p id="status">Not Logged In</p>
+  </div>
 
+  <!-- UPDATE PASSWORD -->
+  <div id="update-password">
+    <h3>Update Password</h3>
+    <input type="text" id="updateEmail" placeholder="Email" />
+    <input type="text" id="updatePhoneCode" placeholder="+91" style="width: 70px;" />
+    <input type="text" id="updatePhone" placeholder="Phone Number" />
+    <input type="text" id="updateUsername" placeholder="Username" />
+    <input type="password" id="newPassword" placeholder="New Password" />
+    <button onclick="updatePassword()">Update Password</button>
+  </div>
 
-  <!-- JS Libraries -->
+  <!-- UPDATE EMAIL -->
+  <div id="update-email">
+    <h3>Update Email</h3>
+    <input type="text" id="emailUsername" placeholder="Username" />
+    <input type="text" id="emailPhoneCode" placeholder="+91" style="width: 70px;" />
+    <input type="text" id="emailPhone" placeholder="Phone Number" />
+    <input type="password" id="emailPassword" placeholder="Password" />
+    <input type="text" id="newEmail" placeholder="New Email" />
+    <button onclick="updateEmail()">Update Email</button>
+  </div>
+
+  <!-- UPDATE PHONE -->
+  <div id="update-phone">
+    <h3>Update Phone Number</h3>
+    <input type="text" id="phoneUsername" placeholder="Username" />
+    <input type="text" id="phoneEmail" placeholder="Email" />
+    <input type="password" id="phonePassword" placeholder="Password" />
+    <input type="text" id="newPhoneCode" placeholder="+91" style="width: 70px;" />
+    <input type="text" id="newPhone" placeholder="New Phone Number" />
+    <button onclick="updatePhone()">Update Phone</button>
+  </div>
+
+  <!-- UPDATE USERNAME -->
+  <div id="update-username">
+    <h3>Update Username</h3>
+    <input type="text" id="currentEmail" placeholder="Email" />
+    <input type="text" id="currentPhoneCode" placeholder="+91" style="width: 70px;" />
+    <input type="text" id="currentPhone" placeholder="Phone Number" />
+    <input type="password" id="currentPassword" placeholder="Password" />
+    <input type="text" id="newUsername" placeholder="New Username" />
+    <button onclick="updateUsername()">Update Username</button>
+  </div>
+
+  <!-- RECOVERY OPTIONS -->
+  <div id="recovery">
+    <h3>Recover Options</h3>
+    <input type="text" id="recoveryInput" placeholder="Input (depending on action)" />
+    <button onclick="recoverPassword()">Recover Password</button>
+    <button onclick="recoverUsername()">Recover Username</button>
+    <button onclick="recoverEmail()">Recover Email</button>
+    <button onclick="recoverPhone()">Recover Phone</button>
+  </div>
+
+  <!-- DELETE ACCOUNT -->
+  <div id="delete-account">
+    <h3>Delete Account</h3>
+    <input type="text" id="deleteUsername" placeholder="Username" />
+    <input type="text" id="deleteEmail" placeholder="Email" />
+    <input type="text" id="deletePhoneCode" placeholder="+91" style="width: 70px;" />
+    <input type="text" id="deletePhone" placeholder="Phone Number" />
+    <input type="password" id="deletePassword" placeholder="Password" />
+    <button onclick="deleteAccount()">Delete Account</button>
+  </div>
+
+  <!-- GO BACK -->
+  <div style="margin-top: 20px;">
+    <button onclick="history.back()">Go Back</button>
+  </div>
+
+  <!-- LIBRARIES -->
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/pouchdb@7.3.0/dist/pouchdb.min.js"></script>
 
-  <!-- Main Script -->
+  <!-- APP SCRIPT -->
   <script src="app.js"></script>
 </body>
 </html>
