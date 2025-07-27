@@ -1,138 +1,173 @@
-// Initialize Gun
 const gun = Gun({
-  peers: ['https://gun-manhattan.herokuapp.com/gun'],
-});
+    peers: ['https://gun-manhattan.herokuapp.com/gun'],
+  });
 
-const user = gun.user();
+  const user = gun.user();
 
-// Register
-window.register = async function () {
-  const username = document.getElementById('username').value.trim();
-  const password = document.getElementById('password').value.trim();
-  const email = document.getElementById('email').value.trim().toLowerCase();
-  const countryCode = document.getElementById('countryCode').value.trim();
-  const phone = document.getElementById('phone').value.trim();
+  // Register
+  window.register = async function () {
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value.trim();
+    const email = document.getElementById('email').value.trim().toLowerCase();
+    const countryCode = document.getElementById('countryCode').value.trim();
+    const phone = document.getElementById('phone').value.trim();
 
-  if (!username || !password) return showMessage("Username and password required");
-  if (!email) return showMessage("Email is required");
-  if (!countryCode || !phone) return showMessage("Phone number with country code required");
+    if (!username || !password) return showMessage("Username and password required");
+    if (!email) return showMessage("Email is required");
+    if (!countryCode || !phone) return showMessage("Phone number with country code required");
 
-  const fullPhone = countryCode + phone;
+    const fullPhone = countryCode + phone;
 
-  // Check if email is already used
-  gun.get('emails').get(email).once(emailData => {
-    if (emailData) return showMessage("This email is already registered");
+    gun.get('emails').get(email).once(emailData => {
+      if (emailData) return showMessage("This email is already registered");
 
-    // Check if full phone number is already used
-    gun.get('phones').get(fullPhone).once(phoneData => {
-      if (phoneData) return showMessage("This phone number with country code is already registered");
+      gun.get('phones').get(fullPhone).once(phoneData => {
+        if (phoneData) return showMessage("This phone number is already registered");
 
-      // Check if username is already taken
-      gun.get('users').get(username).once(async userData => {
-        if (userData) return showMessage("Username already taken.");
+        gun.get('users').get(username).once(async userData => {
+          if (userData) return showMessage("Username already taken");
 
-        // Create account
-        user.create(username, password, async (ack) => {
-          if (ack.err) return showMessage("Register failed: " + ack.err);
+          user.create(username, password, async (ack) => {
+            if (ack.err) return showMessage("Register failed: " + ack.err);
 
-          // Save user data and references
-          gun.get('users').get(username).put({
-            created: Date.now(),
-            email: email,
-            phone: fullPhone
+            gun.get('users').get(username).put({
+              created: Date.now(),
+              email: email,
+              phone: fullPhone
+            });
+
+            gun.get('emails').get(email).put({ username });
+            gun.get('phones').get(fullPhone).put({ username });
+
+            const encPass = await Gun.SEA.encrypt(password, password);
+            gun.get('user_passwords').get(username).put({ encPass });
+
+            showMessage("Registered! Please login.");
           });
-
-          // Map email and phone to prevent reuse
-          gun.get('emails').get(email).put({ username });
-          gun.get('phones').get(fullPhone).put({ username });
-
-          // Encrypt and store password securely
-          const encPass = await Gun.SEA.encrypt(password, password);
-          gun.get('user_passwords').get(username).put({ encPass });
-
-          showMessage("Registered! Please login.");
         });
       });
     });
-  });
-}
-
-// Login
-window.login = async function () {
-  const username = document.getElementById('username').value.trim();
-  const password = document.getElementById('password').value.trim();
-
-  if (!username || !password) {
-    return showMessage("Username and password required");
   }
 
-  user.auth(username, password, (ack) => {
-    if (ack.err) return showMessage("Login failed: " + ack.err);
-    showMessage("Welcome, " + username);
-  });
-}
+  // Login
+  window.login = async function () {
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value.trim();
+    if (!username || !password) return showMessage("Username and password required");
 
-function showMessage(msg) {
-  document.getElementById('msg').innerText = msg;
-}
-
-  // Utility to show message
-function showMessage(msg, success = false) {
-  const msgBox = document.getElementById('updateMsg');
-  msgBox.style.color = success ? 'green' : 'red';
-  msgBox.textContent = msg;
-}
-
-// Main function
-const form = document.getElementById('updatePasswordForm');
-
-form?.addEventListener('submit', async (e) => {
-  e.preventDefault();
-
-  const username = document.getElementById('updateUsername').value.trim();
-  const email = document.getElementById('updateEmail').value.trim();
-  const oldPassword = document.getElementById('oldPassword').value.trim();
-  const newPassword = document.getElementById('newPassword').value.trim();
-
-  if (!username || !email || !oldPassword || !newPassword) {
-    return showMessage("Please fill in all fields");
+    user.auth(username, password, (ack) => {
+      if (ack.err) return showMessage("Login failed: " + ack.err);
+      showMessage("Welcome, " + username);
+    });
   }
 
-  // Step 1: Authenticate user with old password
-  user.auth(username, oldPassword, async (authAck) => {
-    if (authAck.err) return showMessage("Old password is incorrect");
+  // Change Email
+  window.changeEmail = function () {
+    const username = prompt("Enter current username:");
+    const password = prompt("Enter current password:");
+    const phone = prompt("Enter full phone (with country code):");
+    const newEmail = prompt("Enter new email:");
 
-    // Step 2: Check if email matches
-    user.get('email').once((storedEmail) => {
-      if (!storedEmail || storedEmail.toLowerCase() !== email.toLowerCase()) {
-        user.leave();
-        return showMessage("Email does not match");
-      }
+    gun.get('users').get(username).once(async (data) => {
+      if (!data || data.phone !== phone) return showMessage("Phone mismatch");
+      const encPass = await gun.get('user_passwords').get(username).get('encPass').then();
+      const decPass = await Gun.SEA.decrypt(encPass.encPass, password);
+      if (decPass !== password) return showMessage("Wrong password");
 
-      // Step 3: Backup additional user data if needed (currently just email)
-      const backupData = { email: storedEmail };
+      gun.get('emails').get(data.email).put(null); // Remove old
+      gun.get('emails').get(newEmail).put({ username }); // New map
 
-      // Step 4: Logout current session
-      user.leave();
-
-      // Step 5: Re-create user with same username and new password
-      gun.user().create(username, newPassword, (createAck) => {
-        if (createAck.err && createAck.err.includes('User already created')) {
-          return showMessage("Account already exists. Cannot reset password this way.");
-        }
-        if (createAck.err) return showMessage("Failed to update password: " + createAck.err);
-
-        // Step 6: Log in with new password
-        gun.user().auth(username, newPassword, (loginAck) => {
-          if (loginAck.err) return showMessage("Password changed, but login failed");
-
-          // Step 7: Restore backed up user data
-          gun.user().get('email').put(backupData.email);
-
-          showMessage("Password changed successfully", true);
-        });
+      gun.get('users').get(username).put({ email: newEmail }, () => {
+        showMessage("Email updated");
       });
     });
-  });
-});
+  }
 
+  // Change Phone
+  window.changePhone = function () {
+    const username = prompt("Enter current username:");
+    const password = prompt("Enter current password:");
+    const email = prompt("Enter current email:");
+    const newCountryCode = prompt("Enter new country code:");
+    const newPhone = prompt("Enter new phone number:");
+    const newFullPhone = newCountryCode + newPhone;
+
+    gun.get('users').get(username).once(async (data) => {
+      if (!data || data.email !== email) return showMessage("Email mismatch");
+      const encPass = await gun.get('user_passwords').get(username).get('encPass').then();
+      const decPass = await Gun.SEA.decrypt(encPass.encPass, password);
+      if (decPass !== password) return showMessage("Wrong password");
+
+      gun.get('phones').get(data.phone).put(null); // Remove old
+      gun.get('phones').get(newFullPhone).put({ username }); // New map
+
+      gun.get('users').get(username).put({ phone: newFullPhone }, () => {
+        showMessage("Phone updated");
+      });
+    });
+  }
+
+  // Change Password
+  window.changePassword = function () {
+    const username = prompt("Enter current username:");
+    const email = prompt("Enter current email:");
+    const phone = prompt("Enter current full phone:");
+    const currentPassword = prompt("Enter current password:");
+    const newPassword = prompt("Enter new password:");
+
+    gun.get('users').get(username).once(async (data) => {
+      if (!data || data.email !== email || data.phone !== phone)
+        return showMessage("User data mismatch");
+
+      const encPass = await gun.get('user_passwords').get(username).get('encPass').then();
+      const decPass = await Gun.SEA.decrypt(encPass.encPass, currentPassword);
+      if (decPass !== currentPassword) return showMessage("Incorrect password");
+
+      const newEnc = await Gun.SEA.encrypt(newPassword, newPassword);
+      gun.get('user_passwords').get(username).put({ encPass: newEnc }, () => {
+        showMessage("Password updated");
+      });
+    });
+  }
+
+  // Change Username
+  window.changeUsername = function () {
+    const oldUsername = prompt("Enter current username:");
+    const password = prompt("Enter current password:");
+    const phone = prompt("Enter current full phone:");
+    const email = prompt("Enter current email:");
+    const newUsername = prompt("Enter new username:");
+
+    gun.get('users').get(oldUsername).once(async (data) => {
+      if (!data || data.email !== email || data.phone !== phone)
+        return showMessage("Mismatch with current data");
+
+      const encPass = await gun.get('user_passwords').get(oldUsername).get('encPass').then();
+      const decPass = await Gun.SEA.decrypt(encPass.encPass, password);
+      if (decPass !== password) return showMessage("Password incorrect");
+
+      const newData = {
+        ...data,
+        username: newUsername
+      };
+
+      gun.get('users').get(newUsername).put(newData);
+      gun.get('user_passwords').get(newUsername).put({ encPass: encPass.encPass });
+
+      // Map new references
+      gun.get('emails').get(email).put({ username: newUsername });
+      gun.get('phones').get(data.phone).put({ username: newUsername });
+
+      gun.get('users').get(oldUsername).put(null);
+      gun.get('user_passwords').get(oldUsername).put(null);
+
+      showMessage("Username changed successfully to " + newUsername);
+    });
+  }
+
+  // UI Message Display
+  function showMessage(msg) {
+    const m = document.getElementById('msg');
+    if (m) m.innerText = msg;
+    else alert(msg);
+  }
