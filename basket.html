@@ -1,5 +1,4 @@
-<!DOCTYPE html><html lang="en">
-<head>
+<!DOCTYPE html><html lang="en"><head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Basket - imacx Shop</title>
@@ -35,12 +34,17 @@
     h2 {
       color: goldenrod;
     }
+    #orderOutput {
+      white-space: pre-wrap;
+      border: 1px solid goldenrod;
+      padding: 1rem;
+      margin-top: 1rem;
+    }
   </style>
 </head>
 <body>
   <h2>🛒 Basket</h2>
-  <div id="basket-table"></div>
-  <h2>Shipping Details</h2>
+  <div id="basket-table"></div>  <h2>Shipping Details</h2>
   <form id="shippingForm">
     <label>Recipient Name: <input type="text" id="recipient" required></label><br>
     <label>Email: <input type="email" id="email" required></label><br>
@@ -51,131 +55,137 @@
     <label>City: <input type="text" id="city" required></label><br>
     <label>State: <input type="text" id="state" required></label>
     <label>Country: <input type="text" id="country" required></label>
-    <label>Zip Code: <input type="text" id="zip" required></label><br>
-    <button type="button" onclick="printAndProceed()">🖨️ Print & Proceed</button>
-  </form>
-  <script>
-  let basket = JSON.parse(localStorage.getItem('basket')) || [];
-  let orderId = 'IMX' + Math.random().toString(36).substr(2, 9).toUpperCase();
+    <label>Zip Code: <input type="text" id="zip" required></label><br><button type="button" onclick="collectOrderDetails()">📋 Collect Order Info</button>
+<button type="button" onclick="generateOrderId()">🔐 Generate Order ID</button>
+<button type="button" onclick="storeToAdmin()">💾 Save Order</button>
+<button type="button" onclick="startPaymentFlow()">💳 Pay Now</button>
 
-  function renderBasket() {
-    if (basket.length === 0) {
-      document.getElementById('basket-table').innerHTML = '<p>No items in basket.</p>';
-      return;
-    }
-
+  </form>  <div id="orderOutput"></div>  <script>
+    let basket = JSON.parse(localStorage.getItem('basket')) || [];
+    let orderId = '';
+    let shipping = {};
     let total = 0;
-    let html = `<table>
-      <tr>
-        <th>Image</th>
-        <th>Name</th>
-        <th>Qty</th>
-        <th>Price</th>
-        <th>Total</th>
-        <th>Category</th>
-        <th>Subcategory</th>
-        <th>Action</th>
-      </tr>`;
+    let newOrder = {};
 
-    basket.forEach((item, index) => {
-      const itemTotal = item.price * item.quantity;
-      total += itemTotal;
-      html += `<tr>
-        <td><img src="${item.image}" width="50"></td>
-        <td>${item.name}</td>
-        <td>${item.quantity}</td>
-        <td>₹${item.price}</td>
-        <td>₹${itemTotal}</td>
-        <td>${item.category}</td>
-        <td>${item.subcategory}</td>
-        <td><button onclick="deleteItem(${index})">Delete</button></td>
-      </tr>`;
-    });
-
-    html += `<tr><td colspan="4"><strong>Grand Total</strong></td><td colspan="4"><strong>₹${total}</strong></td></tr></table>`;
-    document.getElementById('basket-table').innerHTML = html;
-  }
-
-  function deleteItem(index) {
-    if (confirm("Remove this item from basket?")) {
-      basket.splice(index, 1);
-      localStorage.setItem('basket', JSON.stringify(basket));
-      renderBasket();
-    }
-  }
-
-  function printAndProceed() {
-    if (basket.length === 0) {
-      alert("Basket is empty.");
-      return;
-    }
-
-    const shipping = {
-      orderId,
-      recipient: document.getElementById('recipient').value,
-      email: document.getElementById('email').value,
-      countryCode: document.getElementById('countryCode').value,
-      phone: document.getElementById('phone').value,
-      address: document.getElementById('address').value,
-      area: document.getElementById('area').value,
-      city: document.getElementById('city').value,
-      state: document.getElementById('state').value,
-      country: document.getElementById('country').value,
-      zip: document.getElementById('zip').value
-    };
-
-    let total = basket.reduce((sum, item) => sum + item.price * item.quantity, 0);
-
-    const newOrder = {
-      orderId,
-      basket,
-      shipping,
-      total,
-      status: 'Order Created'
-    };
-
-    // Save to shared "orders" array
-    const orders = JSON.parse(localStorage.getItem('orders')) || [];
-    orders.push(newOrder);
-    localStorage.setItem('orders', JSON.stringify(orders));
-
-    // Save current for receipt or thank you
-    localStorage.setItem('orderData', JSON.stringify(newOrder));
-
-    window.print();
-
-    setTimeout(() => {
-      startPayment(total);
-    }, 1500);
-  }
-
-  function startPayment(total) {
-    const options = {
-      key: "rzp_live_ozWo08bXwqssx3", // ✅ Replace with your Razorpay key
-      amount: total * 100,
-      currency: "INR",
-      name: "imacx Shop",
-      description: "Order Payment",
-      handler: function (response) {
-        alert("Payment Successful. ID: " + response.razorpay_payment_id);
-        window.location.href = "thankyou.html";
-      },
-      prefill: {
-        name: document.getElementById('recipient').value,
-        email: document.getElementById('email').value,
-        contact: document.getElementById('countryCode').value + document.getElementById('phone').value
-      },
-      theme: {
-        color: "#bfa046"
+    function renderBasket() {
+      if (basket.length === 0) {
+        document.getElementById('basket-table').innerHTML = '<p>No items in basket.</p>';
+        return;
       }
-    };
 
-    const rzp = new Razorpay(options);
-    rzp.open();
-  }
+      total = 0;
+      let html = `<table>
+        <tr>
+          <th>Image</th>
+          <th>Name</th>
+          <th>Qty</th>
+          <th>Price</th>
+          <th>Total</th>
+          <th>Category</th>
+          <th>Subcategory</th>
+          <th>Action</th>
+        </tr>`;
 
-  renderBasket();
-</script>
-<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-</body>
+      basket.forEach((item, index) => {
+        const itemTotal = item.price * item.quantity;
+        total += itemTotal;
+        html += `<tr>
+          <td><img src="${item.image}" width="50"></td>
+          <td>${item.name}</td>
+          <td>${item.quantity}</td>
+          <td>₹${item.price}</td>
+          <td>₹${itemTotal}</td>
+          <td>${item.category}</td>
+          <td>${item.subcategory}</td>
+          <td><button onclick="deleteItem(${index})">Delete</button></td>
+        </tr>`;
+      });
+
+      html += `<tr><td colspan="4"><strong>Grand Total</strong></td><td colspan="4"><strong>₹${total}</strong></td></tr></table>`;
+      document.getElementById('basket-table').innerHTML = html;
+    }
+
+    function deleteItem(index) {
+      if (confirm("Remove this item from basket?")) {
+        basket.splice(index, 1);
+        localStorage.setItem('basket', JSON.stringify(basket));
+        renderBasket();
+      }
+    }
+
+    function collectOrderDetails() {
+      shipping = {
+        recipient: document.getElementById('recipient').value,
+        email: document.getElementById('email').value,
+        countryCode: document.getElementById('countryCode').value,
+        phone: document.getElementById('phone').value,
+        address: document.getElementById('address').value,
+        area: document.getElementById('area').value,
+        city: document.getElementById('city').value,
+        state: document.getElementById('state').value,
+        country: document.getElementById('country').value,
+        zip: document.getElementById('zip').value
+      };
+
+      document.getElementById('orderOutput').textContent = JSON.stringify({ shipping, basket }, null, 2);
+    }
+
+    function generateOrderId() {
+      orderId = 'IMX' + Math.random().toString(36).substr(2, 9).toUpperCase();
+      document.getElementById('orderOutput').textContent += `\nOrder ID: ${orderId}`;
+    }
+
+    function storeToAdmin() {
+      if (!orderId || Object.keys(shipping).length === 0) {
+        alert('Please collect order info and generate Order ID first.');
+        return;
+      }
+
+      newOrder = {
+        orderId,
+        basket,
+        shipping,
+        total,
+        status: 'Order Created'
+      };
+
+      const orders = JSON.parse(localStorage.getItem('orders')) || [];
+      orders.push(newOrder);
+      localStorage.setItem('orders', JSON.stringify(orders));
+      localStorage.setItem('orderData', JSON.stringify(newOrder));
+      alert('Order saved to admin.');
+    }
+
+    function startPaymentFlow() {
+      if (!orderId || !newOrder.orderId) {
+        alert('Please save the order first.');
+        return;
+      }
+
+      const options = {
+        key: "rzp_live_ozWo08bXwqssx3",
+        amount: total * 100,
+        currency: "INR",
+        name: "imacx Shop",
+        description: "Order Payment",
+        handler: function (response) {
+          alert("Payment Successful. ID: " + response.razorpay_payment_id);
+          window.location.href = "thankyou.html";
+        },
+        prefill: {
+          name: shipping.recipient,
+          email: shipping.email,
+          contact: shipping.countryCode + shipping.phone
+        },
+        theme: {
+          color: "#bfa046"
+        }
+      };
+
+      const rzp = new Razorpay(options);
+      rzp.open();
+    }
+
+    renderBasket();
+  </script>  <script src="https://checkout.razorpay.com/v1/checkout.js"></script></body>
 </html>
