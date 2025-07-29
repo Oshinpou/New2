@@ -1,15 +1,65 @@
+<!-- admin.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Admin Panel - GunDB</title>
+  <meta charset="UTF-8">
+  <title>Admin Orders - Imacx Shop</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      background: white;
+      font-family: cursive;
+      color: #bfa046;
+      padding: 20px;
+    }
+    .order-card {
+      border: 1px solid #bfa046;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    select {
+      padding: 5px;
+      margin-top: 10px;
+    }
+  </style>
 </head>
 <body>
-  <h2>GunDB Admin Panel</h2>
-  <div id="users"></div>
+  <h1>Admin Panel: Orders</h1>
+  <div id="adminOrders"></div>
 
-  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
-  <script src="admin.js"></script>
+  <script>
+    let orders = JSON.parse(localStorage.getItem('orders')) || [];
+
+    const container = document.getElementById('adminOrders');
+    orders.forEach((order, i) => {
+      const div = document.createElement('div');
+      div.className = 'order-card';
+      div.innerHTML = `
+        <h2>Order ID: ${order.orderId}</h2>
+        <p><strong>Name:</strong> ${order.shipping.name}</p>
+        <p><strong>Address:</strong> ${order.shipping.address}, ${order.shipping.city}</p>
+        <p><strong>Total:</strong> ₹${order.total}</p>
+        <p><strong>Status:</strong> <span id="status-${i}">${order.status}</span></p>
+        <select onchange="updateStatus(${i}, this.value)">
+          <option value="">-- Update Status --</option>
+          <option value="Order Created">Order Created</option>
+          <option value="Payment Done">Payment Done</option>
+          <option value="Preparing Order">Preparing Order</option>
+          <option value="Out for Shipping">Out for Shipping</option>
+          <option value="Shipped">Shipped</option>
+          <option value="Out for Delivery">Out for Delivery</option>
+          <option value="Delivered">Delivered</option>
+        </select>
+      `;
+      container.appendChild(div);
+    });
+
+    function updateStatus(index, newStatus) {
+      orders[index].status = newStatus;
+      localStorage.setItem('orders', JSON.stringify(orders));
+      document.getElementById(`status-${index}`).textContent = newStatus;
+      alert('Order status updated.');
+    }
+  </script>
 </body>
 </html>
