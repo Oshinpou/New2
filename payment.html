@@ -1,0 +1,103 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Payment - IMACX</title>
+  <style>
+    body {
+      font-family: 'Georgia', cursive;
+      background-color: #ffffff;
+      color: #bfa046;
+      padding: 2rem;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      padding: 2rem;
+      border: 1px solid #bfa046;
+      border-radius: 10px;
+      background-color: #fff;
+    }
+    .title {
+      font-size: 2rem;
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    button {
+      background-color: #bfa046;
+      color: white;
+      font-size: 1rem;
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      width: 100%;
+    }
+    button:hover {
+      background-color: #a38730;
+    }
+    #details {
+      margin-bottom: 1.5rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="title">Secure Payment - IMACX</div>
+    <div id="details"></div>
+    <button onclick="payNow()">Pay with Razorpay</button>
+  </div>  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>  <script>
+    const orderData = JSON.parse(localStorage.getItem('orderData'));
+    const detailsDiv = document.getElementById('details');
+
+    if (!orderData) {
+      detailsDiv.innerHTML = 'No order data found!';
+    } else {
+      let itemsHTML = '';
+      orderData.items.forEach(item => {
+        itemsHTML += `<div><b>${item.name}</b> x${item.quantity} - ₹${item.price * item.quantity}</div>`;
+      });
+
+      detailsDiv.innerHTML = `
+        <h3>Order ID: ${orderData.orderId}</h3>
+        <h4>Total: ₹${orderData.total}</h4>
+        <div><b>Recipient:</b> ${orderData.shipping.name}</div>
+        <div><b>Email:</b> ${orderData.shipping.email}</div>
+        <div><b>Phone:</b> +${orderData.shipping.countryCode}-${orderData.shipping.phone}</div>
+        <div><b>Address:</b> ${orderData.shipping.address}, ${orderData.shipping.city}, ${orderData.shipping.state}, ${orderData.shipping.zip}, ${orderData.shipping.country}</div>
+        <h4>Items:</h4>
+        ${itemsHTML}
+      `;
+    }
+
+    function payNow() {
+      const options = {
+        key: 'rzp_test_YourKeyHere', // Replace with your Razorpay test/live key
+        amount: orderData.total * 100, // Razorpay amount in paise
+        currency: 'INR',
+        name: 'IMACX Shop',
+        description: 'Order Payment',
+        image: 'logo.png',
+        handler: function (response) {
+          // On success
+          alert('Payment successful!');
+          window.location.href = 'thankyou.html';
+        },
+        prefill: {
+          name: orderData.shipping.name,
+          email: orderData.shipping.email,
+          contact: orderData.shipping.phone
+        },
+        notes: {
+          order_id: orderData.orderId
+        },
+        theme: {
+          color: '#bfa046'
+        }
+      };
+
+      const rzp = new Razorpay(options);
+      rzp.open();
+    }
+  </script></body>
+</html>
