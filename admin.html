@@ -1,71 +1,124 @@
-<!-- admin.html -->
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Admin Panel - IMACX</title>
+  <title>Admin - Order Management</title>
   <style>
     body {
-      background: white;
-      color: goldenrod;
-      font-family: cursive;
+      font-family: Arial, sans-serif;
       padding: 20px;
+      background: #f4f4f4;
     }
-    .order {
-      border: 1px solid goldenrod;
-      margin-bottom: 20px;
-      padding: 10px;
+    h1 {
+      text-align: center;
     }
-    select {
-      font-family: cursive;
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      margin-bottom: 40px;
+    }
+    th, td {
+      padding: 12px;
+      border: 1px solid #ccc;
+      text-align: left;
+    }
+    th {
+      background-color: #eee;
+    }
+    select, button {
+      padding: 6px 12px;
+      margin: 5px 0;
+    }
+    .delete-btn {
+      background-color: #e74c3c;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    .delete-btn:hover {
+      background-color: #c0392b;
     }
   </style>
 </head>
 <body>
-  <h1>Admin Order Panel</h1>
-  <div id="orders"></div>
+  <h1>Admin - All Orders</h1>
+  <table id="orderTable">
+    <thead>
+      <tr>
+        <th>Order ID</th>
+        <th>Details</th>
+        <th>Status</th>
+        <th>Update</th>
+        <th>Delete</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>  <script>
+    const tableBody = document.querySelector('#orderTable tbody');
 
-  <script>
-    function updateStatus(id, value) {
-      const orders = JSON.parse(localStorage.getItem("orders")) || [];
-      const index = orders.findIndex(o => o.id === id);
-      if (index !== -1) {
-        orders[index].status = value;
-        localStorage.setItem("orders", JSON.stringify(orders));
-        alert("Status updated.");
-        renderOrders();
-      }
-    }
+    function loadOrders() {
+      const allOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+      tableBody.innerHTML = '';
 
-    function renderOrders() {
-      const orders = JSON.parse(localStorage.getItem("orders")) || [];
-      const container = document.getElementById("orders");
-      container.innerHTML = orders.map(o => `
-        <div class="order">
-          <strong>Order ID:</strong> ${o.id}<br>
-          <strong>Status:</strong>
-          <select onchange="updateStatus('${o.id}', this.value)">
-            <option value="Order Created" ${o.status === 'Order Created' ? 'selected' : ''}>Order Created</option>
-            <option value="Payment Done" ${o.status === 'Payment Done' ? 'selected' : ''}>Payment Done</option>
-            <option value="Preparing Order" ${o.status === 'Preparing Order' ? 'selected' : ''}>Preparing Order</option>
-            <option value="Out for Shipping" ${o.status === 'Out for Shipping' ? 'selected' : ''}>Out for Shipping</option>
-            <option value="Shipped" ${o.status === 'Shipped' ? 'selected' : ''}>Shipped</option>
-            <option value="Out for Delivery" ${o.status === 'Out for Delivery' ? 'selected' : ''}>Out for Delivery</option>
-            <option value="Delivered" ${o.status === 'Delivered' ? 'selected' : ''}>Delivered</option>
-          </select><br><br>
-          <strong>Items:</strong><br>
-          ${o.items.map(i => `${i.name} × ${i.quantity} = ₹${i.price * i.quantity}`).join('<br>')}<br>
-          <strong>Grand Total:</strong> ₹${o.total}<br>
-          <strong>Shipping:</strong><br>
-          Name: ${o.shipping.name}<br>
-          Email: ${o.shipping.email}<br>
-          Phone: ${o.shipping.phone}<br>
-          Address: ${o.shipping.address}<br>
-        </div>
-      `).join("");
-    }
+      allOrders.forEach((order, index) => {
+        const tr = document.createElement('tr');
 
-    renderOrders();
+        const statusOptions = [
+          'Order Created', 'Pending Payment', 'Payment Done',
+          'Preparing Order', 'Out for Shipping', 'Shipped',
+          'Out for Delivery', 'Delivered', 'Cancelled'
+        ];
+
+        const statusSelect = document.createElement('select');
+        statusOptions.forEach(status => {
+          const option = document.createElement('option');
+          option.value = status;
+          option.text = status;
+          if (status === order.status) option.selected = true;
+          statusSelect.appendChild(option);
+        });
+
+        const updateBtn = document.createElement('button');
+        updateBtn.textContent = 'Update';
+        updateBtn.onclick = () => {
+          order.status = statusSelect.value;
+          allOrders[index] = order;
+          localStorage.setItem('orders', JSON.stringify(allOrders));
+          alert('Order status updated!');
+        };
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = 'Delete';
+        deleteBtn.className = 'delete-btn';
+        deleteBtn.onclick = () => {
+          if (confirm('Are you sure you want to delete this order?')) {
+            allOrders.splice(index, 1);
+            localStorage.setItem('orders', JSON.stringify(allOrders));
+            loadOrders();
+          }
+        };
+
+        tr.innerHTML = `
+          <td>${order.id}</td>
+          <td><pre>${order.output}</pre></td>`;
+    const statusTd = document.createElement('td');
+    statusTd.appendChild(statusSelect);
+    const updateTd = document.createElement('td');
+    updateTd.appendChild(updateBtn);
+    const deleteTd = document.createElement('td');
+    deleteTd.appendChild(deleteBtn);
+
+    tr.appendChild(statusTd);
+    tr.appendChild(updateTd);
+    tr.appendChild(deleteTd);
+
+    tableBody.appendChild(tr);
+  });
+}
+
+window.onload = loadOrders;
+
   </script>
 </body>
 </html>
