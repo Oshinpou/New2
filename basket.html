@@ -105,6 +105,11 @@
   }
 
   function printAndProceed() {
+    if (basket.length === 0) {
+      alert("Basket is empty.");
+      return;
+    }
+
     const shipping = {
       orderId,
       recipient: document.getElementById('recipient').value,
@@ -119,15 +124,58 @@
       zip: document.getElementById('zip').value
     };
 
-    localStorage.setItem('orderData', JSON.stringify({ orderId, basket, shipping, status: 'Order Created' }));
+    let total = basket.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+    const newOrder = {
+      orderId,
+      basket,
+      shipping,
+      total,
+      status: 'Order Created'
+    };
+
+    // Save to shared "orders" array
+    const orders = JSON.parse(localStorage.getItem('orders')) || [];
+    orders.push(newOrder);
+    localStorage.setItem('orders', JSON.stringify(orders));
+
+    // Save current for receipt or thank you
+    localStorage.setItem('orderData', JSON.stringify(newOrder));
+
     window.print();
 
     setTimeout(() => {
-      window.location.href = 'payment.html';
-    }, 2000);
+      startPayment(total);
+    }, 1500);
+  }
+
+  function startPayment(total) {
+    const options = {
+      key: "rzp_live_ozWo08bXwqssx3", // ✅ Replace with your Razorpay key
+      amount: total * 100,
+      currency: "INR",
+      name: "imacx Shop",
+      description: "Order Payment",
+      handler: function (response) {
+        alert("Payment Successful. ID: " + response.razorpay_payment_id);
+        window.location.href = "thankyou.html";
+      },
+      prefill: {
+        name: document.getElementById('recipient').value,
+        email: document.getElementById('email').value,
+        contact: document.getElementById('countryCode').value + document.getElementById('phone').value
+      },
+      theme: {
+        color: "#bfa046"
+      }
+    };
+
+    const rzp = new Razorpay(options);
+    rzp.open();
   }
 
   renderBasket();
 </script>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 </body>
 </html>
