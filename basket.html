@@ -55,54 +55,79 @@
     <button type="button" onclick="printAndProceed()">🖨️ Print & Proceed</button>
   </form>
   <script>
-    const basket = JSON.parse(localStorage.getItem('basket')) || [];
-    let orderId = 'IMX' + Math.random().toString(36).substr(2, 9).toUpperCase();function renderBasket() {
-  if (basket.length === 0) {
-    document.getElementById('basket-table').innerHTML = '<p>No items in basket.</p>';
-    return;
+  let basket = JSON.parse(localStorage.getItem('basket')) || [];
+  let orderId = 'IMX' + Math.random().toString(36).substr(2, 9).toUpperCase();
+
+  function renderBasket() {
+    if (basket.length === 0) {
+      document.getElementById('basket-table').innerHTML = '<p>No items in basket.</p>';
+      return;
+    }
+
+    let total = 0;
+    let html = `<table>
+      <tr>
+        <th>Image</th>
+        <th>Name</th>
+        <th>Qty</th>
+        <th>Price</th>
+        <th>Total</th>
+        <th>Category</th>
+        <th>Subcategory</th>
+        <th>Action</th>
+      </tr>`;
+
+    basket.forEach((item, index) => {
+      const itemTotal = item.price * item.quantity;
+      total += itemTotal;
+      html += `<tr>
+        <td><img src="${item.image}" width="50"></td>
+        <td>${item.name}</td>
+        <td>${item.quantity}</td>
+        <td>₹${item.price}</td>
+        <td>₹${itemTotal}</td>
+        <td>${item.category}</td>
+        <td>${item.subcategory}</td>
+        <td><button onclick="deleteItem(${index})">Delete</button></td>
+      </tr>`;
+    });
+
+    html += `<tr><td colspan="4"><strong>Grand Total</strong></td><td colspan="4"><strong>₹${total}</strong></td></tr></table>`;
+    document.getElementById('basket-table').innerHTML = html;
   }
-  let total = 0;
-  let html = `<table><tr><th>Image</th><th>Name</th><th>Qty</th><th>Price</th><th>Total</th><th>Category</th><th>Subcategory</th></tr>`;
-  basket.forEach(item => {
-    const itemTotal = item.price * item.quantity;
-    total += itemTotal;
-    html += `<tr>
-      <td><img src="${item.image}" width="50"></td>
-      <td>${item.name}</td>
-      <td>${item.quantity}</td>
-      <td>₹${item.price}</td>
-      <td>₹${itemTotal}</td>
-      <td>${item.category}</td>
-      <td>${item.subcategory}</td>
-    </tr>`;
-  });
-  html += `<tr><td colspan="4"><strong>Grand Total</strong></td><td colspan="3"><strong>₹${total}</strong></td></tr></table>`;
-  document.getElementById('basket-table').innerHTML = html;
-}
 
-function printAndProceed() {
-  const shipping = {
-    orderId,
-    recipient: document.getElementById('recipient').value,
-    email: document.getElementById('email').value,
-    countryCode: document.getElementById('countryCode').value,
-    phone: document.getElementById('phone').value,
-    address: document.getElementById('address').value,
-    area: document.getElementById('area').value,
-    city: document.getElementById('city').value,
-    state: document.getElementById('state').value,
-    country: document.getElementById('country').value,
-    zip: document.getElementById('zip').value
-  };
-  localStorage.setItem('orderData', JSON.stringify({ orderId, basket, shipping, status: 'Order Created' }));
-  window.print();
-  setTimeout(() => {
-    window.location.href = 'payment.html';
-  }, 2000);
-}
+  function deleteItem(index) {
+    if (confirm("Remove this item from basket?")) {
+      basket.splice(index, 1);
+      localStorage.setItem('basket', JSON.stringify(basket));
+      renderBasket();
+    }
+  }
 
-renderBasket();
+  function printAndProceed() {
+    const shipping = {
+      orderId,
+      recipient: document.getElementById('recipient').value,
+      email: document.getElementById('email').value,
+      countryCode: document.getElementById('countryCode').value,
+      phone: document.getElementById('phone').value,
+      address: document.getElementById('address').value,
+      area: document.getElementById('area').value,
+      city: document.getElementById('city').value,
+      state: document.getElementById('state').value,
+      country: document.getElementById('country').value,
+      zip: document.getElementById('zip').value
+    };
 
-  </script>
+    localStorage.setItem('orderData', JSON.stringify({ orderId, basket, shipping, status: 'Order Created' }));
+    window.print();
+
+    setTimeout(() => {
+      window.location.href = 'payment.html';
+    }, 2000);
+  }
+
+  renderBasket();
+</script>
 </body>
 </html>
