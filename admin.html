@@ -3,152 +3,69 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Admin Orders - Imacx Shop</title>
-  <link rel="stylesheet" href="style.css">
+  <title>Admin Panel - IMACX</title>
   <style>
     body {
       background: white;
+      color: goldenrod;
       font-family: cursive;
-      color: #bfa046;
       padding: 20px;
     }
-    .order-card {
-      border: 1px solid #bfa046;
-      padding: 20px;
+    .order {
+      border: 1px solid goldenrod;
       margin-bottom: 20px;
+      padding: 10px;
     }
     select {
-      padding: 5px;
-      margin-top: 10px;
+      font-family: cursive;
     }
   </style>
 </head>
 <body>
-  <h1>Admin Panel: Orders</h1>
-  <div id="adminOrders"></div>
+  <h1>Admin Order Panel</h1>
+  <div id="orders"></div>
 
   <script>
-  let basket = JSON.parse(localStorage.getItem('basket')) || [];
-  let orderId = 'IMX' + Math.random().toString(36).substr(2, 9).toUpperCase();
-
-  function renderBasket() {
-    if (basket.length === 0) {
-      document.getElementById('basket-table').innerHTML = '<p>No items in basket.</p>';
-      return;
-    }
-
-    let total = 0;
-    let html = `<table>
-      <tr>
-        <th>Image</th>
-        <th>Name</th>
-        <th>Qty</th>
-        <th>Price</th>
-        <th>Total</th>
-        <th>Category</th>
-        <th>Subcategory</th>
-        <th>Action</th>
-      </tr>`;
-
-    basket.forEach((item, index) => {
-      const itemTotal = item.price * item.quantity;
-      total += itemTotal;
-      html += `<tr>
-        <td><img src="${item.image}" width="50"></td>
-        <td>${item.name}</td>
-        <td>${item.quantity}</td>
-        <td>₹${item.price}</td>
-        <td>₹${itemTotal}</td>
-        <td>${item.category}</td>
-        <td>${item.subcategory}</td>
-        <td><button onclick="deleteItem(${index})">Delete</button></td>
-      </tr>`;
-    });
-
-    html += `<tr><td colspan="4"><strong>Grand Total</strong></td><td colspan="4"><strong>₹${total}</strong></td></tr></table>`;
-    document.getElementById('basket-table').innerHTML = html;
-  }
-
-  function deleteItem(index) {
-    if (confirm("Remove this item from basket?")) {
-      basket.splice(index, 1);
-      localStorage.setItem('basket', JSON.stringify(basket));
-      renderBasket();
-    }
-  }
-
-  function printAndProceed() {
-    if (basket.length === 0) {
-      alert("Basket is empty.");
-      return;
-    }
-
-    const shipping = {
-      orderId,
-      recipient: document.getElementById('recipient').value,
-      email: document.getElementById('email').value,
-      countryCode: document.getElementById('countryCode').value,
-      phone: document.getElementById('phone').value,
-      address: document.getElementById('address').value,
-      area: document.getElementById('area').value,
-      city: document.getElementById('city').value,
-      state: document.getElementById('state').value,
-      country: document.getElementById('country').value,
-      zip: document.getElementById('zip').value
-    };
-
-    let total = basket.reduce((sum, item) => sum + item.price * item.quantity, 0);
-
-    const newOrder = {
-      orderId,
-      basket,
-      shipping,
-      total,
-      status: 'Order Created'
-    };
-
-    // Save to shared "orders" array
-    const orders = JSON.parse(localStorage.getItem('orders')) || [];
-    orders.push(newOrder);
-    localStorage.setItem('orders', JSON.stringify(orders));
-
-    // Save current for receipt or thank you
-    localStorage.setItem('orderData', JSON.stringify(newOrder));
-
-    window.print();
-
-    setTimeout(() => {
-      startPayment(total);
-    }, 1500);
-  }
-
-  function startPayment(total) {
-    const options = {
-      key: "YOUR_RAZORPAY_KEY", // ✅ Replace with your Razorpay key
-      amount: total * 100,
-      currency: "INR",
-      name: "imacx Shop",
-      description: "Order Payment",
-      handler: function (response) {
-        alert("Payment Successful. ID: " + response.razorpay_payment_id);
-        window.location.href = "thankyou.html";
-      },
-      prefill: {
-        name: document.getElementById('recipient').value,
-        email: document.getElementById('email').value,
-        contact: document.getElementById('countryCode').value + document.getElementById('phone').value
-      },
-      theme: {
-        color: "#bfa046"
+    function updateStatus(id, value) {
+      const orders = JSON.parse(localStorage.getItem("orders")) || [];
+      const index = orders.findIndex(o => o.id === id);
+      if (index !== -1) {
+        orders[index].status = value;
+        localStorage.setItem("orders", JSON.stringify(orders));
+        alert("Status updated.");
+        renderOrders();
       }
-    };
+    }
 
-    const rzp = new Razorpay(options);
-    rzp.open();
-  }
+    function renderOrders() {
+      const orders = JSON.parse(localStorage.getItem("orders")) || [];
+      const container = document.getElementById("orders");
+      container.innerHTML = orders.map(o => `
+        <div class="order">
+          <strong>Order ID:</strong> ${o.id}<br>
+          <strong>Status:</strong>
+          <select onchange="updateStatus('${o.id}', this.value)">
+            <option value="Order Created" ${o.status === 'Order Created' ? 'selected' : ''}>Order Created</option>
+            <option value="Payment Done" ${o.status === 'Payment Done' ? 'selected' : ''}>Payment Done</option>
+            <option value="Preparing Order" ${o.status === 'Preparing Order' ? 'selected' : ''}>Preparing Order</option>
+            <option value="Out for Shipping" ${o.status === 'Out for Shipping' ? 'selected' : ''}>Out for Shipping</option>
+            <option value="Shipped" ${o.status === 'Shipped' ? 'selected' : ''}>Shipped</option>
+            <option value="Out for Delivery" ${o.status === 'Out for Delivery' ? 'selected' : ''}>Out for Delivery</option>
+            <option value="Delivered" ${o.status === 'Delivered' ? 'selected' : ''}>Delivered</option>
+          </select><br><br>
+          <strong>Items:</strong><br>
+          ${o.items.map(i => `${i.name} × ${i.quantity} = ₹${i.price * i.quantity}`).join('<br>')}<br>
+          <strong>Grand Total:</strong> ₹${o.total}<br>
+          <strong>Shipping:</strong><br>
+          Name: ${o.shipping.name}<br>
+          Email: ${o.shipping.email}<br>
+          Phone: ${o.shipping.phone}<br>
+          Address: ${o.shipping.address}<br>
+        </div>
+      `).join("");
+    }
 
-  renderBasket();
-</script>
-<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    renderOrders();
+  </script>
 </body>
 </html>
