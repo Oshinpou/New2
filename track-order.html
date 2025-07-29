@@ -1,0 +1,68 @@
+<!-- track-order.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Track Order - Imacx Shop</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      background: white;
+      font-family: cursive;
+      color: #bfa046;
+      padding: 30px;
+    }
+    input, button {
+      padding: 8px;
+      font-family: cursive;
+      margin-right: 10px;
+    }
+    .status {
+      margin-top: 20px;
+      font-size: 2em;
+      font-weight: bold;
+    }
+    .details {
+      margin-top: 20px;
+      border-top: 1px solid #bfa046;
+      padding-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Track Your Order</h1>
+  <input type="text" id="trackId" placeholder="Enter Order ID">
+  <button onclick="trackOrder()">Track</button>
+  <div id="orderStatus" class="status"></div>
+  <div id="orderDetails" class="details"></div>
+
+  <script>
+    function trackOrder() {
+      const id = document.getElementById('trackId').value;
+      const orders = JSON.parse(localStorage.getItem('orders')) || [];
+      const order = orders.find(o => o.orderId === id);
+
+      const statusEl = document.getElementById('orderStatus');
+      const detailEl = document.getElementById('orderDetails');
+
+      if (order) {
+        statusEl.textContent = order.status;
+        detailEl.innerHTML = `
+          <p><strong>Name:</strong> ${order.shipping.name}</p>
+          <p><strong>Email:</strong> ${order.shipping.email}</p>
+          <p><strong>Phone:</strong> ${order.shipping.phone}</p>
+          <p><strong>Address:</strong> ${order.shipping.address}, ${order.shipping.area}, ${order.shipping.city}, ${order.shipping.state}, ${order.shipping.country} - ${order.shipping.zip}</p>
+          <h3>Items:</h3>
+          <ul>
+            ${order.items.map(item => `<li>${item.name} x ${item.quantity} = ₹${item.total}</li>`).join('')}
+          </ul>
+          <p><strong>Grand Total:</strong> ₹${order.total}</p>
+        `;
+      } else {
+        statusEl.textContent = 'Order ID not found';
+        detailEl.innerHTML = '';
+      }
+    }
+  </script>
+</body>
+</html>
