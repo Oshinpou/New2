@@ -98,24 +98,24 @@ window.deleteAccount = function () {
     return showMessage("All fields required to delete account.");
   }
 
-  // Authenticate user first
+  // Authenticate the user
   user.auth(deleteUsername, deletePassword, ack => {
     if (ack.err) return showMessage("Authentication failed: " + ack.err);
 
-    // Step 1: Remove user SEA data (user public key data)
-    user.delete(deleteUsername, deletePassword, function(delAck) {
-      if (delAck.err) return showMessage("Failed to delete SEA user account: " + delAck.err);
+    const pub = user.is.pub;
 
-      // Step 2: Remove all user-related mappings and metadata
-      gun.get('emails').get(deleteEmail).put(null);
-      gun.get('phones').get(fullPhone).put(null);
-      gun.get('users').get(deleteUsername).put(null);
-      gun.get('user_passwords').get(deleteUsername).put(null);
+    // Step 1: Delete the public SEA user node
+    gun.user(pub).put(null); // deletes `~pub` data
 
-      user.leave();
-      updateStatus();
-      showMessage("Account and all user data deleted successfully.");
-    });
+    // Step 2: Delete your app's stored metadata
+    gun.get('users').get(deleteUsername).put(null);
+    gun.get('emails').get(deleteEmail).put(null);
+    gun.get('phones').get(fullPhone).put(null);
+    gun.get('user_passwords').get(deleteUsername).put(null);
+
+    // Step 3: Logout user
+    user.leave();
+    updateStatus();
+    showMessage("Account fully deleted from database.");
   });
 };
-  
