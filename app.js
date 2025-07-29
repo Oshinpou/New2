@@ -4,6 +4,23 @@ const gun = Gun({
 });
 
 const user = gun.user();
+user.recall({ sessionStorage: true });
+updateStatus();
+
+// Show message utility
+function showMessage(msg) {
+  document.getElementById('msg').innerText = msg;
+  console.log(msg);
+}
+
+// Update account status
+function updateStatus() {
+  if (user.is) {
+    document.getElementById('status').innerText = `Logged in as: ${user.is.alias}`;
+  } else {
+    document.getElementById('status').innerText = 'Not Logged In';
+  }
+}
 
 // Register
 window.register = async function () {
@@ -19,68 +36,81 @@ window.register = async function () {
 
   const fullPhone = countryCode + phone;
 
-  // Check if email is already used
   gun.get('emails').get(email).once(emailData => {
     if (emailData) return showMessage("This email is already registered");
 
-    // Check if full phone number is already used
     gun.get('phones').get(fullPhone).once(phoneData => {
-      if (phoneData) return showMessage("This phone number with country code is already registered");
+      if (phoneData) return showMessage("This phone number is already registered");
 
-      // Check if username is already taken
-      gun.get('users').get(username).once(async userData => {
+      gun.get('users').get(username).once(userData => {
         if (userData) return showMessage("Username already taken.");
 
-        // Create account
-        user.create(username, password, (ack) => {
+        user.create(username, password, ack => {
           if (ack.err) return showMessage("Register failed: " + ack.err);
 
-          // Save user data and references
           gun.get('users').get(username).put({
             created: Date.now(),
             email: email,
             phone: fullPhone
           });
 
-          // Map email and phone to prevent reuse
           gun.get('emails').get(email).put({ username });
           gun.get('phones').get(fullPhone).put({ username });
-
           gun.get('user_passwords').get(username).put({ password });
-          
+
           showMessage("Registered! Please login.");
         });
       });
     });
   });
-}
+};
 
 // Login
-window.login = async function () {
+window.login = function () {
   const username = document.getElementById('username').value.trim();
   const password = document.getElementById('password').value.trim();
 
-  if (!username || !password) {
-    return showMessage("Username and password required");
-  }
+  if (!username || !password) return showMessage("Username and password required");
 
-  user.auth(username, password, (ack) => {
+  user.auth(username, password, ack => {
     if (ack.err) return showMessage("Login failed: " + ack.err);
     showMessage("Welcome, " + username);
+    updateStatus();
   });
-}
+};
 
-function showMessage(msg) {
-  document.getElementById('msg').innerText = msg;
-}
+// Logout
+window.logout = function () {
+  user.leave();
+  updateStatus();
+  showMessage("Logged out.");
+};
 
+// Delete Account
+window.deleteAccount = function () {
+  const deleteUsername = document.getElementById('deleteUsername').value.trim();
+  const deletePassword = document.getElementById('deletePassword').value.trim();
+  const deleteEmail = document.getElementById('deleteEmail').value.trim().toLowerCase();
+  const deletePhone = document.getElementById('deletePhone').value.trim();
+  const deletePhoneCode = document.getElementById('deletePhoneCode').value.trim();
+  const fullPhone = deletePhoneCode + deletePhone;
 
+  if (!deleteUsername || !deletePassword || !deleteEmail || !deletePhoneCode || !deletePhone) {
+    return showMessage("All fields required to delete account.");
+  }
 
+  // Authenticate user first
+  user.auth(deleteUsername, deletePassword, ack => {
+    if (ack.err) return showMessage("Authentication failed: " + ack.err);
 
-    
+    // Remove user-related data
+    gun.get('emails').get(deleteEmail).put(null);
+    gun.get('phones').get(fullPhone).put(null);
+    gun.get('users').get(deleteUsername).put(null);
+    gun.get('user_passwords').get(deleteUsername).put(null);
 
-      
-
-          
-
-            
+    user.leave();
+    showMessage("Account deleted successfully.");
+    updateStatus();
+  });
+};
