@@ -99,9 +99,16 @@
           }
         };
 
-        tr.innerHTML = `
-          <td>${order.id}</td>
-          <td><pre>${order.output}</pre></td>`;
+        <tr>
+  <td>${order.orderId}</td>
+  <td><pre>
+    Products: ${order.basket.map(item => `${item.name} (x${item.quantity}) - ₹${item.price}`).join('\n')}
+    \nTotal: ₹${order.total}
+    \nShipping:
+    ${order.shipping.recipient}, ${order.shipping.address}, ${order.shipping.city}, ${order.shipping.state}, ${order.shipping.country}, ${order.shipping.zip}
+    \nEmail: ${order.shipping.email}
+    \nPhone: +${order.shipping.countryCode}-${order.shipping.phone}
+  </pre></td>;
     const statusTd = document.createElement('td');
     statusTd.appendChild(statusSelect);
     const updateTd = document.createElement('td');
