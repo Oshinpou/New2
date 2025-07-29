@@ -1,122 +1,15 @@
-<!-- admin.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Admin Panel</title>
-  <style>
-    body { font-family: sans-serif; padding: 20px; }
-    input { margin: 5px; }
-    table, td, th { border: 1px solid black; border-collapse: collapse; padding: 5px; }
-  </style>
+  <title>Admin Panel - GunDB</title>
 </head>
 <body>
-  <h1>Admin Panel - All Accounts</h1>
-
-  <input type="text" id="searchUsername" placeholder="Search by Username" />
-  <input type="text" id="searchEmail" placeholder="Search by Email" />
-  <button onclick="searchAccounts()">Search</button>
-  <button onclick="loadAllAccounts()">Load All Accounts</button>
-
-  <table id="accountsTable">
-    <thead>
-      <tr>
-        <th>Username</th>
-        <th>Email</th>
-        <th>Phone</th>
-        <th>Password</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+  <h2>GunDB Admin Panel</h2>
+  <div id="users"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-  <script>
-    const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
-    const usersNode = gun.get('users');
-    const passwordsNode = gun.get('user_passwords');
-
-    function createRow(username, email, phone, password) {
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td>${username}</td>
-        <td><input value="${email}" id="email-${username}" /></td>
-        <td><input value="${phone}" id="phone-${username}" /></td>
-        <td><input value="${password}" id="pass-${username}" /></td>
-        <td>
-          <button onclick="updateUser('${username}')">Update</button>
-          <button onclick="deleteUser('${username}', '${email}', '${phone}')">Delete</button>
-        </td>`;
-      return row;
-    }
-
-    function loadAllAccounts() {
-      document.querySelector("#accountsTable tbody").innerHTML = "";
-      usersNode.map().once((data, username) => {
-        if (!data || username === '_') return;
-        const email = data.email || '';
-        const phone = data.phone || '';
-        passwordsNode.get(username).once(passData => {
-          const pass = passData?.password || '';
-          const row = createRow(username, email, phone, pass);
-          document.querySelector("#accountsTable tbody").appendChild(row);
-        });
-      });
-    }
-
-    function searchAccounts() {
-      const uname = document.getElementById("searchUsername").value.trim();
-      const emailSearch = document.getElementById("searchEmail").value.trim();
-      document.querySelector("#accountsTable tbody").innerHTML = "";
-
-      if (uname) {
-        usersNode.get(uname).once(data => {
-          if (!data) return;
-          passwordsNode.get(uname).once(passData => {
-            const row = createRow(uname, data.email || '', data.phone || '', passData?.password || '');
-            document.querySelector("#accountsTable tbody").appendChild(row);
-          });
-        });
-      } else if (emailSearch) {
-        gun.get('emails').get(emailSearch).once(ref => {
-          if (!ref || !ref.username) return;
-          usersNode.get(ref.username).once(data => {
-            passwordsNode.get(ref.username).once(passData => {
-              const row = createRow(ref.username, data.email || '', data.phone || '', passData?.password || '');
-              document.querySelector("#accountsTable tbody").appendChild(row);
-            });
-          });
-        });
-      }
-    }
-
-    function updateUser(username) {
-      const email = document.getElementById(`email-${username}`).value;
-      const phone = document.getElementById(`phone-${username}`).value;
-      const password = document.getElementById(`pass-${username}`).value;
-
-      usersNode.get(username).put({ email, phone });
-      passwordsNode.get(username).put({ password });
-      gun.get('emails').get(email).put({ username });
-      gun.get('phones').get(phone).put({ username });
-
-      alert(`User ${username} updated`);
-    }
-
-    function deleteUser(username, email, phone) {
-      usersNode.get(username).put(null);
-      passwordsNode.get(username).put(null);
-      gun.get('emails').get(email).put(null);
-      gun.get('phones').get(phone).put(null);
-
-      gun.get('~' + username).put(null); // Attempt SEA user root clear
-      alert(`User ${username} deleted`);
-      loadAllAccounts();
-    }
-
-    // Optional auto-load
-    loadAllAccounts();
-  </script>
+  <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
+  <script src="admin.js"></script>
 </body>
 </html>
