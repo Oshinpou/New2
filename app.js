@@ -86,7 +86,6 @@ window.logout = function () {
   showMessage("Logged out.");
 };
 
-// Delete Account
 window.deleteAccount = function () {
   const deleteUsername = document.getElementById('deleteUsername').value.trim();
   const deletePassword = document.getElementById('deletePassword').value.trim();
@@ -103,14 +102,20 @@ window.deleteAccount = function () {
   user.auth(deleteUsername, deletePassword, ack => {
     if (ack.err) return showMessage("Authentication failed: " + ack.err);
 
-    // Remove user-related data
-    gun.get('emails').get(deleteEmail).put(null);
-    gun.get('phones').get(fullPhone).put(null);
-    gun.get('users').get(deleteUsername).put(null);
-    gun.get('user_passwords').get(deleteUsername).put(null);
+    // Step 1: Remove user SEA data (user public key data)
+    user.delete(deleteUsername, deletePassword, function(delAck) {
+      if (delAck.err) return showMessage("Failed to delete SEA user account: " + delAck.err);
 
-    user.leave();
-    showMessage("Account deleted successfully.");
-    updateStatus();
+      // Step 2: Remove all user-related mappings and metadata
+      gun.get('emails').get(deleteEmail).put(null);
+      gun.get('phones').get(fullPhone).put(null);
+      gun.get('users').get(deleteUsername).put(null);
+      gun.get('user_passwords').get(deleteUsername).put(null);
+
+      user.leave();
+      updateStatus();
+      showMessage("Account and all user data deleted successfully.");
+    });
   });
 };
+  
