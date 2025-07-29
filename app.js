@@ -147,35 +147,36 @@ window.deleteAccount = function () {
     return showMessage("All fields required to delete account.");
   }
 
+  // Authenticate
   user.auth(deleteUsername, deletePassword, async ack => {
     if (ack.err) return showMessage("Authentication failed: " + ack.err);
 
     const pub = user.is.pub;
+    const userNode = gun.user(pub);
 
-    // Wipe all known paths the app wrote
+    // Step 1: Delete all known app data (references)
     gun.get('users').get(deleteUsername).put(null);
     gun.get('emails').get(deleteEmail).put(null);
     gun.get('phones').get(fullPhone).put(null);
     gun.get('user_passwords').get(deleteUsername).put(null);
 
-    // Wipe SEA root node fields
-    gun.user(pub).once(data => {
+    // Step 2: Deep delete SEA account-specific keys
+    userNode.once(data => {
       if (data) {
         Object.keys(data).forEach(key => {
           if (key !== '_') {
-            gun.user(pub).get(key).put(null);
+            userNode.get(key).put(null);
           }
         });
       }
 
-      // Finally, null the root pub node itself
-      gun.get(`~${pub}`).put(null);
+      // Step 3: Delete the root user SEA node (~pub)
+      gun.get('~' + pub).put(null);
 
+      // Step 4: Logout and notify
       user.leave();
       updateStatus();
-      showMessage("User account and data deleted (as fully as Gun allows).");
+      showMessage("✅ Account and all user data deleted successfully.");
     });
   });
 };
-
-  
