@@ -1,0 +1,208 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>imacx Shop - Shopping Page</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Cursive', sans-serif;
+      background-color: #ffffff;
+      color: goldenrod;
+    }
+    .navbar {
+      background: white;
+      padding: 1rem;
+      border-bottom: 1px solid goldenrod;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    .navbar img {
+      height: 40px;
+    }
+    .nav-links a {
+      margin-left: 1rem;
+      text-decoration: none;
+      color: goldenrod;
+    }
+    .search-sort-filter {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      padding: 1rem;
+    }
+    .search-sort-filter input,
+    .search-sort-filter select {
+      margin: 0.5rem;
+      padding: 0.5rem;
+      font-family: 'Cursive', sans-serif;
+    }
+    .products-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+      padding: 1rem;
+    }
+    .product-card {
+      border: 1px solid goldenrod;
+      border-radius: 10px;
+      padding: 0.5rem;
+      text-align: center;
+      font-size: 0.8rem;
+    }
+    .product-card img {
+      width: 100%;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 5px;
+    }
+    .quantity-controls {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 0.5rem 0;
+    }
+    .quantity-controls button {
+      padding: 0.3rem;
+      background: goldenrod;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    .quantity-controls input {
+      width: 30px;
+      text-align: center;
+      font-size: 0.8rem;
+    }
+    .add-to-basket-btn {
+      background-color: goldenrod;
+      color: white;
+      border: none;
+      padding: 0.3rem 0.5rem;
+      cursor: pointer;
+      font-family: 'Cursive', sans-serif;
+      font-size: 0.8rem;
+      border-radius: 4px;
+    }
+    footer {
+      padding: 1rem;
+      text-align: center;
+      border-top: 1px solid goldenrod;
+      margin-top: 2rem;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <img src="logo.png" alt="imacx logo">
+    <div class="nav-links">
+      <a href="basket.html">Basket</a>
+      <a href="account.html">Account</a>
+      <a href="track-order.html">Track Order</a>
+      <a href="#" onclick="toggleMenu()">Menu</a>
+    </div>
+  </nav>  <div class="menu-links" id="menu" style="display:none; flex-direction:column; gap:0.5rem; margin-top:1rem;">
+    <a href="about.html">About</a>
+    <a href="privacy.html">Privacy Policy</a>
+    <a href="terms.html">Terms & Conditions</a>
+    <a href="contact.html">Contact Us</a>
+    <a href="faq.html">FAQ</a>
+  </div>  <div class="search-sort-filter">
+    <input type="text" id="searchBar" placeholder="Search by product name...">
+    <select id="sort">
+      <option value="">Sort By</option>
+      <option value="low">Price: Low to High</option>
+      <option value="high">Price: High to Low</option>
+    </select>
+    <select id="filter-category">
+      <option value="">Filter by Category</option>
+      <option value="food">Food</option>
+    </select>
+    <select id="filter-subcategory">
+      <option value="">Filter by Subcategory</option>
+      <option value="chocolate">Chocolate</option>
+      <option value="breakfast">Breakfast Spread</option>
+    </select>
+  </div>  <div class="products-container" id="products">
+    <div class="product-card" data-name="Soleme Cheese" data-price="299" data-category="food" data-subcategory="breakfast">
+      <a href="product-soleme-cheese.html">
+        <img src="soleme-cheese.jpg" alt="Soleme Cheese">
+        <div>Soleme Cheese</div>
+        <div>₹299</div>
+      </a>
+      <div class="quantity-controls">
+        <button onclick="updateQty(this, -1)">-</button>
+        <input type="number" value="0" readonly>
+        <button onclick="updateQty(this, 1)">+</button>
+      </div>
+      <button class="add-to-basket-btn" onclick="addToBasket(this)">Add to Basket</button>
+    </div>
+  </div>  <footer>
+    &copy; 2025 imacx Shop. All rights reserved.
+  </footer>  <script>
+    function toggleMenu() {
+      const menu = document.getElementById('menu');
+      menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
+    }
+
+    function updateQty(btn, delta) {
+      const input = btn.parentNode.querySelector('input');
+      let value = parseInt(input.value) + delta;
+      if (value < 0) value = 0;
+      input.value = value;
+    }
+
+    function addToBasket(button) {
+      const card = button.closest('.product-card');
+      const name = card.getAttribute('data-name');
+      const price = parseFloat(card.getAttribute('data-price'));
+      const qty = parseInt(card.querySelector('input').value);
+      if (qty > 0) {
+        alert(`${qty} × ${name} added to basket. Total: ₹${qty * price}`);
+      } else {
+        alert('Please select quantity before adding to basket.');
+      }
+    }
+
+    document.getElementById('searchBar').addEventListener('input', function () {
+      const search = this.value.toLowerCase();
+      document.querySelectorAll('.product-card').forEach(card => {
+        const name = card.getAttribute('data-name').toLowerCase();
+        card.style.display = name.includes(search) ? 'block' : 'none';
+      });
+    });
+
+    document.getElementById('sort').addEventListener('change', function () {
+      const direction = this.value;
+      const container = document.getElementById('products');
+      const cards = Array.from(container.children);
+      cards.sort((a, b) => {
+        const priceA = parseFloat(a.getAttribute('data-price'));
+        const priceB = parseFloat(b.getAttribute('data-price'));
+        return direction === 'low' ? priceA - priceB : priceB - priceA;
+      });
+      cards.forEach(card => container.appendChild(card));
+    });
+
+    document.getElementById('filter-category').addEventListener('change', filterCards);
+    document.getElementById('filter-subcategory').addEventListener('change', filterCards);
+
+    function filterCards() {
+      const cat = document.getElementById('filter-category').value;
+      const sub = document.getElementById('filter-subcategory').value;
+      document.querySelectorAll('.product-card').forEach(card => {
+        const cardCat = card.getAttribute('data-category');
+        const cardSub = card.getAttribute('data-subcategory');
+        const catMatch = !cat || cardCat === cat;
+        const subMatch = !sub || cardSub === sub;
+        card.style.display = catMatch && subMatch ? 'block' : 'none';
+      });
+    }
+  </script></body>
+</html>
