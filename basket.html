@@ -161,35 +161,50 @@ function storeToAdmin() {
 
     
     function startPaymentFlow() {
-      if (!orderId || !newOrder.orderId) {
-        alert('Please save the order first.');
-        return;
+  if (!orderId || Object.keys(newOrder).length === 0) {
+    alert('Please save the order first.');
+    return;
+  }
+
+  const options = {
+    key: "rzp_live_ozWo08bXwqssx3",
+    amount: total * 100,
+    currency: "INR",
+    name: "imacx Shop",
+    description: `Order ID: ${orderId}`,
+    notes: {
+      orderId: orderId,
+      recipient: shipping.recipient,
+      email: shipping.email,
+      phone: shipping.countryCode + shipping.phone,
+      address: shipping.address,
+      total: total,
+      items: basket.map(i => `${i.name} x${i.quantity}`).join(', ')
+    },
+    handler: function (response) {
+      alert("Payment Successful. ID: " + response.razorpay_payment_id);
+      window.location.href = "thankyou.html";
+
+      // Optional: Update order status
+      const orders = JSON.parse(localStorage.getItem('orders')) || [];
+      const orderIndex = orders.findIndex(o => o.orderId === orderId);
+      if (orderIndex !== -1) {
+        orders[orderIndex].status = "Payment Done";
+        localStorage.setItem('orders', JSON.stringify(orders));
       }
-
-      const options = {
-        key: "rzp_live_ozWo08bXwqssx3",
-        amount: total * 100,
-        currency: "INR",
-        name: "imacx Shop",
-        description: "Order Payment",
-        handler: function (response) {
-          alert("Payment Successful. ID: " + response.razorpay_payment_id);
-          window.location.href = "thankyou.html";
-        },
-        prefill: {
-          name: shipping.recipient,
-          email: shipping.email,
-          contact: shipping.countryCode + shipping.phone
-        },
-        theme: {
-          color: "#bfa046"
-        }
-      };
-
-      const rzp = new Razorpay(options);
-      rzp.open();
+    },
+    prefill: {
+      name: shipping.recipient,
+      email: shipping.email,
+      contact: shipping.countryCode + shipping.phone
+    },
+    theme: {
+      color: "#bfa046"
     }
+  };
 
-    renderBasket();
+  const rzp = new Razorpay(options);
+  rzp.open();
+        }
   </script>  <script src="https://checkout.razorpay.com/v1/checkout.js"></script></body>
 </html>
