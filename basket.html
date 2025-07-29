@@ -114,29 +114,33 @@
     }
 
     function collectOrderDetails() {
-      shipping = {
-        recipient: document.getElementById('recipient').value,
-        email: document.getElementById('email').value,
-        countryCode: document.getElementById('countryCode').value,
-        phone: document.getElementById('phone').value,
-        address: document.getElementById('address').value,
-        area: document.getElementById('area').value,
-        city: document.getElementById('city').value,
-        state: document.getElementById('state').value,
-        country: document.getElementById('country').value,
-        zip: document.getElementById('zip').value
-      };
+  shipping = {
+    recipient: document.getElementById('recipient').value,
+    email: document.getElementById('email').value,
+    countryCode: document.getElementById('countryCode').value,
+    phone: document.getElementById('phone').value,
+    address: document.getElementById('address').value,
+    area: document.getElementById('area').value,
+    city: document.getElementById('city').value,
+    state: document.getElementById('state').value,
+    country: document.getElementById('country').value,
+    zip: document.getElementById('zip').value
+  };
 
-      document.getElementById('orderOutput').textContent = JSON.stringify({ shipping, basket }, null, 2);
-    }
+  document.getElementById('orderOutput').textContent = JSON.stringify({
+    shipping,
+    basket,
+    total
+  }, null, 2);
+}
 
-    function generateOrderId() {
+function generateOrderId() {
   orderId = 'IMX' + Math.random().toString(36).substr(2, 9).toUpperCase();
-  
-  const existingOutput = document.getElementById('orderOutput').textContent;
-  document.getElementById('orderOutput').textContent = `${existingOutput}\nOrder ID: ${orderId}`;
-    }
+  document.getElementById('orderOutput').textContent += `\nOrder ID: ${orderId}`;
+}
+    
 
+    
 
 function storeToAdmin() {
   if (!orderId || Object.keys(shipping).length === 0) {
