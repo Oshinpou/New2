@@ -76,8 +76,57 @@ window.login = function () {
     if (ack.err) return showMessage("Login failed: " + ack.err);
     showMessage("Welcome, " + username);
     updateStatus();
+ 
+  gun.user().get('profile').put({
+  name: "John Doe",
+  shippingAddress: "123 Main St, NY",
+  email: "john@example.com"
+});
+
+gun.user().get('favorites').set({ itemId: 'product123' });
   });
 };
+
+function saveAccountData() {
+  if (!user.is) return showMessage("Login first");
+
+  const name = prompt("Enter name:");
+  const address = prompt("Enter shipping address:");
+  const favorite = prompt("Enter favorite item ID:");
+
+  user.get('profile').put({ name, address });
+  user.get('favorites').set({ itemId: favorite });
+
+  showMessage("Account data saved.");
+}
+
+function loadAccountData() {
+  if (!user.is) return showMessage("Login first");
+
+  user.get('profile').once(profile => {
+    if (profile) {
+      console.log("Profile:", profile);
+      showMessage(`Name: ${profile.name}, Address: ${profile.address}`);
+    }
+  });
+
+  user.get('favorites').map().once(fav => {
+    if (fav) {
+      console.log("Favorite item:", fav.itemId);
+    }
+  });
+}
+
+function deleteAccountData() {
+  if (!user.is) return showMessage("Login first");
+
+  user.get('profile').put(null);  // deletes profile
+  user.get('favorites').map().once((fav, key) => {
+    user.get('favorites').get(key).put(null); // deletes each favorite
+  });
+
+  showMessage("All account data deleted.");
+}
 
 // Logout
 window.logout = function () {
