@@ -131,31 +131,35 @@
     }
 
     function generateOrderId() {
-      orderId = 'IMX' + Math.random().toString(36).substr(2, 9).toUpperCase();
-      document.getElementById('orderOutput').textContent += `\nOrder ID: ${orderId}`;
+  orderId = 'IMX' + Math.random().toString(36).substr(2, 9).toUpperCase();
+  
+  const existingOutput = document.getElementById('orderOutput').textContent;
+  document.getElementById('orderOutput').textContent = `${existingOutput}\nOrder ID: ${orderId}`;
     }
 
-    function storeToAdmin() {
-      if (!orderId || Object.keys(shipping).length === 0) {
-        alert('Please collect order info and generate Order ID first.');
-        return;
-      }
 
-      newOrder = {
-        orderId,
-        basket,
-        shipping,
-        total,
-        status: 'Order Created'
-      };
+function storeToAdmin() {
+  if (!orderId || Object.keys(shipping).length === 0) {
+    alert('Please collect order info and generate Order ID first.');
+    return;
+  }
 
-      const orders = JSON.parse(localStorage.getItem('orders')) || [];
-      orders.push(newOrder);
-      localStorage.setItem('orders', JSON.stringify(orders));
-      localStorage.setItem('orderData', JSON.stringify(newOrder));
-      alert('Order saved to admin.');
-    }
+  newOrder = {
+    orderId,
+    basket,
+    shipping,
+    total,
+    status: 'Order Created'
+  };
 
+  const orders = JSON.parse(localStorage.getItem('orders')) || [];
+  orders.push(newOrder);
+  localStorage.setItem('orders', JSON.stringify(orders));
+  localStorage.setItem('orderData', JSON.stringify(newOrder));
+  alert(`Order saved: ${orderId}`);
+}
+
+    
     function startPaymentFlow() {
       if (!orderId || !newOrder.orderId) {
         alert('Please save the order first.');
