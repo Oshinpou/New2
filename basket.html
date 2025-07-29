@@ -1,0 +1,108 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Basket - imacx Shop</title>
+  <style>
+    body {
+      font-family: 'Cursive', sans-serif;
+      background-color: #fff;
+      color: goldenrod;
+      padding: 1rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 2rem;
+    }
+    th, td {
+      border: 1px solid goldenrod;
+      padding: 0.5rem;
+      text-align: center;
+    }
+    input, select, textarea, button {
+      font-family: 'Cursive', sans-serif;
+      padding: 0.5rem;
+      margin: 0.5rem 0;
+      border: 1px solid goldenrod;
+    }
+    button {
+      background: goldenrod;
+      color: white;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+    h2 {
+      color: goldenrod;
+    }
+  </style>
+</head>
+<body>
+  <h2>🛒 Basket</h2>
+  <div id="basket-table"></div>
+  <h2>Shipping Details</h2>
+  <form id="shippingForm">
+    <label>Recipient Name: <input type="text" id="recipient" required></label><br>
+    <label>Email: <input type="email" id="email" required></label><br>
+    <label>Country Code: <input type="text" id="countryCode" required></label>
+    <label>Phone: <input type="text" id="phone" required></label><br>
+    <label>Address: <textarea id="address" required></textarea></label><br>
+    <label>Area: <input type="text" id="area" required></label>
+    <label>City: <input type="text" id="city" required></label><br>
+    <label>State: <input type="text" id="state" required></label>
+    <label>Country: <input type="text" id="country" required></label>
+    <label>Zip Code: <input type="text" id="zip" required></label><br>
+    <button type="button" onclick="printAndProceed()">🖨️ Print & Proceed</button>
+  </form>
+  <script>
+    const basket = JSON.parse(localStorage.getItem('basket')) || [];
+    let orderId = 'IMX' + Math.random().toString(36).substr(2, 9).toUpperCase();function renderBasket() {
+  if (basket.length === 0) {
+    document.getElementById('basket-table').innerHTML = '<p>No items in basket.</p>';
+    return;
+  }
+  let total = 0;
+  let html = `<table><tr><th>Image</th><th>Name</th><th>Qty</th><th>Price</th><th>Total</th><th>Category</th><th>Subcategory</th></tr>`;
+  basket.forEach(item => {
+    const itemTotal = item.price * item.quantity;
+    total += itemTotal;
+    html += `<tr>
+      <td><img src="${item.image}" width="50"></td>
+      <td>${item.name}</td>
+      <td>${item.quantity}</td>
+      <td>₹${item.price}</td>
+      <td>₹${itemTotal}</td>
+      <td>${item.category}</td>
+      <td>${item.subcategory}</td>
+    </tr>`;
+  });
+  html += `<tr><td colspan="4"><strong>Grand Total</strong></td><td colspan="3"><strong>₹${total}</strong></td></tr></table>`;
+  document.getElementById('basket-table').innerHTML = html;
+}
+
+function printAndProceed() {
+  const shipping = {
+    orderId,
+    recipient: document.getElementById('recipient').value,
+    email: document.getElementById('email').value,
+    countryCode: document.getElementById('countryCode').value,
+    phone: document.getElementById('phone').value,
+    address: document.getElementById('address').value,
+    area: document.getElementById('area').value,
+    city: document.getElementById('city').value,
+    state: document.getElementById('state').value,
+    country: document.getElementById('country').value,
+    zip: document.getElementById('zip').value
+  };
+  localStorage.setItem('orderData', JSON.stringify({ orderId, basket, shipping, status: 'Order Created' }));
+  window.print();
+  setTimeout(() => {
+    window.location.href = 'payment.html';
+  }, 2000);
+}
+
+renderBasket();
+
+  </script>
+</body>
+</html>
