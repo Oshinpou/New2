@@ -58,14 +58,19 @@
       background: #e74c3c;
       color: white;
     }
+    #noOrders {
+      text-align: center;
+      color: #888;
+      margin-top: 40px;
+    }
   </style>
 </head>
 <body>
 
   <h1>🌍 imacx Admin - Orders Worldwide</h1>
   <input type="text" id="searchInput" placeholder="🔍 Search Order ID or Email" oninput="filterOrders()" />
-
   <div id="ordersContainer"></div>
+  <p id="noOrders">No orders yet.</p>
 
   <script>
     const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
@@ -86,6 +91,8 @@
 
     function createOrderBlock(order) {
       if (!order || !order.orderId || !order.shipping || !order.basket) return;
+
+      document.getElementById('noOrders').style.display = 'none';
 
       const block = document.createElement('div');
       block.className = 'order-block';
@@ -136,9 +143,12 @@
     }
 
     function loadOrders() {
-      globalOrders.map().on(order => {
-        const exists = allBlocks.find(b => b.getAttribute('data-order-id') === (order.orderId || '').toLowerCase());
-        if (!exists) createOrderBlock(order);
+      globalOrders.map().on((_, key) => {
+        globalOrders.get(key).once(order => {
+          if (!order || !order.orderId) return;
+          const exists = allBlocks.find(b => b.getAttribute('data-order-id') === order.orderId.toLowerCase());
+          if (!exists) createOrderBlock(order);
+        });
       });
     }
 
@@ -155,6 +165,5 @@
 
     window.onload = loadOrders;
   </script>
-
 </body>
 </html>
