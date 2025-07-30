@@ -108,6 +108,23 @@
     document.getElementById('basket-table').innerHTML = html;
   }
 
+  
+function addToBasket(product) {
+  const basket = JSON.parse(localStorage.getItem('basket')) || [];
+
+  // Check if item already in basket
+  const existing = basket.find(item => item.name === product.name);
+  if (existing) {
+    existing.quantity += product.quantity;
+  } else {
+    basket.push(product);
+  }
+
+  localStorage.setItem('basket', JSON.stringify(basket));
+  alert("✅ Added to basket!");
+}
+
+  
   // Delete item from basket
   function deleteItem(index) {
     if (confirm("Remove this item from basket?")) {
