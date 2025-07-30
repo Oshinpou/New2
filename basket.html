@@ -166,31 +166,32 @@
 
   total = basket.reduce((acc, item) => acc + item.quantity * item.price, 0);
   newOrder = {
-    orderId,
-    basket,
-    shipping,
+    basket: JSON.parse(JSON.stringify(basket)), // deep copy to avoid reactive issues
+    shipping: JSON.parse(JSON.stringify(shipping)),
     total,
     status: "Order Created",
     timestamp: Date.now()
   };
 
-  globalOrders.get(orderId).put(newOrder, ack => {
-    if (ack.err) {
-      console.error("❌ Failed to save order:", ack.err);
-      alert("❌ Order not saved!");
-    } else {
-      alert("✅ Order saved to admin database.");
+  // ✅ Store orderId explicitly on the node
+  const orderRef = globalOrders.get(orderId);
+  orderRef.get('orderId').put(orderId); // 🔐 This is CRUCIAL
+  orderRef.get('basket').put(newOrder.basket);
+  orderRef.get('shipping').put(newOrder.shipping);
+  orderRef.get('total').put(newOrder.total);
+  orderRef.get('status').put(newOrder.status);
+  orderRef.get('timestamp').put(newOrder.timestamp);
 
-      // Confirm saved
-      globalOrders.get(orderId).once(data => {
-        console.log("✅ Verified saved order:", data);
+  alert("✅ Order saved to admin database.");
 
-        // Also show it as output JSON
-        document.getElementById('orderOutput').textContent = JSON.stringify(data, null, 2);
-      });
-    }
+  // Confirm and show output
+  orderRef.once(data => {
+    console.log("✅ Verified saved order:", data);
+    document.getElementById('orderOutput').textContent = JSON.stringify(data, null, 2);
   });
 }
+
+  
 
       
  function startPaymentFlow() {
