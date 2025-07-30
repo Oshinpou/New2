@@ -157,7 +157,8 @@
       console.log("Generated Order ID:", orderId);
     }
 
-  function storeToAdmin() {
+  
+function storeToAdmin() {
   const basket = getBasket();
   if (!orderId || Object.keys(shipping).length === 0 || basket.length === 0) {
     alert("❗ Please collect shipping info, generate order ID, and have items in basket.");
@@ -165,9 +166,8 @@
   }
 
   total = basket.reduce((acc, item) => acc + item.quantity * item.price, 0);
-
   newOrder = {
-    orderId, // 👈 Must include this!
+    orderId,
     basket: JSON.parse(JSON.stringify(basket)),
     shipping: JSON.parse(JSON.stringify(shipping)),
     total,
@@ -175,19 +175,14 @@
     timestamp: Date.now()
   };
 
-  // ✅ Save full object instead of separate `.get().put()`
-  globalOrders.get(orderId).put(newOrder);
+  // ✅ Store order in 2 places:
+  globalOrders.get(orderId).put(newOrder); // for order details
+  globalOrders.set(newOrder);              // for indexing visibility via .map()
 
   alert("✅ Order saved to admin database.");
 
-  // Confirm and show output
-  globalOrders.get(orderId).once(data => {
-    console.log("✅ Verified saved order:", data);
-    document.getElementById('orderOutput').textContent = JSON.stringify(data, null, 2);
-  });
+  document.getElementById('orderOutput').textContent = JSON.stringify(newOrder, null, 2);
 }
-  
-
       
  function startPaymentFlow() {
       const basket = getBasket();
