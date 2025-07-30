@@ -117,8 +117,7 @@
     }
   }
 
-  // Collect order shipping details
-  function collectOrderDetails() {
+   function collectOrderDetails() {
     shipping = {
       recipient: document.getElementById('recipient').value,
       email: document.getElementById('email').value,
@@ -131,6 +130,9 @@
       country: document.getElementById('country').value,
       zip: document.getElementById('zip').value
     };
+  }
+
+    
 
     document.getElementById('orderOutput').textContent = JSON.stringify({
       shipping,
@@ -139,30 +141,39 @@
     }, null, 2);
   }
 
-  // Generate unique order ID
-  function generateOrderId() {
+   function generateOrderId() {
     orderId = 'IMX' + Math.random().toString(36).substr(2, 9).toUpperCase();
-    document.getElementById('orderOutput').textContent += `\nOrder ID: ${orderId}`;
+    console.log("Generated Order ID:", orderId);
   }
 
-  // Save order to admin (GunDB)
-  function storeToAdmin() {
-    if (!orderId || Object.keys(shipping).length === 0) {
-      alert('Please collect order info and generate Order ID first.');
+
+    function storeToAdmin() {
+    if (!orderId || Object.keys(shipping).length === 0 || basket.length === 0) {
+      alert("❗ Please collect shipping info, generate order ID, and have items in basket.");
       return;
     }
+
+    total = basket.reduce((acc, item) => acc + item.quantity * item.price, 0);
 
     newOrder = {
       orderId,
       basket,
       shipping,
       total,
-      status: 'Order Created',
+      status: "Order Created",
       timestamp: Date.now()
     };
 
-    globalOrders.get(orderId).put(newOrder); // Save to GunDB
-    alert(`🌍 Order saved globally: ${orderId}`);
+    console.log("Saving order to GunDB:", newOrder);
+
+    globalOrders.get(orderId).put(newOrder, ack => {
+      if (ack.err) {
+        console.error("❌ Failed to save order:", ack.err);
+        alert("Order not saved!");
+      } else {
+        alert("✅ Order saved to admin database.");
+      }
+    });
   }
 
   // Start Razorpay payment
