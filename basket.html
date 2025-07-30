@@ -157,7 +157,7 @@
       console.log("Generated Order ID:", orderId);
     }
 
-    function storeToAdmin() {
+  function storeToAdmin() {
   const basket = getBasket();
   if (!orderId || Object.keys(shipping).length === 0 || basket.length === 0) {
     alert("❗ Please collect shipping info, generate order ID, and have items in basket.");
@@ -165,32 +165,27 @@
   }
 
   total = basket.reduce((acc, item) => acc + item.quantity * item.price, 0);
+
   newOrder = {
-    basket: JSON.parse(JSON.stringify(basket)), // deep copy to avoid reactive issues
+    orderId, // 👈 Must include this!
+    basket: JSON.parse(JSON.stringify(basket)),
     shipping: JSON.parse(JSON.stringify(shipping)),
     total,
     status: "Order Created",
     timestamp: Date.now()
   };
 
-  // ✅ Store orderId explicitly on the node
-  const orderRef = globalOrders.get(orderId);
-  orderRef.get('orderId').put(orderId); // 🔐 This is CRUCIAL
-  orderRef.get('basket').put(newOrder.basket);
-  orderRef.get('shipping').put(newOrder.shipping);
-  orderRef.get('total').put(newOrder.total);
-  orderRef.get('status').put(newOrder.status);
-  orderRef.get('timestamp').put(newOrder.timestamp);
+  // ✅ Save full object instead of separate `.get().put()`
+  globalOrders.get(orderId).put(newOrder);
 
   alert("✅ Order saved to admin database.");
 
   // Confirm and show output
-  orderRef.once(data => {
+  globalOrders.get(orderId).once(data => {
     console.log("✅ Verified saved order:", data);
     document.getElementById('orderOutput').textContent = JSON.stringify(data, null, 2);
   });
 }
-
   
 
       
