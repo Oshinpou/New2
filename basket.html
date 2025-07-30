@@ -134,29 +134,29 @@ function addToBasket(product) {
     }
   }
 
-   function collectOrderDetails() {
-    shipping = {
-      recipient: document.getElementById('recipient').value,
-      email: document.getElementById('email').value,
-      countryCode: document.getElementById('countryCode').value,
-      phone: document.getElementById('phone').value,
-      address: document.getElementById('address').value,
-      area: document.getElementById('area').value,
-      city: document.getElementById('city').value,
-      state: document.getElementById('state').value,
-      country: document.getElementById('country').value,
-      zip: document.getElementById('zip').value
-    };
-  }
 
-    
+function collectOrderDetails() {
+  shipping = {
+    recipient: document.getElementById('recipient').value,
+    email: document.getElementById('email').value,
+    countryCode: document.getElementById('countryCode').value,
+    phone: document.getElementById('phone').value,
+    address: document.getElementById('address').value,
+    area: document.getElementById('area').value,
+    city: document.getElementById('city').value,
+    state: document.getElementById('state').value,
+    country: document.getElementById('country').value,
+    zip: document.getElementById('zip').value
+  };
 
-    document.getElementById('orderOutput').textContent = JSON.stringify({
-      shipping,
-      basket,
-      total
-    }, null, 2);
-  }
+  document.getElementById('orderOutput').textContent = JSON.stringify({
+    shipping,
+    basket,
+    total
+  }, null, 2);
+}
+  
+     
 
    function generateOrderId() {
     orderId = 'IMX' + Math.random().toString(36).substr(2, 9).toUpperCase();
@@ -193,6 +193,10 @@ function addToBasket(product) {
     });
   }
 
+  globalOrders.get(orderId).once(data => {
+  console.log("✅ Verified saved order:", data);
+});
+
   // Start Razorpay payment
   function startPaymentFlow() {
     if (!orderId || Object.keys(newOrder).length === 0) {
@@ -205,7 +209,7 @@ function addToBasket(product) {
 
     const options = {
       key: "rzp_live_ozWo08bXwqssx3", // Replace with your real Razorpay key
-      amount: total * 100, // in paise
+      amount: Math.round(total * 100), // in paise
       currency: "INR",
       name: "imacx Shop",
       description: `Order ID: ${orderId}`,
@@ -247,6 +251,8 @@ function addToBasket(product) {
     rzp.open();
   }
 
+  localStorage.removeItem('basket');
+  
   renderBasket();
 
     
