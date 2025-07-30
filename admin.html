@@ -188,7 +188,11 @@ ${order.shipping.address}, ${order.shipping.area}, ${order.shipping.city}, ${ord
     });
   }
 
-  window.onload = loadOrders;
+ globalOrders.get(orderId).once(data => {
+  console.log("✅ Verified saved order:", data);
+});
+  
+                           window.onload = loadOrders;
 </script>
 
 </body>
