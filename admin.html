@@ -1,53 +1,50 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Admin - imacx Orders</title>
+  <meta charset="UTF-8">
+  <title>Admin - imacx Orders (Global)</title>
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: #f4f4f4;
+      font-family: monospace;
+      background: #fefefe;
+      color: #222;
       padding: 20px;
     }
     h1 {
       text-align: center;
-      color: #333;
+      font-family: sans-serif;
     }
     #searchInput {
       display: block;
-      margin: 10px auto;
+      margin: 0 auto 20px;
       padding: 10px;
-      width: 320px;
-      border-radius: 4px;
+      width: 300px;
+      border: 1px solid #aaa;
+      border-radius: 5px;
+    }
+    .order-block {
       border: 1px solid #ccc;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 5px;
+      background: #fffbe6;
     }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: #fff;
-      margin-top: 20px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-    th, td {
-      border: 1px solid #ddd;
-      padding: 12px;
-      text-align: left;
-      vertical-align: top;
-    }
-    th {
-      background-color: #eee;
+    .order-block.highlight {
+      border-color: goldenrod;
+      background: #ffffd7;
     }
     pre {
       white-space: pre-wrap;
       word-break: break-word;
-      font-size: 13px;
-      line-height: 1.4;
+      font-size: 14px;
     }
     select, button {
+      margin-top: 10px;
       padding: 6px 10px;
       border-radius: 4px;
-      border: 1px solid #ccc;
+      border: 1px solid #bbb;
+      font-family: sans-serif;
     }
     .btn {
       cursor: pointer;
@@ -61,33 +58,20 @@
       background: #e74c3c;
       color: white;
     }
-    .highlight {
-      background: #ffffe0;
-    }
   </style>
 </head>
 <body>
-  <h1>Admin - imacx Order Management</h1>
 
+  <h1>🌍 imacx Admin - Orders Worldwide</h1>
   <input type="text" id="searchInput" placeholder="🔍 Search Order ID or Email" oninput="filterOrders()" />
 
-  <table id="orderTable">
-    <thead>
-      <tr>
-        <th>Order ID</th>
-        <th>Details</th>
-        <th>Status</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+  <div id="ordersContainer"></div>
 
   <script>
     const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
     const globalOrders = gun.get('imacx_orders');
-    const tableBody = document.querySelector('#orderTable tbody');
-    const allRows = [];
+    const ordersContainer = document.getElementById('ordersContainer');
+    const allBlocks = [];
 
     const STATUS_LIST = [
       'Order Created',
@@ -100,46 +84,35 @@
       'Delivered'
     ];
 
-    function createRow(order) {
+    function createOrderBlock(order) {
       if (!order || !order.orderId || !order.shipping || !order.basket) return;
 
-      const tr = document.createElement('tr');
-      tr.setAttribute('data-order-id', order.orderId.toLowerCase());
-      tr.setAttribute('data-email', order.shipping.email.toLowerCase());
+      const block = document.createElement('div');
+      block.className = 'order-block';
+      block.setAttribute('data-order-id', order.orderId.toLowerCase());
+      block.setAttribute('data-email', order.shipping.email.toLowerCase());
 
-      const tdId = document.createElement('td');
-      tdId.textContent = order.orderId;
+      const orderPre = document.createElement('pre');
+      orderPre.textContent = JSON.stringify(order, null, 2);
 
-      const tdDetails = document.createElement('td');
-      tdDetails.innerHTML = `<pre>
-🛍️ Products:
-${order.basket.map(i => `- ${i.name} x${i.quantity} (₹${i.price})`).join('\n')}
-
-💰 Total: ₹${order.total}
-👤 ${order.shipping.recipient}
-📧 ${order.shipping.email}
-📞 +${order.shipping.countryCode}-${order.shipping.phone}
-📦 ${order.shipping.address}, ${order.shipping.area}, ${order.shipping.city}, ${order.shipping.state}, ${order.shipping.country} - ${order.shipping.zip}
-</pre>`;
-
-      const tdStatus = document.createElement('td');
+      const statusLabel = document.createElement('label');
+      statusLabel.textContent = "Update Status: ";
       const statusSelect = document.createElement('select');
+
       STATUS_LIST.forEach(status => {
         const option = document.createElement('option');
         option.value = status;
-        option.text = status;
+        option.textContent = status;
         if (status === order.status) option.selected = true;
         statusSelect.appendChild(option);
       });
-      tdStatus.appendChild(statusSelect);
 
-      const tdActions = document.createElement('td');
       const updateBtn = document.createElement('button');
       updateBtn.className = 'btn update-btn';
       updateBtn.textContent = 'Update';
       updateBtn.onclick = () => {
         globalOrders.get(order.orderId).get('status').put(statusSelect.value);
-        alert("✅ Status updated!");
+        alert("✅ Order status updated");
       };
 
       const deleteBtn = document.createElement('button');
@@ -148,48 +121,40 @@ ${order.basket.map(i => `- ${i.name} x${i.quantity} (₹${i.price})`).join('\n')
       deleteBtn.onclick = () => {
         if (confirm("❌ Delete this order permanently?")) {
           globalOrders.get(order.orderId).put(null);
-          tr.remove();
+          block.remove();
         }
       };
 
-      tdActions.appendChild(updateBtn);
-      tdActions.appendChild(deleteBtn);
+      block.appendChild(orderPre);
+      block.appendChild(statusLabel);
+      block.appendChild(statusSelect);
+      block.appendChild(updateBtn);
+      block.appendChild(deleteBtn);
 
-      tr.appendChild(tdId);
-      tr.appendChild(tdDetails);
-      tr.appendChild(tdStatus);
-      tr.appendChild(tdActions);
-
-      tableBody.appendChild(tr);
-      allRows.push(tr);
+      ordersContainer.appendChild(block);
+      allBlocks.push(block);
     }
 
-    // Load all orders with live sync
     function loadOrders() {
       globalOrders.map().on(order => {
-        if (!order || !order.orderId || !order.shipping || !order.basket) return;
-
-        const exists = allRows.find(r => r.getAttribute('data-order-id') === order.orderId.toLowerCase());
-        if (exists) return; // Avoid duplicates
-
-        createRow(order);
+        const exists = allBlocks.find(b => b.getAttribute('data-order-id') === (order.orderId || '').toLowerCase());
+        if (!exists) createOrderBlock(order);
       });
     }
 
-    // Search filter
     function filterOrders() {
       const query = document.getElementById('searchInput').value.trim().toLowerCase();
-      allRows.forEach(row => {
-        const id = row.getAttribute('data-order-id');
-        const email = row.getAttribute('data-email');
-        const show = id.includes(query) || email.includes(query);
-        row.style.display = show ? '' : 'none';
-        row.classList.toggle('highlight', show && query);
+      allBlocks.forEach(block => {
+        const id = block.getAttribute('data-order-id');
+        const email = block.getAttribute('data-email');
+        const match = id.includes(query) || email.includes(query);
+        block.style.display = match ? '' : 'none';
+        block.classList.toggle('highlight', match && query);
       });
     }
 
-    // Start loading
     window.onload = loadOrders;
   </script>
+
 </body>
 </html>
