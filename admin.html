@@ -7,53 +7,60 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f9f9f9;
+      background: #f4f4f4;
       padding: 20px;
     }
     h1 {
       text-align: center;
-      color: #333;
+      color: #444;
     }
-    input[type="text"] {
+    #searchInput {
       width: 300px;
-      padding: 10px;
       margin: 20px auto;
       display: block;
+      padding: 10px;
+      border-radius: 4px;
       border: 1px solid #ccc;
-      border-radius: 5px;
     }
     table {
       width: 100%;
       border-collapse: collapse;
-      background: white;
       margin-top: 10px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      background: #fff;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
     th, td {
-      border: 1px solid #ddd;
       padding: 12px;
-      text-align: left;
+      border: 1px solid #ddd;
       vertical-align: top;
+      text-align: left;
     }
     th {
       background-color: #eee;
     }
-    select, button {
-      padding: 6px 10px;
+    pre {
+      font-size: 13px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    select {
+      padding: 5px;
+    }
+    .btn {
+      padding: 6px 12px;
       border: none;
-      border-radius: 3px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-left: 5px;
     }
     .update-btn {
-      background: #3498db;
-      color: white;
-      cursor: pointer;
-      margin-left: 5px;
+      background-color: #3498db;
+      color: #fff;
     }
     .delete-btn {
-      background: #e74c3c;
-      color: white;
-      cursor: pointer;
-      margin-left: 5px;
+      background-color: #e74c3c;
+      color: #fff;
     }
     .highlight {
       background-color: #fffae6;
@@ -62,127 +69,127 @@
 </head>
 <body>
 
-  <h1>Admin - Order Management</h1>
-  <input type="text" id="searchInput" placeholder="Search by Order ID or Email..." oninput="filterOrders()">
+<h1>Admin - Order Management</h1>
+<input type="text" id="searchInput" placeholder="Search by Order ID or Email..." oninput="filterOrders()">
 
-  <table id="orderTable">
-    <thead>
-      <tr>
-        <th>Order ID</th>
-        <th>Details</th>
-        <th>Status</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+<table id="orderTable">
+  <thead>
+    <tr>
+      <th>Order ID</th>
+      <th>Details</th>
+      <th>Status</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
 
-  <script>
-    const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
-    const globalOrders = gun.get('imacx_orders');
-    const tableBody = document.querySelector('#orderTable tbody');
-    const searchInput = document.getElementById('searchInput');
-    const allRows = [];
+<script>
+  const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
+  const globalOrders = gun.get('imacx_orders');
+  const tableBody = document.querySelector('#orderTable tbody');
+  const searchInput = document.getElementById('searchInput');
+  const allRows = [];
 
-    const STATUS_LIST = [
-      'Order Created',
-      'Payment Done',
-      'Order Cancelled',
-      'Order Processing',
-      'Out for Shipping',
-      'Shipped',
-      'Out for Delivery',
-      'Delivered'
-    ];
+  const STATUS_LIST = [
+    'Order Created',
+    'Payment Done',
+    'Order Cancelled',
+    'Order Processing',
+    'Out for Shipping',
+    'Shipped',
+    'Out for Delivery',
+    'Delivered'
+  ];
 
-    function createRow(order) {
-      const tr = document.createElement('tr');
-      tr.setAttribute('data-order-id', order.orderId);
-      tr.setAttribute('data-email', order.shipping.email.toLowerCase());
+  // Create a row for an order
+  function createRow(order) {
+    const tr = document.createElement('tr');
+    tr.setAttribute('data-order-id', order.orderId);
+    tr.setAttribute('data-email', order.shipping?.email?.toLowerCase() || '');
 
-      const tdId = document.createElement('td');
-      tdId.textContent = order.orderId;
+    const tdId = document.createElement('td');
+    tdId.textContent = order.orderId;
 
-      const tdDetails = document.createElement('td');
-      tdDetails.innerHTML = `
-<pre>
-Items:
-${order.basket.map(i => `- ${i.name} (x${i.quantity}) - ₹${i.price}`).join('\n')}
+    const tdDetails = document.createElement('td');
+    tdDetails.innerHTML = `<pre>
+Products:
+${order.basket.map(i => `- ${i.name} (x${i.quantity}) ₹${i.price}`).join('\n')}
+
 Total: ₹${order.total}
-Shipping:
-${order.shipping.recipient}
-${order.shipping.address}, ${order.shipping.area}
-${order.shipping.city}, ${order.shipping.state}, ${order.shipping.country} - ${order.shipping.zip}
+Recipient: ${order.shipping.recipient}
 Phone: +${order.shipping.countryCode}-${order.shipping.phone}
 Email: ${order.shipping.email}
+Address:
+${order.shipping.address}, ${order.shipping.area}, ${order.shipping.city}, ${order.shipping.state}, ${order.shipping.country}, ${order.shipping.zip}
 </pre>`;
 
-      const tdStatus = document.createElement('td');
-      const statusSelect = document.createElement('select');
-      STATUS_LIST.forEach(status => {
-        const option = document.createElement('option');
-        option.value = status;
-        option.text = status;
-        if (status === order.status) option.selected = true;
-        statusSelect.appendChild(option);
-      });
-      tdStatus.appendChild(statusSelect);
+    const tdStatus = document.createElement('td');
+    const statusSelect = document.createElement('select');
+    STATUS_LIST.forEach(status => {
+      const option = document.createElement('option');
+      option.value = status;
+      option.text = status;
+      if (status === order.status) option.selected = true;
+      statusSelect.appendChild(option);
+    });
+    tdStatus.appendChild(statusSelect);
 
-      const tdActions = document.createElement('td');
-      const updateBtn = document.createElement('button');
-      updateBtn.textContent = 'Update';
-      updateBtn.className = 'update-btn';
-      updateBtn.onclick = () => {
-        globalOrders.get(order.orderId).get('status').put(statusSelect.value);
-        alert('✅ Order status updated!');
-      };
+    const tdActions = document.createElement('td');
+    const updateBtn = document.createElement('button');
+    updateBtn.textContent = 'Update';
+    updateBtn.className = 'btn update-btn';
+    updateBtn.onclick = () => {
+      globalOrders.get(order.orderId).get('status').put(statusSelect.value);
+      alert("✅ Order status updated");
+    };
 
-      const deleteBtn = document.createElement('button');
-      deleteBtn.textContent = 'Delete';
-      deleteBtn.className = 'delete-btn';
-      deleteBtn.onclick = () => {
-        if (confirm("❌ Delete this order?")) {
-          globalOrders.get(order.orderId).put(null);
-          tr.remove();
-        }
-      };
+    const deleteBtn = document.createElement('button');
+    deleteBtn.textContent = 'Delete';
+    deleteBtn.className = 'btn delete-btn';
+    deleteBtn.onclick = () => {
+      if (confirm("❌ Delete this order permanently?")) {
+        globalOrders.get(order.orderId).put(null);
+        tr.remove();
+        alert("Order deleted.");
+      }
+    };
 
-      tdActions.appendChild(updateBtn);
-      tdActions.appendChild(deleteBtn);
+    tdActions.appendChild(updateBtn);
+    tdActions.appendChild(deleteBtn);
 
-      tr.appendChild(tdId);
-      tr.appendChild(tdDetails);
-      tr.appendChild(tdStatus);
-      tr.appendChild(tdActions);
+    tr.appendChild(tdId);
+    tr.appendChild(tdDetails);
+    tr.appendChild(tdStatus);
+    tr.appendChild(tdActions);
 
-      tableBody.appendChild(tr);
-      allRows.push(tr);
-    }
+    tableBody.appendChild(tr);
+    allRows.push(tr);
+  }
 
-    function loadOrders() {
-      tableBody.innerHTML = '';
-      globalOrders.map().once(order => {
-        if (!order || !order.orderId || !order.shipping) return;
-        createRow(order);
-      });
-    }
+  // Load all orders from GunDB
+  function loadOrders() {
+    tableBody.innerHTML = '';
+    globalOrders.map().once(order => {
+      if (!order || !order.orderId || !order.shipping) return;
+      createRow(order);
+    });
+  }
 
-    function filterOrders() {
-      const query = searchInput.value.trim().toLowerCase();
-      allRows.forEach(row => {
-        const orderId = row.getAttribute('data-order-id').toLowerCase();
-        const email = row.getAttribute('data-email').toLowerCase();
-        if (orderId.includes(query) || email.includes(query)) {
-          row.style.display = '';
-          row.classList.add('highlight');
-        } else {
-          row.style.display = 'none';
-          row.classList.remove('highlight');
-        }
-      });
-    }
+  // Search filter
+  function filterOrders() {
+    const query = searchInput.value.trim().toLowerCase();
+    allRows.forEach(row => {
+      const orderId = row.getAttribute('data-order-id').toLowerCase();
+      const email = row.getAttribute('data-email').toLowerCase();
+      const match = orderId.includes(query) || email.includes(query);
+      row.style.display = match ? '' : 'none';
+      row.classList.toggle('highlight', match && query.length > 0);
+    });
+  }
 
-    window.onload = loadOrders;
-  </script>
+  window.onload = loadOrders;
+</script>
+
 </body>
 </html>
