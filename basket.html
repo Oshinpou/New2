@@ -69,7 +69,8 @@
   const globalOrders = gun.get('imacx_orders');
 
   // Basket & Order variables
-  let basket = JSON.parse(localStorage.getItem('basket')) || [];
+  function renderBasket() {
+  const basket = JSON.parse(localStorage.getItem('basket')) || [];
   let orderId = '';
   let shipping = {};
   let total = 0;
@@ -125,17 +126,21 @@ function addToBasket(product) {
 }
 
   
-  // Delete item from basket
-  function deleteItem(index) {
-    if (confirm("Remove this item from basket?")) {
-      basket.splice(index, 1);
-      localStorage.setItem('basket', JSON.stringify(basket));
-      renderBasket();
-    }
+function deleteItem(index) {
+  const basket = JSON.parse(localStorage.getItem('basket')) || [];
+  if (confirm("Remove this item from basket?")) {
+    basket.splice(index, 1);
+    localStorage.setItem('basket', JSON.stringify(basket));
+    renderBasket();
   }
+}
 
 
-function collectOrderDetails() {
+
+
+   function collectOrderDetails() {
+  const basket = JSON.parse(localStorage.getItem('basket')) || [];
+
   shipping = {
     recipient: document.getElementById('recipient').value,
     email: document.getElementById('email').value,
@@ -149,12 +154,15 @@ function collectOrderDetails() {
     zip: document.getElementById('zip').value
   };
 
+  total = basket.reduce((acc, item) => acc + item.price * item.quantity, 0);
+
   document.getElementById('orderOutput').textContent = JSON.stringify({
-  orderId,
-  shipping,
-  basket,
-  total
-}, null, 2);
+    orderId,
+    shipping,
+    basket,
+    total
+  }, null, 2);
+}
   
      
 
