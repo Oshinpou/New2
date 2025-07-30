@@ -158,33 +158,42 @@
     }
 
     function storeToAdmin() {
-      const basket = getBasket();
-      if (!orderId || Object.keys(shipping).length === 0 || basket.length === 0) {
-        alert("❗ Please collect shipping info, generate order ID, and have items in basket.");
-        return;
-      }
+  const basket = getBasket();
+  if (!orderId || Object.keys(shipping).length === 0 || basket.length === 0) {
+    alert("❗ Please collect shipping info, generate order ID, and have items in basket.");
+    return;
+  }
 
-      total = basket.reduce((acc, item) => acc + item.quantity * item.price, 0);
-      newOrder = {
-        orderId,
-        basket,
-        shipping,
-        total,
-        status: "Order Created",
-        timestamp: Date.now()
-      };
+  total = basket.reduce((acc, item) => acc + item.quantity * item.price, 0);
+  newOrder = {
+    orderId,
+    basket,
+    shipping,
+    total,
+    status: "Order Created",
+    timestamp: Date.now()
+  };
 
-      globalOrders.get(orderId).put(newOrder, ack => {
-        if (ack.err) {
-          console.error("❌ Failed to save order:", ack.err);
-          alert("Order not saved!");
-        } else {
-          alert("✅ Order saved to admin database.");
-        }
+  globalOrders.get(orderId).put(newOrder, ack => {
+    if (ack.err) {
+      console.error("❌ Failed to save order:", ack.err);
+      alert("❌ Order not saved!");
+    } else {
+      alert("✅ Order saved to admin database.");
+
+      // Confirm saved
+      globalOrders.get(orderId).once(data => {
+        console.log("✅ Verified saved order:", data);
+
+        // Also show it as output JSON
+        document.getElementById('orderOutput').textContent = JSON.stringify(data, null, 2);
       });
     }
+  });
+}
 
-    function startPaymentFlow() {
+      
+ function startPaymentFlow() {
       const basket = getBasket();
       if (!orderId || Object.keys(shipping).length === 0 || basket.length === 0) {
         alert('Please save the order first.');
