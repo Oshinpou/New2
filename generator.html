@@ -2,43 +2,85 @@
 <html>
 <head>
   <title>Softcoded Page Generator</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    .card { border: 1px solid #ddd; padding: 10px; margin: 10px 0; }
+    .hidden { display: none; }
+    input, textarea { width: 100%; margin-bottom: 10px; }
+  </style>
 </head>
 <body>
-  <h2>Create Softcoded Page Link</h2>
-  <input id="title" placeholder="Title"><br>
-  <input id="description" placeholder="Description"><br>
-  <input id="image" placeholder="Image URL"><br>
-  <input id="price" placeholder="Price"><br>
-  <button onclick="generatePage()">Generate</button>
-  <div id="links"></div>
 
-  <script>
-    let count = 1000;
-    const linksDiv = document.getElementById('links');
+<h2>Softcoded Page Generator</h2>
 
-    function generatePage() {
-      const id = "page-" + (count++);
-      const title = document.getElementById('title').value;
-      const description = document.getElementById('description').value;
-      const image = document.getElementById('image').value;
-      const price = document.getElementById('price').value;
+<div id="generator">
+  <input id="title" placeholder="Title">
+  <textarea id="description" placeholder="Description"></textarea>
+  <input id="image" placeholder="Image URL">
+  <button onclick="generatePage()">Generate Page</button>
+</div>
 
-      // Show link to softcoded page
-      const link = document.createElement('a');
-      link.href = `shopping.html?page=${id}`;
-      link.textContent = `Visit ${title}`;
-      link.target = "_blank";
-      linksDiv.appendChild(link);
-      linksDiv.appendChild(document.createElement('br'));
+<h3>Generated Links:</h3>
+<div id="links"></div>
 
-      // Copy to console: paste this into softcoded-pages.js manually for now
-      console.log(`"${id}": {
-        title: "${title}",
-        description: "${description}",
-        image: "${image}",
-        price: "${price}"
-      },`);
+<hr>
+
+<div id="page-render" class="hidden">
+  <h2 id="page-title"></h2>
+  <img id="page-image" src="" style="max-width: 200px;">
+  <p id="page-description"></p>
+</div>
+
+<script>
+  // Memory database (softcoded)
+  const pagesData = {};
+
+  // Check if URL has a page
+  const params = new URLSearchParams(window.location.search);
+  const pageId = params.get("page");
+
+  if (pageId && pagesData[pageId]) {
+    renderPage(pageId);
+  }
+
+  function generatePage() {
+    const id = Date.now().toString(36); // unique ID
+    pagesData[id] = {
+      title: document.getElementById("title").value,
+      description: document.getElementById("description").value,
+      image: document.getElementById("image").value
+    };
+
+    const link = `${location.origin}${location.pathname}?page=${id}`;
+    const div = document.createElement("div");
+    div.className = "card";
+    div.innerHTML = `
+      <a href="${link}" target="_blank">${pagesData[id].title}</a>
+      <button onclick="deletePage('${id}', this)">Delete</button>
+    `;
+    document.getElementById("links").appendChild(div);
+  }
+
+  function deletePage(id, btn) {
+    delete pagesData[id];
+    btn.parentElement.remove();
+  }
+
+  function renderPage(id) {
+    const data = pagesData[id];
+    if (!data) {
+      document.body.innerHTML = "<h2>Page not found.</h2>";
+      return;
     }
-  </script>
+
+    document.getElementById("page-render").classList.remove("hidden");
+    document.getElementById("page-title").textContent = data.title;
+    document.getElementById("page-description").textContent = data.description;
+    document.getElementById("page-image").src = data.image;
+    document.getElementById("generator").classList.add("hidden");
+    document.getElementById("links").classList.add("hidden");
+  }
+</script>
+
 </body>
 </html>
