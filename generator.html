@@ -54,40 +54,53 @@
 
   <script>
     const gun = Gun();
+    const pagesDB = gun.get('pages');
+    const pagesList = gun.get('pagesList'); // Used to store active page IDs
     const params = new URLSearchParams(window.location.search);
     const pageId = params.get('id');
     const main = document.getElementById('main');
 
-    // 📄 Blank Page Mode (View Only with Title)
+    // VIEW MODE
     if (pageId) {
-      gun.get('pages').get(pageId).once(data => {
-        if (data) {
+      pagesDB.get(pageId).once(data => {
+        if (data && data.created) {
           document.title = "imacx";
           main.innerHTML = `<h1>imacx</h1>`;
         } else {
           main.innerHTML = `<h1>⚠️ This page was deleted or doesn't exist.</h1>`;
         }
       });
+
     } else {
-      // ✨ Generator Mode
+      // GENERATOR MODE
       main.innerHTML = `
         <h1>✨ Digital Pages Generator</h1>
         <button onclick="createPage()">Create New Blank Page</button>
         <div id="output"></div>
       `;
-
       const output = document.getElementById('output');
 
-      // Fetch and show all links on load
-      gun.get('pages').map().once((data, key) => {
-        if (data !== null && data.created) {
-          addLinkBox(key);
+      // Load existing pages from pagesList
+      pagesList.map().once((val, key) => {
+        if (val) {
+          pagesDB.get(key).once(data => {
+            if (data && data.created) {
+              addLinkBox(key);
+            }
+          });
         }
       });
 
       window.createPage = function () {
         const id = 'page-' + Date.now() + '-' + Math.random().toString(36).substr(2, 6);
-        gun.get('pages').get(id).put({ created: new Date().toISOString() });
+        const createdAt = new Date().toISOString();
+
+        // Save page data
+        pagesDB.get(id).put({ created: createdAt });
+
+        // Add page ID to pagesList
+        pagesList.get(id).put(true);
+
         addLinkBox(id);
       }
 
@@ -103,7 +116,10 @@
       }
 
       window.deleteLink = function (id, btn) {
-        gun.get('pages').get(id).put(null);
+        // Remove page content and remove from list
+        pagesDB.get(id).put(null);
+        pagesList.get(id).put(null);
+
         const box = btn.parentElement;
         box.innerHTML = `<p>❌ Link deleted.</p>`;
       }
