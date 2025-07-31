@@ -1,42 +1,43 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Soft Page Generator</title>
-  <style>
-    body { font-family: sans-serif; padding: 20px; }
-    input, textarea { display: block; margin: 10px 0; width: 300px; }
-  </style>
+  <title>Softcoded Page Generator</title>
 </head>
 <body>
-  <h2>Create Softcoded Product Page</h2>
-  <input id="title" placeholder="Product Title" />
-  <input id="image" placeholder="Image URL" />
-  <input id="price" placeholder="Price (e.g. ₹2499)" />
-  <textarea id="description" placeholder="Product Description"></textarea>
-  <button onclick="generate()">Generate Link</button>
-
-  <h3>Generated Link:</h3>
-  <p id="linkOutput"></p>
+  <h2>Create Softcoded Page Link</h2>
+  <input id="title" placeholder="Title"><br>
+  <input id="description" placeholder="Description"><br>
+  <input id="image" placeholder="Image URL"><br>
+  <input id="price" placeholder="Price"><br>
+  <button onclick="generatePage()">Generate</button>
+  <div id="links"></div>
 
   <script>
-    function generateID() {
-      return 'p' + Math.random().toString(36).substr(2, 9);
-    }
+    let count = 1000;
+    const linksDiv = document.getElementById('links');
 
-    function generate() {
-      const id = generateID();
-      const page = {
-        title: document.getElementById('title').value,
-        image: document.getElementById('image').value,
-        price: document.getElementById('price').value,
-        description: document.getElementById('description').value
-      };
+    function generatePage() {
+      const id = "page-" + (count++);
+      const title = document.getElementById('title').value;
+      const description = document.getElementById('description').value;
+      const image = document.getElementById('image').value;
+      const price = document.getElementById('price').value;
 
-      const script = `window.pageDatabase = window.pageDatabase || {};\nwindow.pageDatabase["${id}"] = ${JSON.stringify(page, null, 2)};`;
-      console.log(script); // You can copy this and append to pages-data.js
+      // Show link to softcoded page
+      const link = document.createElement('a');
+      link.href = `shopping.html?page=${id}`;
+      link.textContent = `Visit ${title}`;
+      link.target = "_blank";
+      linksDiv.appendChild(link);
+      linksDiv.appendChild(document.createElement('br'));
 
-      const link = `${location.origin}/page.html?page=${id}`;
-      document.getElementById('linkOutput').innerHTML = `<a href="${link}" target="_blank">${link}</a>`;
+      // Copy to console: paste this into softcoded-pages.js manually for now
+      console.log(`"${id}": {
+        title: "${title}",
+        description: "${description}",
+        image: "${image}",
+        price: "${price}"
+      },`);
     }
   </script>
 </body>
