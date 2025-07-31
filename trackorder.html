@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Search Order - imacx Admin</title>
+  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 2rem;
+      background-color: #fffff0;
+      color: #333;
+    }
+    h1 {
+      color: goldenrod;
+    }
+    input {
+      padding: 0.6rem;
+      width: 300px;
+      font-size: 16px;
+      margin-right: 10px;
+      border: 1px solid goldenrod;
+      border-radius: 4px;
+    }
+    button {
+      padding: 0.6rem 1rem;
+      background-color: goldenrod;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .result {
+      margin-top: 2rem;
+      border: 1px solid #ccc;
+      background: #fff;
+      padding: 1rem;
+      border-radius: 5px;
+    }
+    select {
+      margin-top: 1rem;
+      padding: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🔍 Search Order by ID</h1>
+
+  <input type="text" id="orderIdInput" placeholder="Enter Order ID (e.g., IMX...)">
+  <button onclick="searchOrder()">Search</button>
+
+  <div id="result" class="result" style="display: none;"></div>
+
+  <script>
+    const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
+    const globalOrders = gun.get('imacx_orders');
+
+    const STATUS_LIST = [
+      'Order Created', 'Payment Done', 'Order Cancelled',
+      'Order Processing', 'Out for Shipping', 'Shipped',
+      'Out for Delivery', 'Delivered'
+    ];
+
+    function searchOrder() {
+      const orderId = document.getElementById('orderIdInput').value.trim().toUpperCase();
+      if (!orderId.startsWith('IMX')) {
+        alert('⚠️ Please enter a valid Order ID starting with "IMX".');
+        return;
+      }
+
+      globalOrders.get(orderId).once(order => {
+        const resultBox = document.getElementById('result');
+        if (!order || !order.orderId) {
+          resultBox.innerHTML = `<p style="color:red">❌ Order not found.</p>`;
+          resultBox.style.display = 'block';
+          return;
+        }
+
+        // Display order
+        resultBox.innerHTML = `
+          <pre>${JSON.stringify(order, null, 2)}</pre>
+          <label for="statusSelect">Status: </label>
+          <select id="statusSelect">
+            ${STATUS_LIST.map(s => `<option value="${s}" ${s === order.status ? 'selected' : ''}>${s}</option>`).join('')}
+          </select>
+          <button onclick="updateStatus('${orderId}')">Update Status</button>
+        `;
+        resultBox.style.display = 'block';
+      });
+    }
+
+    function updateStatus(orderId) {
+      const newStatus = document.getElementById('statusSelect').value;
+      globalOrders.get(orderId).get('status').put(newStatus);
+      alert('✅ Status updated to: ' + newStatus);
+    }
+  </script>
+</body>
+</html>
