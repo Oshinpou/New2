@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Product</title>
+  <script src="pages-data.js"></script>
+</head>
+<body>
+  <div id="product"></div>
+
+  <script>
+    function getQueryParam(name) {
+      return new URLSearchParams(window.location.search).get(name);
+    }
+
+    const id = getQueryParam('page');
+    const data = window.pageDatabase?.[id];
+
+    if (!data) {
+      document.body.innerHTML = "<h2>Page Not Found</h2>";
+    } else {
+      document.getElementById("product").innerHTML = `
+        <h1>${data.title}</h1>
+        <img src="${data.image}" alt="${data.title}" width="300">
+        <h3>${data.price}</h3>
+        <p>${data.description}</p>
+      `;
+    }
+  </script>
+</body>
+</html>
