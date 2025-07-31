@@ -1,130 +1,93 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Digital Page Generator</title>
-  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-  <style>
-    body {
-      font-family: sans-serif;
-      padding: 20px;
-      background: #f4f4f4;
-      color: #222;
-    }
-    h1 {
-      color: #111;
-      margin-bottom: 20px;
-    }
-    button {
-      padding: 10px 20px;
-      margin: 10px 0;
-      font-size: 16px;
-      cursor: pointer;
-      background: #007bff;
-      color: white;
-      border: none;
-      border-radius: 5px;
-    }
-    button.danger {
-      background-color: #dc3545;
-    }
-    .link-box {
-      background: #fff;
-      padding: 15px;
-      border-radius: 6px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      margin-top: 20px;
-    }
-    a {
-      word-break: break-all;
-      display: block;
-      margin-bottom: 10px;
-    }
-    #status {
-      margin-top: 10px;
-      font-weight: bold;
-      color: green;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Pages Generator</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    width: 80%;
+    margin: 50px auto;
+    background: #fff;
+    padding: 20px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+    text-align: center;
+}
+
+#pages {
+    margin-top: 20px;
+}
+
+.page {
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    position: relative;
+}
+
+.page a {
+    text-decoration: none;
+    color: #333;
+    font-weight: bold;
+}
+
+.delete-button {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    color: red;
+    cursor: pointer;
+}
+
+  
+</style>
+
 </head>
 <body>
+    <div class="container">
+        <h1>Digital Pages Generator</h1>
+        <button id="createPage">Create New Page</button>
+        <div id="pages"></div>
+    </div>
+    <script>
+      $(document).ready(function() {
+    let pageCounter = 0;
 
-  <div id="main"></div>
+    $('#createPage').click(function() {
+        pageCounter++;
+        const pageId = `page-${pageCounter}`;
+        $('#pages').append(`
+            <div class="page" id="${pageId}">
+                <span class="delete-button" data-page="${pageId}">Delete</span>
+                <a href="#" class="pageLink" data-page="${pageId}">Page ${pageCounter}</a>
+            </div>
+        `);
 
-  <script>
-    const gun = Gun();
-    const pagesDB = gun.get('pages');
-    const pagesList = gun.get('pagesList');
-    const params = new URLSearchParams(window.location.search);
-    const pageId = params.get('id');
-    const main = document.getElementById('main');
-    const renderedPages = new Set(); // To prevent duplicate rendering
+        $(`a[data-page="${pageId}"]`).click(function(e) {
+            e.preventDefault();
+            alert(`This is ${$(this).text()}. You can add content here.`);
+        });
+    });
 
-    // 📄 PAGE VIEW MODE
-    if (pageId) {
-      pagesDB.get(pageId).once(data => {
-        if (data && data.created) {
-          document.title = "imacx";
-          main.innerHTML = `<h1>imacx</h1>`;
-        } else {
-          main.innerHTML = `<h1>⚠️ This page was deleted or doesn't exist.</h1>`;
-        }
-      });
+    $(document).on('click', '.delete-button', function() {
+        const pageId = $(this).data('page');
+        $(`#${pageId}`).remove();
+    });
+});
 
-    } else {
-      // 🛠️ GENERATOR MODE
-      main.innerHTML = `
-        <h1>✨ Digital Pages Generator</h1>
-        <button onclick="createPage()">Create New Blank Page</button>
-        <div id="output"></div>
-      `;
-      const output = document.getElementById('output');
-
-      // Real-time listener to show all pages
-      pagesList.map().on((val, key) => {
-        if (val && !renderedPages.has(key)) {
-          pagesDB.get(key).once(data => {
-            if (data && data.created) {
-              addLinkBox(key);
-              renderedPages.add(key);
-            }
-          });
-        } else if (!val && renderedPages.has(key)) {
-          // Handle deletion: remove box
-          const box = document.getElementById(`box-${key}`);
-          if (box) box.remove();
-          renderedPages.delete(key);
-        }
-      });
-
-      // 📥 Create New Page
-      window.createPage = function () {
-        const id = 'page-' + Date.now() + '-' + Math.random().toString(36).substr(2, 6);
-        const createdAt = new Date().toISOString();
-        pagesDB.get(id).put({ created: createdAt });
-        pagesList.get(id).put(true);
-      }
-
-      // 🧱 Render a box
-      function addLinkBox(id) {
-        const link = location.origin + location.pathname + '?id=' + id;
-        const box = document.createElement('div');
-        box.className = 'link-box';
-        box.id = `box-${id}`;
-        box.innerHTML = `
-          <a href="${link}" target="_blank">${link}</a>
-          <button class="danger" onclick="deleteLink('${id}')">Delete Link</button>
-        `;
-        output.prepend(box);
-      }
-
-      // ❌ Delete
-      window.deleteLink = function (id) {
-        pagesDB.get(id).put(null);
-        pagesList.get(id).put(null);
-      }
-    }
-  </script>
+    </script>
 </body>
 </html>
