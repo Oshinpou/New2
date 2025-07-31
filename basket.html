@@ -157,8 +157,7 @@
       console.log("Generated Order ID:", orderId);
     }
 
-  
-function storeToAdmin() {
+    function storeToAdmin() {
   const basket = getBasket();
   if (!orderId || Object.keys(shipping).length === 0 || basket.length === 0) {
     alert("❗ Please collect shipping info, generate order ID, and have items in basket.");
@@ -175,15 +174,16 @@ function storeToAdmin() {
     timestamp: Date.now()
   };
 
-   globalOrders.get(orderId).put(newOrder); // full order details
-globalOrders.get('all').get(orderId).put(true); // index for admin map() 
-  
+  // ✅ 1. Save full order data
+  globalOrders.get(orderId).put(newOrder);
+
+  // ✅ 2. Save reference to allow admin indexing
+  globalOrders.get('all').get(orderId).put(true);
 
   alert("✅ Order saved to admin database.");
-
   document.getElementById('orderOutput').textContent = JSON.stringify(newOrder, null, 2);
-}
-      
+    }
+  
  function startPaymentFlow() {
       const basket = getBasket();
       if (!orderId || Object.keys(shipping).length === 0 || basket.length === 0) {
