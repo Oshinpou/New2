@@ -1,29 +1,38 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Product</title>
-  <script src="pages-data.js"></script>
+  <title>Digital Page Viewer</title>
+  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
 </head>
 <body>
-  <div id="product"></div>
+  <h2 id="pageTitle">Loading...</h2>
+  <p id="pageContent"></p>
+  <button onclick="deletePage()">❌ Delete This Page</button>
+  <p id="status"></p>
 
   <script>
-    function getQueryParam(name) {
-      return new URLSearchParams(window.location.search).get(name);
+    const gun = Gun();
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("id");
+
+    if (!id) {
+      document.getElementById("pageTitle").innerText = "No ID provided.";
+    } else {
+      gun.get("pages").get(id).once(data => {
+        if (!data || !data.title) {
+          document.getElementById("pageTitle").innerText = "This page was deleted or doesn't exist.";
+        } else {
+          document.getElementById("pageTitle").innerText = data.title;
+          document.getElementById("pageContent").innerText = data.content;
+        }
+      });
     }
 
-    const id = getQueryParam('page');
-    const data = window.pageDatabase?.[id];
-
-    if (!data) {
-      document.body.innerHTML = "<h2>Page Not Found</h2>";
-    } else {
-      document.getElementById("product").innerHTML = `
-        <h1>${data.title}</h1>
-        <img src="${data.image}" alt="${data.title}" width="300">
-        <h3>${data.price}</h3>
-        <p>${data.description}</p>
-      `;
+    function deletePage() {
+      gun.get("pages").get(id).put(null);
+      document.getElementById("status").innerText = "✅ Page deleted.";
+      document.getElementById("pageTitle").innerText = "";
+      document.getElementById("pageContent").innerText = "";
     }
   </script>
 </body>
