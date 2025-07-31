@@ -10,103 +10,96 @@
       font-family: 'Cursive', sans-serif;
       background-color: #ffffff;
       color: goldenrod;
-    }.navbar {
-  background: white;
-  padding: 1rem;
-  border-bottom: 1px solid goldenrod;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-}
-
-.navbar img {
-  height: 40px;
-}
-
-.nav-links a {
-  margin-left: 1rem;
-  text-decoration: none;
-  color: goldenrod;
-}
-
-.search-sort-filter {
-  display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  padding: 1rem;
-}
-
-.search-sort-filter input,
-.search-sort-filter select {
-  margin: 0.5rem;
-  padding: 0.5rem;
-  font-family: 'Cursive', sans-serif;
-}
-
-.products-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 1rem;
-  padding: 1rem;
-}
-
-.product-card {
-  border: 1px solid goldenrod;
-  border-radius: 10px;
-  padding: 0.5rem;
-  text-align: center;
-  font-size: 0.8rem;
-}
-
-.product-card img {
-  width: 100%;
-  height: 100px;
-  object-fit: cover;
-  border-radius: 5px;
-}
-
-.quantity-controls {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-top: 0.5rem;
-}
-
-.quantity-controls button {
-  padding: 0.3rem;
-  background: goldenrod;
-  color: white;
-  border: none;
-  cursor: pointer;
-}
-
-.quantity-controls input {
-  width: 30px;
-  text-align: center;
-  font-size: 0.8rem;
-}
-
-footer {
-  padding: 1rem;
-  text-align: center;
-  border-top: 1px solid goldenrod;
-  margin-top: 2rem;
-  font-size: 0.9rem;
-}
-
-.menu-links {
-  display: none;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin-top: 1rem;
-}
-
+    }
+    .navbar {
+      background: white;
+      padding: 1rem;
+      border-bottom: 1px solid goldenrod;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    .navbar img {
+      height: 40px;
+    }
+    .nav-links a {
+      margin-left: 1rem;
+      text-decoration: none;
+      color: goldenrod;
+    }
+    .search-sort-filter {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      padding: 1rem;
+    }
+    .search-sort-filter input,
+    .search-sort-filter select {
+      margin: 0.5rem;
+      padding: 0.5rem;
+      font-family: 'Cursive', sans-serif;
+    }
+    .products-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+      padding: 1rem;
+    }
+    .product-card {
+      border: 1px solid goldenrod;
+      border-radius: 10px;
+      padding: 0.5rem;
+      text-align: center;
+      font-size: 0.8rem;
+    }
+    .product-card img {
+      width: 100%;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 5px;
+    }
+    .quantity-controls {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 0.5rem 0;
+    }
+    .quantity-controls button {
+      padding: 0.3rem;
+      background: goldenrod;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    .quantity-controls input {
+      width: 30px;
+      text-align: center;
+      font-size: 0.8rem;
+    }
+    .add-to-basket-btn {
+      background-color: goldenrod;
+      color: white;
+      border: none;
+      padding: 0.3rem 0.5rem;
+      cursor: pointer;
+      font-family: 'Cursive', sans-serif;
+      font-size: 0.8rem;
+      border-radius: 4px;
+    }
+    footer {
+      padding: 1rem;
+      text-align: center;
+      border-top: 1px solid goldenrod;
+      margin-top: 2rem;
+      font-size: 0.9rem;
+    }
   </style>
 </head>
-<body>  <nav class="navbar">
+<body>
+  <nav class="navbar">
     <img src="logo.png" alt="imacx logo">
     <div class="nav-links">
       <a href="basket.html">Basket</a>
@@ -114,7 +107,7 @@ footer {
       <a href="track-order.html">Track Order</a>
       <a href="#" onclick="toggleMenu()">Menu</a>
     </div>
-  </nav>  <div class="menu-links" id="menu">
+  </nav>  <div class="menu-links" id="menu" style="display:none; flex-direction:column; gap:0.5rem; margin-top:1rem;">
     <a href="about.html">About</a>
     <a href="privacy.html">Privacy Policy</a>
     <a href="terms.html">Terms & Conditions</a>
@@ -137,20 +130,60 @@ footer {
       <option value="breakfast">Breakfast Spread</option>
     </select>
   </div>  <div class="products-container" id="products">
-    <!-- Example Product Card -->
-    <div class="product-card" data-name="Soleme Cheese" data-price="299" data-category="food" data-subcategory="breakfast">
+    <div class="product-card" data-name="Soleme Cheese" data-price="1" data-category="food" data-subcategory="breakfast">
       <a href="product-soleme-cheese.html">
         <img src="soleme-cheese.jpg" alt="Soleme Cheese">
         <div>Soleme Cheese</div>
-        <div>₹299</div>
+        <div>₹1</div>
       </a>
       <div class="quantity-controls">
         <button onclick="updateQty(this, -1)">-</button>
         <input type="number" value="0" readonly>
         <button onclick="updateQty(this, 1)">+</button>
       </div>
-    </div><!-- More product cards can be copied similarly -->
-
+      <button class="add-to-basket-btn" onclick="addToBasket(this)">Add to Basket</button>
+    </div>
+ 
+  <div class="product-card" data-name="Iconic Blue Chocolate" data-price="499" data-category="food" data-subcategory="chocolate">
+  <a href="product-iconic-blue-chocolate.html">
+    <img src="iconic-blue-chocolate.jpg" alt="Iconic Blue Chocolate">
+    <div>Iconic Blue Chocolate</div>
+    <div>₹499</div>
+  </a>
+  <div class="quantity-controls">
+    <button onclick="updateQty(this, -1)">-</button>
+    <input type="number" value="0" readonly>
+    <button onclick="updateQty(this, 1)">+</button>
+  </div>
+  <button class="add-to-basket-btn" onclick="addToBasket(this)">Add to Basket</button>
+</div>
+ <div class="product-card" data-name="Iconic Blue Chocolate" data-price="499" data-category="food" data-subcategory="chocolate">
+  <a href="product-iconic-blue-chocolate.html">
+    <img src="iconic-blue-chocolate.jpg" alt="Iconic Blue Chocolate">
+    <div>Iconic Blue Chocolate</div>
+    <div>₹499</div>
+  </a>
+  <div class="quantity-controls">
+    <button onclick="updateQty(this, -1)">-</button>
+    <input type="number" value="0" readonly>
+    <button onclick="updateQty(this, 1)">+</button>
+  </div>
+  <button class="add-to-basket-btn" onclick="addToBasket(this)">Add to Basket</button>
+</div>
+  <div class="product-card" data-name="Iconic Blue Chocolate" data-price="499" data-category="food" data-subcategory="chocolate">
+  <a href="product-iconic-blue-chocolate.html">
+    <img src="iconic-blue-chocolate.jpg" alt="Iconic Blue Chocolate">
+    <div>Iconic Blue Chocolate</div>
+    <div>₹499</div>
+  </a>
+  <div class="quantity-controls">
+    <button onclick="updateQty(this, -1)">-</button>
+    <input type="number" value="0" readonly>
+    <button onclick="updateQty(this, 1)">+</button>
+  </div>
+  <button class="add-to-basket-btn" onclick="addToBasket(this)">Add to Basket</button>
+</div>
+  
   </div>  <footer>
     &copy; 2025 imacx Shop. All rights reserved.
   </footer>  <script>
@@ -165,6 +198,42 @@ footer {
       if (value < 0) value = 0;
       input.value = value;
     }
+
+    
+  function addToBasket(button) {
+    const card = button.closest('.product-card');
+    const name = card.getAttribute('data-name');
+    const price = parseFloat(card.getAttribute('data-price'));
+    const qty = parseInt(card.querySelector('input').value);
+    const image = card.querySelector('img').src;
+    const category = card.getAttribute('data-category');
+    const subcategory = card.getAttribute('data-subcategory');
+
+    if (qty > 0) {
+      let basket = JSON.parse(localStorage.getItem('basket')) || [];
+
+      // Check if product already exists
+      const existingIndex = basket.findIndex(item => item.name === name);
+      if (existingIndex > -1) {
+        basket[existingIndex].quantity += qty;
+      } else {
+        basket.push({
+          name,
+          price,
+          quantity: qty,
+          image,
+          category,
+          subcategory
+        });
+      }
+
+      localStorage.setItem('basket', JSON.stringify(basket));
+      alert(`${qty} × ${name} added to basket. Total: ₹${qty * price}`);
+    } else {
+      alert('Please select quantity before adding to basket.');
+    }
+  }
+
 
     document.getElementById('searchBar').addEventListener('input', function () {
       const search = this.value.toLowerCase();
@@ -200,5 +269,7 @@ footer {
         card.style.display = catMatch && subMatch ? 'block' : 'none';
       });
     }
+
+    renderBasket();
   </script></body>
 </html>
