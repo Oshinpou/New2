@@ -12,7 +12,6 @@
     }
     h1 {
       text-align: center;
-      font-family: sans-serif;
     }
     #searchInput {
       display: block;
@@ -111,10 +110,10 @@
 
       const updateBtn = document.createElement('button');
       updateBtn.className = 'btn update-btn';
-      updateBtn.textContent = 'Update';
+      updateBtn.textContent = 'Update Status';
       updateBtn.onclick = () => {
         globalOrders.get(order.orderId).get('status').put(statusSelect.value);
-        alert("✅ Order status updated");
+        alert("✅ Status updated successfully for " + order.orderId);
       };
 
       block.appendChild(orderPre);
