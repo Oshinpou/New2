@@ -1,50 +1,43 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Page Generator</title>
-  <script src="pages-data.js"></script>
+  <title>Soft Page Generator</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    input, textarea { display: block; margin: 10px 0; width: 300px; }
+  </style>
 </head>
 <body>
-  <h2>Create Softcoded Page</h2>
-  <input placeholder="Page ID (e.g., imacx-softskin)" id="pageId"><br>
-  <input placeholder="Title" id="title"><br>
-  <input placeholder="Description" id="description"><br>
-  <input placeholder="Price" id="price" type="number"><br>
-  <input placeholder="Image URL" id="image"><br>
-  <button onclick="generate()">Generate Page</button>
+  <h2>Create Softcoded Product Page</h2>
+  <input id="title" placeholder="Product Title" />
+  <input id="image" placeholder="Image URL" />
+  <input id="price" placeholder="Price (e.g. ₹2499)" />
+  <textarea id="description" placeholder="Product Description"></textarea>
+  <button onclick="generate()">Generate Link</button>
 
-  <h3>Generated Pages:</h3>
-  <ul id="pagesList"></ul>
+  <h3>Generated Link:</h3>
+  <p id="linkOutput"></p>
 
   <script>
-    const list = document.getElementById('pagesList');
-    function updateList() {
-      list.innerHTML = "";
-      for (const id in pagesData) {
-        const link = `view.html?page=${id}`;
-        list.innerHTML += `<li><a href="${link}" target="_blank">${id}</a>
-          <button onclick="deletePage('${id}')">Delete</button></li>`;
-      }
+    function generateID() {
+      return 'p' + Math.random().toString(36).substr(2, 9);
     }
 
     function generate() {
-      const id = document.getElementById('pageId').value.trim();
-      if (!id) return alert("Page ID is required");
-      pagesData[id] = {
+      const id = generateID();
+      const page = {
         title: document.getElementById('title').value,
-        description: document.getElementById('description').value,
-        price: +document.getElementById('price').value,
-        image: document.getElementById('image').value
+        image: document.getElementById('image').value,
+        price: document.getElementById('price').value,
+        description: document.getElementById('description').value
       };
-      updateList();
-    }
 
-    function deletePage(id) {
-      delete pagesData[id];
-      updateList();
-    }
+      const script = `window.pageDatabase = window.pageDatabase || {};\nwindow.pageDatabase["${id}"] = ${JSON.stringify(page, null, 2)};`;
+      console.log(script); // You can copy this and append to pages-data.js
 
-    updateList();
+      const link = `${location.origin}/page.html?page=${id}`;
+      document.getElementById('linkOutput').innerHTML = `<a href="${link}" target="_blank">${link}</a>`;
+    }
   </script>
 </body>
 </html>
