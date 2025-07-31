@@ -29,12 +29,6 @@
     button.danger {
       background-color: #dc3545;
     }
-    input, textarea {
-      padding: 10px;
-      margin: 10px 0;
-      width: 100%;
-      font-size: 16px;
-    }
     .link-box {
       background: #fff;
       padding: 15px;
@@ -44,6 +38,8 @@
     }
     a {
       word-break: break-all;
+      display: block;
+      margin-bottom: 10px;
     }
     #status {
       margin-top: 10px;
@@ -62,48 +58,54 @@
     const pageId = params.get('id');
     const main = document.getElementById('main');
 
-    // If there's a page ID, show that page for editing
+    // 📄 Blank Page Mode (View Only with Title)
     if (pageId) {
       gun.get('pages').get(pageId).once(data => {
-        const content = data && data.content ? data.content : '';
-        main.innerHTML = `
-          <h1>📄 Digital Page: ${pageId}</h1>
-          <textarea id="pageContent" rows="12" placeholder="Write something...">${content}</textarea><br/>
-          <button onclick="saveContent()">💾 Save</button>
-          <button class="danger" onclick="deletePage()">🗑️ Delete</button>
-          <p id="status"></p>
-        `;
+        if (data) {
+          document.title = "imacx";
+          main.innerHTML = `<h1>imacx</h1>`;
+        } else {
+          main.innerHTML = `<h1>⚠️ This page was deleted or doesn't exist.</h1>`;
+        }
       });
-
-      window.saveContent = function () {
-        const content = document.getElementById('pageContent').value;
-        gun.get('pages').get(pageId).put({ content });
-        document.getElementById('status').innerText = '✅ Content saved.';
-      }
-
-      window.deletePage = function () {
-        gun.get('pages').get(pageId).put(null);
-        document.getElementById('status').innerText = '❌ Page deleted.';
-      }
-
     } else {
-      // No page ID, show the generator
+      // ✨ Generator Mode
       main.innerHTML = `
         <h1>✨ Digital Pages Generator</h1>
         <button onclick="createPage()">Create New Blank Page</button>
         <div id="output"></div>
       `;
 
+      const output = document.getElementById('output');
+
+      // Fetch and show all links on load
+      gun.get('pages').map().once((data, key) => {
+        if (data !== null && data.created) {
+          addLinkBox(key);
+        }
+      });
+
       window.createPage = function () {
         const id = 'page-' + Date.now() + '-' + Math.random().toString(36).substr(2, 6);
         gun.get('pages').get(id).put({ created: new Date().toISOString() });
+        addLinkBox(id);
+      }
+
+      function addLinkBox(id) {
         const link = location.origin + location.pathname + '?id=' + id;
-        document.getElementById('output').innerHTML = `
-          <div class="link-box">
-            <p><strong>🔗 Your new digital page link:</strong></p>
-            <a href="${link}" target="_blank">${link}</a>
-          </div>
+        const box = document.createElement('div');
+        box.className = 'link-box';
+        box.innerHTML = `
+          <a href="${link}" target="_blank">${link}</a>
+          <button class="danger" onclick="deleteLink('${id}', this)">Delete Link</button>
         `;
+        output.prepend(box);
+      }
+
+      window.deleteLink = function (id, btn) {
+        gun.get('pages').get(id).put(null);
+        const box = btn.parentElement;
+        box.innerHTML = `<p>❌ Link deleted.</p>`;
       }
     }
   </script>
