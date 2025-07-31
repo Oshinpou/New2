@@ -174,19 +174,17 @@
     timestamp: Date.now()
   };
 
-  // ✅ 1. Save full order data
-  globalOrders.get(orderId).put(newOrder);
+  // Save order to localStorage for admin page
+  const existingOrders = JSON.parse(localStorage.getItem('admin_orders')) || [];
+  existingOrders.push(newOrder);
+  localStorage.setItem('admin_orders', JSON.stringify(existingOrders));
 
-  // ✅ 2. Save reference to allow admin indexing
-  globalOrders.get('all').get(orderId).put(true);
+  alert("✅ Order saved locally (admin_orders).");
 
-  alert("✅ Order saved to admin database.");
   document.getElementById('orderOutput').textContent = JSON.stringify(newOrder, null, 2);
     }
 
-    localStorage.setItem('admin_orders', JSON.stringify([...(JSON.parse(localStorage.getItem('admin_orders')) || []), newOrder]));
-
-    
+  
     function startPaymentFlow() {
       const basket = getBasket();
       if (!orderId || Object.keys(shipping).length === 0 || basket.length === 0) {
