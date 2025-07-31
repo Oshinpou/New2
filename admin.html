@@ -117,36 +117,25 @@
         alert("✅ Order status updated");
       };
 
-      const deleteBtn = document.createElement('button');
-      deleteBtn.className = 'btn delete-btn';
-      deleteBtn.textContent = 'Delete';
-      deleteBtn.onclick = () => {
-        if (confirm("❌ Delete this order permanently?")) {
-          globalOrders.get(order.orderId).put(null);
-          block.remove();
-        }
-      };
-
       block.appendChild(orderPre);
       block.appendChild(statusLabel);
       block.appendChild(statusSelect);
       block.appendChild(updateBtn);
-      block.appendChild(deleteBtn);
 
       ordersContainer.appendChild(block);
       allBlocks.push(block);
     }
 
     function loadOrders() {
-  globalOrders.map().once(ref => {
-    if (!ref || !ref.orderId) return;
-    globalOrders.get(ref.orderId).once(order => {
-      if (!order || !order.orderId) return;
-      const exists = allBlocks.find(b => b.getAttribute('data-order-id') === order.orderId.toLowerCase());
-      if (!exists) createOrderBlock(order);
-    });
-  });
-}
+      globalOrders.map().once(ref => {
+        if (!ref || !ref.orderId) return;
+        globalOrders.get(ref.orderId).once(fullOrder => {
+          if (!fullOrder || !fullOrder.orderId) return;
+          const exists = allBlocks.find(b => b.getAttribute('data-order-id') === fullOrder.orderId.toLowerCase());
+          if (!exists) createOrderBlock(fullOrder);
+        });
+      });
+    }
 
     function filterOrders() {
       const query = document.getElementById('searchInput').value.trim().toLowerCase();
