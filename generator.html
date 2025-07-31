@@ -1,42 +1,33 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Imacx Softcoded Product</title>
-  <script src="pages-data.js" defer></script>
-  <style>
-    body { font-family: sans-serif; padding: 20px; background: #f4f4f4; }
-    .product { background: #fff; padding: 20px; border: 1px solid #ccc; max-width: 600px; margin: auto; }
-    .product img { width: 100%; height: auto; }
-  </style>
+  <title>Digital Page Generator</title>
+  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
 </head>
 <body>
-  <div id="content">Loading...</div>
+  <h2>Create Digital Page</h2>
+  <input id="title" placeholder="Title" /><br><br>
+  <textarea id="content" placeholder="Description"></textarea><br><br>
+  <button onclick="createPage()">Generate Page</button>
+  <p id="link"></p>
 
   <script>
-    window.addEventListener('DOMContentLoaded', () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const pageId = urlParams.get('page');
-      const container = document.getElementById('content');
+    const gun = Gun();
 
-      if (typeof softcodedPages === 'undefined') {
-        container.innerHTML = "<h2>Data file not loaded</h2>";
-        return;
-      }
+    function generateId() {
+      return '_' + Math.random().toString(36).substr(2, 9);
+    }
 
-      if (pageId && softcodedPages[pageId]) {
-        const data = softcodedPages[pageId];
-        container.innerHTML = `
-          <div class="product">
-            <h1>${data.title}</h1>
-            <img src="${data.image}" alt="${data.title}">
-            <p>${data.description}</p>
-            <h3>₹${data.price}</h3>
-          </div>
-        `;
-      } else {
-        container.innerHTML = "<h2>Page not found</h2>";
-      }
-    });
+    function createPage() {
+      const id = generateId();
+      const title = document.getElementById("title").value;
+      const content = document.getElementById("content").value;
+
+      gun.get("pages").get(id).put({ title, content });
+
+      const link = `page.html?id=${id}`;
+      document.getElementById("link").innerHTML = `🔗 <a href="${link}" target="_blank">${link}</a>`;
+    }
   </script>
 </body>
 </html>
