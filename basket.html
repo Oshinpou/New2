@@ -175,9 +175,9 @@ function storeToAdmin() {
     timestamp: Date.now()
   };
 
-  // ✅ Store order in 2 places:
-  globalOrders.get(orderId).put(newOrder); // for order details
-  globalOrders.set(newOrder);              // for indexing visibility via .map()
+   globalOrders.get(orderId).put(newOrder); // full order details
+globalOrders.get('all').get(orderId).put(true); // index for admin map() 
+  
 
   alert("✅ Order saved to admin database.");
 
