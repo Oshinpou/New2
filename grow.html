@@ -282,5 +282,23 @@
   document.getElementById('filter-category').addEventListener('change', applyFilters);
   document.getElementById('filter-subcategory').addEventListener('change', applyFilters);
 </script>
+<script src="softcoded-pages.js"></script>
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const pageID = params.get('page');
+
+  if (pageID && softcodedPages[pageID]) {
+    const data = softcodedPages[pageID];
+    document.body.innerHTML = `
+      <div class="soft-page">
+        <h1>${data.title}</h1>
+        <img src="${data.image}" style="max-width:300px" />
+        <p>${data.description}</p>
+        <strong>${data.price}</strong>
+      </div>
+    `;
+  }
+</script>
+
 </body>
 </html>
