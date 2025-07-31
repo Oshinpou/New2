@@ -1,0 +1,140 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Digital Product Page Generator - imacx</title>
+  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+  <style>
+    body {
+      font-family: cursive;
+      background: #fff;
+      color: goldenrod;
+      padding: 1rem;
+    }
+    input, textarea, select, button {
+      display: block;
+      margin: 0.5rem 0;
+      padding: 0.5rem;
+      border: 1px solid goldenrod;
+      font-family: cursive;
+    }
+    button {
+      background: goldenrod;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .product-card {
+      border: 1px solid goldenrod;
+      padding: 1rem;
+      margin: 1rem 0;
+    }
+    .image-preview img {
+      max-width: 100px;
+      margin-right: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h2>📄 Generate Digital Product Page</h2>  <input type="text" id="productName" placeholder="Product Name">
+  <input type="number" id="basePrice" placeholder="Base Price">
+  <input type="number" id="discountPrice" placeholder="Discount Price (Optional)">  <textarea id="description" placeholder="Product Description"></textarea><label>Variants (e.g., Color): <input type="text" id="variantType" placeholder="Color"></label> <input type="text" id="variantOptions" placeholder="Comma-separated options (e.g., Red, Blue, Custom)">
+
+<label>Variant Prices:</label>
+
+  <textarea id="variantPrices" placeholder='{"Red": 1800, "Blue": 1850, "Custom": 2000}'></textarea><label>Category: <input type="text" id="category"></label> <label>Subcategory: <input type="text" id="subcategory"></label>
+
+<label>Rating (e.g., 4.5): <input type="number" step="0.1" id="rating"></label>
+
+<label>Select Product Images: <input type="file" id="imageUpload" multiple></label>
+
+  <div class="image-preview" id="imagePreview"></div><button onclick="generateProductPage()">➕ Generate Page</button>
+
+  <h3>🗂️ All Created Pages</h3>
+  <div id="productList"></div><script>
+  const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
+  const products = gun.get('digital_products');
+  const productIds = gun.get('all_product_ids');
+
+  const imageUpload = document.getElementById('imageUpload');
+  const imagePreview = document.getElementById('imagePreview');
+  let imageArray = [];
+
+  imageUpload.addEventListener('change', function() {
+    imageArray = [];
+    imagePreview.innerHTML = '';
+    [...this.files].forEach(file => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        imageArray.push(e.target.result);
+        const img = document.createElement('img');
+        img.src = e.target.result;
+        imagePreview.appendChild(img);
+      }
+      reader.readAsDataURL(file);
+    });
+  });
+
+  function generateProductPage() {
+    const id = 'prod_' + Math.random().toString(36).substring(2, 9);
+    const name = document.getElementById('productName').value;
+    const basePrice = +document.getElementById('basePrice').value;
+    const discountPrice = +document.getElementById('discountPrice').value;
+    const description = document.getElementById('description').value;
+    const variantType = document.getElementById('variantType').value;
+    const variantOptions = document.getElementById('variantOptions').value.split(',').map(v => v.trim());
+    const variantPrices = JSON.parse(document.getElementById('variantPrices').value || '{}');
+    const category = document.getElementById('category').value;
+    const subcategory = document.getElementById('subcategory').value;
+    const rating = +document.getElementById('rating').value;
+
+    const productData = {
+      id,
+      name,
+      basePrice,
+      discountPrice,
+      description,
+      variantType,
+      variantOptions,
+      variantPrices,
+      images: imageArray,
+      category,
+      subcategory,
+      rating
+    };
+
+    products.get(id).put(productData);
+    productIds.set(id);
+    alert("✅ Page Created: product.html#" + id);
+    renderProductList();
+  }
+
+  function renderProductList() {
+    document.getElementById('productList').innerHTML = '';
+    productIds.map().once(id => {
+      if (!id) return;
+      products.get(id).once(data => {
+        if (!data) return;
+        const div = document.createElement('div');
+        div.className = 'product-card';
+        div.innerHTML = `
+          <strong>${data.name}</strong> <br>
+          <a href="product.html#${id}" target="_blank">🔗 Open Page</a><br>
+          <button onclick="deleteProduct('${id}')">🗑️ Delete</button>
+        `;
+        document.getElementById('productList').appendChild(div);
+      });
+    });
+  }
+
+  function deleteProduct(id) {
+    if (!confirm("Are you sure to delete this page?")) return;
+    products.get(id).put(null);
+    productIds.get(id).put(null);
+    alert("❌ Page deleted");
+    renderProductList();
+  }
+
+  renderProductList();
+</script></body>
+  </html>
