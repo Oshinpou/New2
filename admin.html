@@ -143,15 +143,15 @@
     }
 
     function loadOrders() {
-  globalOrders.get('all').map().on((val, key) => {
-    if (!key) return;
-    globalOrders.get(key).once(order => {
+  globalOrders.get('all').map().once((val, orderId) => {
+    if (!orderId) return;
+    globalOrders.get(orderId).once(order => {
       if (!order || !order.orderId) return;
       const exists = allBlocks.find(b => b.getAttribute('data-order-id') === order.orderId.toLowerCase());
       if (!exists) createOrderBlock(order);
     });
   });
-  }
+}
 
     function filterOrders() {
       const query = document.getElementById('searchInput').value.trim().toLowerCase();
