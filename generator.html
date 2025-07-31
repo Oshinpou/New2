@@ -55,12 +55,13 @@
   <script>
     const gun = Gun();
     const pagesDB = gun.get('pages');
-    const pagesList = gun.get('pagesList'); // Used to store active page IDs
+    const pagesList = gun.get('pagesList');
     const params = new URLSearchParams(window.location.search);
     const pageId = params.get('id');
     const main = document.getElementById('main');
+    const renderedPages = new Set(); // To prevent duplicate rendering
 
-    // VIEW MODE
+    // 📄 PAGE VIEW MODE
     if (pageId) {
       pagesDB.get(pageId).once(data => {
         if (data && data.created) {
@@ -72,7 +73,7 @@
       });
 
     } else {
-      // GENERATOR MODE
+      // 🛠️ GENERATOR MODE
       main.innerHTML = `
         <h1>✨ Digital Pages Generator</h1>
         <button onclick="createPage()">Create New Blank Page</button>
@@ -80,48 +81,48 @@
       `;
       const output = document.getElementById('output');
 
-      // Load existing pages from pagesList
-      pagesList.map().once((val, key) => {
-        if (val) {
+      // Real-time listener to show all pages
+      pagesList.map().on((val, key) => {
+        if (val && !renderedPages.has(key)) {
           pagesDB.get(key).once(data => {
             if (data && data.created) {
               addLinkBox(key);
+              renderedPages.add(key);
             }
           });
+        } else if (!val && renderedPages.has(key)) {
+          // Handle deletion: remove box
+          const box = document.getElementById(`box-${key}`);
+          if (box) box.remove();
+          renderedPages.delete(key);
         }
       });
 
+      // 📥 Create New Page
       window.createPage = function () {
         const id = 'page-' + Date.now() + '-' + Math.random().toString(36).substr(2, 6);
         const createdAt = new Date().toISOString();
-
-        // Save page data
         pagesDB.get(id).put({ created: createdAt });
-
-        // Add page ID to pagesList
         pagesList.get(id).put(true);
-
-        addLinkBox(id);
       }
 
+      // 🧱 Render a box
       function addLinkBox(id) {
         const link = location.origin + location.pathname + '?id=' + id;
         const box = document.createElement('div');
         box.className = 'link-box';
+        box.id = `box-${id}`;
         box.innerHTML = `
           <a href="${link}" target="_blank">${link}</a>
-          <button class="danger" onclick="deleteLink('${id}', this)">Delete Link</button>
+          <button class="danger" onclick="deleteLink('${id}')">Delete Link</button>
         `;
         output.prepend(box);
       }
 
-      window.deleteLink = function (id, btn) {
-        // Remove page content and remove from list
+      // ❌ Delete
+      window.deleteLink = function (id) {
         pagesDB.get(id).put(null);
         pagesList.get(id).put(null);
-
-        const box = btn.parentElement;
-        box.innerHTML = `<p>❌ Link deleted.</p>`;
       }
     }
   </script>
