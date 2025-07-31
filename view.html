@@ -3,66 +3,49 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Imacx Page Generator</title>
+  <title>Imacx Digital Page Generator</title>
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
   <style>
     body {
-      font-family: sans-serif;
+      font-family: Arial, sans-serif;
       padding: 20px;
-      background: #f4f4f4;
-    }
-    h1 {
-      color: #333;
+      background-color: #f0f0f0;
     }
     input, textarea, select {
       display: block;
-      margin: 10px 0;
+      margin-bottom: 10px;
       padding: 8px;
       width: 100%;
-      max-width: 400px;
     }
     button {
-      margin: 10px 0;
-      padding: 8px 16px;
-      background: #007BFF;
-      color: white;
-      border: none;
+      padding: 10px 15px;
+      margin: 5px 0;
       cursor: pointer;
     }
-    button:hover {
-      background: #0056b3;
+    .link-card {
+      background: white;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 8px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
     }
-    .link-entry {
-      margin-bottom: 10px;
-      background: #fff;
-      padding: 10px;
-      border-left: 4px solid #007BFF;
-    }
-    .link-entry button {
-      background: #dc3545;
-      margin-left: 10px;
-    }
-    #links-container {
-      margin-top: 20px;
+    .link-card a {
+      word-break: break-all;
     }
   </style>
 </head>
 <body>
-  <h1>🔗 Imacx Page Generator</h1>
+  <h1>🌐 Imacx Page Generator</h1>
 
-  <input id="name" placeholder="Product Name" />
-  <textarea id="details" placeholder="Product Details"></textarea>
-  <input id="price" placeholder="Price" />
+  <input id="title" placeholder="Page Title (e.g., Imacx Star)" />
+  <textarea id="details" placeholder="Details (short description)"></textarea>
   <input id="image" placeholder="Image URL" />
-  <input id="category" placeholder="Category" />
-  <input id="subcategory" placeholder="Subcategory" />
-  <input id="variants" placeholder="Variants (comma-separated)" />
+  <input id="price" placeholder="Price (e.g., ₹1999)" />
+  <input id="variants" placeholder="Variants (e.g., Red,Blue,Green)" />
+  <button onclick="generatePage()">Generate Page</button>
 
-  <button onclick="generatePage()">Generate Link Page</button>
-
-  <hr />
-  <h2>📃 Generated Links</h2>
-  <div id="links-container"></div>
+  <h2>🔗 Generated Pages</h2>
+  <div id="links"></div>
 
   <hr />
   <button id="export-btn">📤 Export All Pages</button>
@@ -71,62 +54,91 @@
 
   <script>
     const gun = Gun();
-    const baseUrl = location.origin + location.pathname.replace("generator.html", ""); // assumes generator.html
+    const baseURL = location.origin + location.pathname.replace(/[^/]+$/, '');
 
     function generatePage() {
       const id = 'page_' + Date.now();
-      const name = document.getElementById('name').value;
-      const details = document.getElementById('details').value;
-      const price = document.getElementById('price').value;
-      const image = document.getElementById('image').value;
-      const category = document.getElementById('category').value;
-      const subcategory = document.getElementById('subcategory').value;
-      const variants = document.getElementById('variants').value;
+      const title = document.getElementById('title').value.trim();
+      const details = document.getElementById('details').value.trim();
+      const image = document.getElementById('image').value.trim();
+      const price = document.getElementById('price').value.trim();
+      const variants = document.getElementById('variants').value.trim();
+
+      if (!title || !details) {
+        alert("Title and details required");
+        return;
+      }
 
       const pageData = {
         id,
-        name,
+        title,
         details,
-        price,
         image,
-        category,
-        subcategory,
+        price,
         variants
       };
 
       gun.get(id).put(pageData);
-      gun.get('products_index').set(gun.get(id));
+      gun.get("index").set(gun.get(id));
+
       displayLinks();
     }
 
     function displayLinks() {
-      const container = document.getElementById('links-container');
-      container.innerHTML = '';
-      gun.get('products_index').map().once((page, id) => {
-        if (!page || !id) return;
-        const div = document.createElement('div');
-        div.className = 'link-entry';
-        div.innerHTML = `
-          <a href="${baseUrl}?id=${id}" target="_blank">🔗 ${page.name || id}</a>
-          <button onclick="deletePage('${id}')">Delete</button>
-        `;
-        container.appendChild(div);
+      document.getElementById('links').innerHTML = '';
+      gun.get("index").map().once((data, key) => {
+        if (!data || !data.id) return;
+        const linkDiv = document.createElement('div');
+        linkDiv.className = "link-card";
+
+        const link = document.createElement('a');
+        link.href = baseURL + '?id=' + data.id;
+        link.target = "_blank";
+        link.textContent = baseURL + '?id=' + data.id;
+
+        const del = document.createElement('button');
+        del.textContent = '🗑️ Delete';
+        del.onclick = () => {
+          gun.get(data.id).put(null);
+          gun.get("index").get(data.id).put(null);
+          displayLinks();
+        };
+
+        linkDiv.appendChild(link);
+        linkDiv.appendChild(document.createElement('br'));
+        linkDiv.appendChild(del);
+        document.getElementById('links').appendChild(linkDiv);
       });
     }
 
-    function deletePage(id) {
-      gun.get(id).put(null);
-      gun.get('products_index').map().once((data, key) => {
-        if (key === id) {
-          gun.get('products_index').get(key).put(null);
+    function renderPageFromURL() {
+      const params = new URLSearchParams(window.location.search);
+      const pageId = params.get("id");
+      if (!pageId) return;
+
+      document.body.innerHTML = '<p>Loading page...</p>';
+      gun.get(pageId).once(data => {
+        if (!data) {
+          document.body.innerHTML = '<h1>This page was deleted or does not exist</h1>';
+          return;
         }
+        document.body.innerHTML = `
+          <nav style="padding: 15px; background: #222; color: white;">
+            <h2>✨ ${data.title}</h2>
+          </nav>
+          <div style="padding: 20px;">
+            <img src="${data.image}" alt="Image" style="max-width:100%; border-radius:10px;" />
+            <p>${data.details}</p>
+            <h3>Price: ${data.price}</h3>
+            <p><strong>Variants:</strong> ${data.variants}</p>
+          </div>
+        `;
       });
-      displayLinks();
     }
 
     function exportPages() {
       const allData = {};
-      gun.get('products_index').map().once((product, id) => {
+      gun.get("index").map().once((product, id) => {
         if (!product || !id) return;
         gun.get(id).once(data => {
           allData[id] = data;
@@ -134,7 +146,7 @@
             const blob = new Blob([JSON.stringify(allData, null, 2)], { type: 'application/json' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = 'pages_backup.json';
+            a.download = 'imacx_pages_backup.json';
             a.click();
           }
         });
@@ -148,8 +160,9 @@
       reader.onload = (e) => {
         const data = JSON.parse(e.target.result);
         for (const id in data) {
-          gun.get(id).put(data[id]);
-          gun.get('products_index').set(gun.get(id));
+          const entry = data[id];
+          gun.get(id).put(entry);
+          gun.get("index").set(gun.get(id));
         }
         alert('✅ Pages imported successfully!');
         displayLinks();
@@ -157,11 +170,15 @@
       reader.readAsText(file);
     }
 
-    document.getElementById('export-btn').addEventListener('click', exportPages);
-    document.getElementById('import-btn').addEventListener('click', () => document.getElementById('import-input').click());
-    document.getElementById('import-input').addEventListener('change', importPages);
-
-    displayLinks();
+    // Setup event listeners
+    if (!window.location.search.includes('id=')) {
+      displayLinks();
+      document.getElementById('export-btn').addEventListener('click', exportPages);
+      document.getElementById('import-btn').addEventListener('click', () => document.getElementById('import-input').click());
+      document.getElementById('import-input').addEventListener('change', importPages);
+    } else {
+      renderPageFromURL();
+    }
   </script>
 </body>
-      </html>
+</html>
