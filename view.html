@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Soft Page</title>
+  <script src="pages-data.js"></script>
+</head>
+<body>
+  <div id="pageContent"></div>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const pageId = params.get("page");
+    const data = pagesData[pageId];
+
+    if (data) {
+      document.title = data.title;
+      document.getElementById("pageContent").innerHTML = `
+        <h1>${data.title}</h1>
+        <img src="${data.image}" style="max-width:300px;">
+        <p>${data.description}</p>
+        <h3>₹${data.price}</h3>
+      `;
+    } else {
+      document.getElementById("pageContent").innerText = "Page not found.";
+    }
+  </script>
+</body>
+</html>
