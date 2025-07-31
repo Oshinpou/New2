@@ -1,152 +1,103 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Admin - imacx Orders (Global)</title>
+  <title>imacx Admin - Orders</title>
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
   <style>
     body {
       font-family: sans-serif;
-      background: #fefefe;
-      color: #222;
       padding: 20px;
+      background: #fefefe;
     }
     h1 {
       text-align: center;
     }
-    #searchInput {
-      display: block;
-      margin: 0 auto 20px;
-      padding: 10px;
-      width: 300px;
-      border: 1px solid #aaa;
-      border-radius: 5px;
-    }
-    .order-block {
+    .order {
       border: 1px solid #ccc;
       padding: 15px;
       margin-bottom: 20px;
       border-radius: 5px;
-      background: #fffbe6;
-    }
-    .order-block.highlight {
-      border-color: goldenrod;
-      background: #ffffd7;
+      background: #ffffef;
     }
     pre {
-      white-space: pre-wrap;
-      word-break: break-word;
-      font-size: 14px;
+      background: #fff;
+      padding: 10px;
+      border: 1px dashed #aaa;
+      overflow-x: auto;
     }
     select, button {
       margin-top: 10px;
       padding: 6px 10px;
-      border-radius: 4px;
-      border: 1px solid #bbb;
-      font-family: sans-serif;
-    }
-    .btn {
-      cursor: pointer;
-      margin-left: 5px;
-    }
-    .update-btn {
-      background: #3498db;
-      color: white;
-    }
-    .delete-btn {
-      background: #e74c3c;
-      color: white;
-    }
-    #noOrders {
-      text-align: center;
-      color: #888;
-      margin-top: 40px;
+      font-size: 14px;
     }
   </style>
 </head>
-<body>  <h1>🌍 imacx Admin - Orders Worldwide</h1>
-  <input type="text" id="searchInput" placeholder="🔍 Search Order ID or Email" oninput="filterOrders()" />
-  <div id="ordersContainer"></div>
-  <p id="noOrders">No orders yet.</p>  <script>
-    const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
-    const globalOrders = gun.get('imacx_orders');
-    const ordersContainer = document.getElementById('ordersContainer');
-    const allBlocks = [];
+<body>
 
-    const STATUS_LIST = [
-      'Order Created',
-      'Payment Done',
-      'Order Cancelled',
-      'Order Processing',
-      'Out for Shipping',
-      'Shipped',
-      'Out for Delivery',
-      'Delivered'
-    ];
+<h1>🌍 imacx Admin - Global Orders</h1>
+<div id="orders"></div>
+<p id="emptyNote">No orders found.</p>
 
-    function createOrderBlock(order) {
-      if (!order || !order.orderId || !order.shipping || !order.basket) return;
+<script>
+  const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
+  const ordersRef = gun.get('imacx_orders');
+  const ordersDiv = document.getElementById('orders');
+  const emptyNote = document.getElementById('emptyNote');
 
-      document.getElementById('noOrders').style.display = 'none';
+  const STATUS_LIST = [
+    'Order Created', 'Payment Done', 'Order Cancelled',
+    'Order Processing', 'Out for Shipping', 'Shipped',
+    'Out for Delivery', 'Delivered'
+  ];
 
-      const block = document.createElement('div');
-      block.className = 'order-block';
-      block.setAttribute('data-order-id', order.orderId.toLowerCase());
-      block.setAttribute('data-email', order.shipping.email.toLowerCase());
+  function renderOrder(order) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'order';
 
-      const orderPre = document.createElement('pre');
-      orderPre.textContent = JSON.stringify(order, null, 2);
+    const pre = document.createElement('pre');
+    pre.textContent = JSON.stringify(order, null, 2);
 
-      const statusLabel = document.createElement('label');
-      statusLabel.textContent = "Update Status: ";
-      const statusSelect = document.createElement('select');
+    const statusLabel = document.createElement('label');
+    statusLabel.textContent = "Status: ";
+    
+    const select = document.createElement('select');
+    STATUS_LIST.forEach(status => {
+      const opt = document.createElement('option');
+      opt.value = status;
+      opt.textContent = status;
+      if (order.status === status) opt.selected = true;
+      select.appendChild(opt);
+    });
 
-      STATUS_LIST.forEach(status => {
-        const option = document.createElement('option');
-        option.value = status;
-        option.textContent = status;
-        if (status === order.status) option.selected = true;
-        statusSelect.appendChild(option);
+    const btn = document.createElement('button');
+    btn.textContent = "Update Status";
+    btn.onclick = () => {
+      ordersRef.get(order.orderId).get('status').put(select.value);
+      alert("✅ Status updated");
+    };
+
+    wrapper.appendChild(pre);
+    wrapper.appendChild(statusLabel);
+    wrapper.appendChild(select);
+    wrapper.appendChild(btn);
+
+    ordersDiv.appendChild(wrapper);
+  }
+
+  function loadOrders() {
+    ordersRef.map().once((ref) => {
+      if (!ref || !ref.orderId) return;
+      ordersRef.get(ref.orderId).once(order => {
+        if (!order || !order.orderId) return;
+        emptyNote.style.display = 'none';
+        renderOrder(order);
       });
+    });
+  }
 
-      const updateBtn = document.createElement('button');
-      updateBtn.className = 'btn update-btn';
-      updateBtn.textContent = 'Update Status';
-      updateBtn.onclick = () => {
-        globalOrders.get(order.orderId).get('status').put(statusSelect.value);
-        alert("✅ Status updated successfully for " + order.orderId);
-      };
+  window.onload = loadOrders;
+</script>
 
-      block.appendChild(orderPre);
-      block.appendChild(statusLabel);
-      block.appendChild(statusSelect);
-      block.appendChild(updateBtn);
-
-      ordersContainer.appendChild(block);
-      allBlocks.push(block);
-    }
-
-    function loadOrders() {
-      globalOrders.map().once(ref => {
-        if (!ref || !ref.orderId) return;
-        globalOrders.get(ref.orderId).once(fullOrder => {
-          if (!fullOrder || !fullOrder.orderId) return;
-          const exists = allBlocks.find(b => b.getAttribute('data-order-id') === fullOrder.orderId.toLowerCase());
-          if (!exists) createOrderBlock(fullOrder);
-        });
-      });
-    }
-
-    function filterOrders() {
-      const query = document.getElementById('searchInput').value.trim().toLowerCase();
-      allBlocks.forEach(block => {
-        const id = block.getAttribute('data-order-id');
-        const email = block.getAttribute('data-email');
-        const match = id.includes(query) || email.includes(query);
-        block.style.display = match ? '' : 'none';
-        block.classList.toggle('highlight', match && query);
-      });
-    }
-
-    window.onload = loadOrders;
-  </script></body>
+</body>
 </html>
