@@ -1,33 +1,169 @@
-<!DOCTYPE html>
-<html>
+<!DOCTYPE html><html lang="en">
 <head>
-  <title>Digital Page Generator</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>imacx Product Page Generator</title>
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f7f7f7; }
+    nav { background: #111; color: white; padding: 1rem; display: flex; justify-content: space-between; align-items: center; }
+    nav img { height: 40px; }
+    nav a { color: white; margin-left: 20px; text-decoration: none; }
+    .container { max-width: 800px; margin: auto; background: white; padding: 2rem; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    .slider { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 10px; }
+    .slider img, .slider video { height: 200px; scroll-snap-align: start; }
+    .field { margin: 1rem 0; }
+    .field label { display: block; font-weight: bold; }
+    .field input, .field select, .field textarea { width: 100%; padding: 0.5rem; }
+    .basket-btn { background: goldenrod; color: white; padding: 0.5rem 1rem; border: none; cursor: pointer; border-radius: 5px; }
+    .review-section { margin-top: 2rem; }
+    .stars span { font-size: 1.5rem; cursor: pointer; }
+    .product-card { border: 1px solid #ccc; padding: 1rem; margin: 1rem 0; display: flex; align-items: center; gap: 1rem; }
+    .product-card img { height: 80px; width: 80px; object-fit: cover; }
+  </style>
 </head>
 <body>
-  <h2>Create Digital Page</h2>
-  <input id="title" placeholder="Title" /><br><br>
-  <textarea id="content" placeholder="Description"></textarea><br><br>
-  <button onclick="createPage()">Generate Page</button>
-  <p id="link"></p>
+  <nav>
+    <div><img src="imacxstarone.png" alt="Logo"> <strong>imacx</strong></div>
+    <div>
+      <a href="account.html">Account</a>
+      <a href="index.html">Home</a>
+      <a href="basket.html">Basket</a>
+    </div>
+  </nav>
+  <div class="container">
+    <div class="slider" id="mediaSlider"></div><div class="field">
+  <label>Product Name</label>
+  <input type="text" id="productName">
+</div>
 
-  <script>
-    const gun = Gun();
+<div class="field">
+  <label>Category</label>
+  <select id="category">
+    <option value="food">Food</option>
+    <option value="jewellery">Jewellery</option>
+    <option value="digital">Digital</option>
+    <option value="cosmetics">Cosmetics</option>
+  </select>
+</div>
 
-    function generateId() {
-      return '_' + Math.random().toString(36).substr(2, 9);
+<div class="field">
+  <label>Subcategory</label>
+  <input type="text" id="subcategory" placeholder="e.g., chocolate, serum">
+</div>
+
+<div class="field">
+  <label>Variants (e.g., Size, Color)</label>
+  <input type="text" id="variantName" placeholder="e.g., color">
+  <label>Options (comma-separated)</label>
+  <input type="text" id="variantOptions" placeholder="e.g., red,blue">
+</div>
+
+<div class="field">
+  <label>Prices (for each variant option)</label>
+  <input type="text" id="variantPrices" placeholder="e.g., 100,120">
+  <label>Discounted Prices (optional)</label>
+  <input type="text" id="discountedPrices" placeholder="e.g., 90,110">
+</div>
+
+<div class="field">
+  <label>Quantity</label>
+  <input type="number" id="quantity" value="1" min="1">
+</div>
+
+<button class="basket-btn" onclick="addToBasket()">Add to Basket</button>
+
+<div class="field">
+  <label>Product Details</label>
+  <textarea id="productDetails" rows="5"></textarea>
+</div>
+
+<div class="review-section">
+  <h3>Rate & Review</h3>
+  <div class="stars" id="starRating"></div>
+  <textarea id="reviewText" placeholder="Write your review here..."></textarea>
+  <button class="basket-btn" onclick="submitReview()">Submit Review</button>
+</div>
+
+<div class="field">
+  <label>Search Products</label>
+  <input type="text" id="searchBar" onkeyup="searchProducts()" placeholder="Search...">
+  <div id="searchResults"></div>
+</div>
+
+  </div>  <script>
+    const allProducts = [
+      { name: "Soleme Cheese", price: 1, category: "food", subcategory: "breakfast", image: "soleme-cheese.jpg", link: "product-soleme-cheese.html" },
+      { name: "Iconic Blue Chocolate", price: 499, category: "food", subcategory: "chocolate", image: "iconic-blue-chocolate.jpg", link: "product-iconic-blue-chocolate.html" },
+      { name: "Grow Magic Jam", price: 249, category: "food", subcategory: "breakfast", image: "magic-jam.jpg", link: "product-magic-jam.html" },
+      { name: "Need Crunchy Nuts", price: 379, category: "food", subcategory: "snacks", image: "crunchy-nuts.jpg", link: "product-crunchy-nuts.html" }
+    ];
+
+    const basket = JSON.parse(localStorage.getItem('basket')) || [];
+
+    function addToBasket() {
+      const name = document.getElementById('productName').value;
+      const category = document.getElementById('category').value;
+      const subcategory = document.getElementById('subcategory').value;
+      const variantName = document.getElementById('variantName').value;
+      const options = document.getElementById('variantOptions').value.split(',');
+      const prices = document.getElementById('variantPrices').value.split(',').map(p => parseFloat(p));
+      const discounts = document.getElementById('discountedPrices').value.split(',').map(p => parseFloat(p));
+      const quantity = parseInt(document.getElementById('quantity').value);
+
+      const product = {
+        name,
+        category,
+        subcategory,
+        variants: options.map((opt, i) => ({
+          type: variantName,
+          option: opt,
+          price: discounts[i] || prices[i]
+        })),
+        price: discounts[0] || prices[0],
+        quantity,
+        image: "default.jpg"
+      };
+
+      basket.push(product);
+      localStorage.setItem('basket', JSON.stringify(basket));
+      alert("✅ Added to basket!");
     }
 
-    function createPage() {
-      const id = generateId();
-      const title = document.getElementById("title").value;
-      const content = document.getElementById("content").value;
-
-      gun.get("pages").get(id).put({ title, content });
-
-      const link = `page.html?id=${id}`;
-      document.getElementById("link").innerHTML = `🔗 <a href="${link}" target="_blank">${link}</a>`;
+    function submitReview() {
+      const stars = document.querySelectorAll('#starRating span.selected').length;
+      const text = document.getElementById('reviewText').value;
+      alert(`⭐ You rated ${stars} stars\n\n📝 Review: ${text}`);
     }
-  </script>
-</body>
-</html>
+
+    function createStars() {
+      const starDiv = document.getElementById('starRating');
+      for (let i = 0; i < 5; i++) {
+        const star = document.createElement('span');
+        star.textContent = '★';
+        star.onclick = () => {
+          [...starDiv.children].forEach((s, idx) => s.classList.toggle('selected', idx <= i));
+        };
+        starDiv.appendChild(star);
+      }
+    }
+
+    function searchProducts() {
+      const keyword = document.getElementById('searchBar').value.toLowerCase();
+      const results = allProducts.filter(p => p.name.toLowerCase().includes(keyword));
+      const display = results.map(p => `
+        <div class="product-card">
+          <img src="${p.image}" alt="${p.name}">
+          <div>
+            <h4>${p.name}</h4>
+            <p>₹${p.price}</p>
+            <a href="${p.link}">View Product</a>
+          </div>
+        </div>
+      `).join('');
+      document.getElementById('searchResults').innerHTML = display;
+    }
+
+    createStars();
+  </script></body>
+  </html>
