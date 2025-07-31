@@ -1,13 +1,167 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My SPA</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Imacx Page Generator</title>
+  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      background: #f4f4f4;
+    }
+    h1 {
+      color: #333;
+    }
+    input, textarea, select {
+      display: block;
+      margin: 10px 0;
+      padding: 8px;
+      width: 100%;
+      max-width: 400px;
+    }
+    button {
+      margin: 10px 0;
+      padding: 8px 16px;
+      background: #007BFF;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    .link-entry {
+      margin-bottom: 10px;
+      background: #fff;
+      padding: 10px;
+      border-left: 4px solid #007BFF;
+    }
+    .link-entry button {
+      background: #dc3545;
+      margin-left: 10px;
+    }
+    #links-container {
+      margin-top: 20px;
+    }
+  </style>
 </head>
 <body>
-    <div id="app"></div>
+  <h1>🔗 Imacx Page Generator</h1>
 
-    <script src="script.js"></script>
+  <input id="name" placeholder="Product Name" />
+  <textarea id="details" placeholder="Product Details"></textarea>
+  <input id="price" placeholder="Price" />
+  <input id="image" placeholder="Image URL" />
+  <input id="category" placeholder="Category" />
+  <input id="subcategory" placeholder="Subcategory" />
+  <input id="variants" placeholder="Variants (comma-separated)" />
+
+  <button onclick="generatePage()">Generate Link Page</button>
+
+  <hr />
+  <h2>📃 Generated Links</h2>
+  <div id="links-container"></div>
+
+  <hr />
+  <button id="export-btn">📤 Export All Pages</button>
+  <input type="file" id="import-input" style="display:none;" />
+  <button id="import-btn">📥 Import Pages</button>
+
+  <script>
+    const gun = Gun();
+    const baseUrl = location.origin + location.pathname.replace("generator.html", ""); // assumes generator.html
+
+    function generatePage() {
+      const id = 'page_' + Date.now();
+      const name = document.getElementById('name').value;
+      const details = document.getElementById('details').value;
+      const price = document.getElementById('price').value;
+      const image = document.getElementById('image').value;
+      const category = document.getElementById('category').value;
+      const subcategory = document.getElementById('subcategory').value;
+      const variants = document.getElementById('variants').value;
+
+      const pageData = {
+        id,
+        name,
+        details,
+        price,
+        image,
+        category,
+        subcategory,
+        variants
+      };
+
+      gun.get(id).put(pageData);
+      gun.get('products_index').set(gun.get(id));
+      displayLinks();
+    }
+
+    function displayLinks() {
+      const container = document.getElementById('links-container');
+      container.innerHTML = '';
+      gun.get('products_index').map().once((page, id) => {
+        if (!page || !id) return;
+        const div = document.createElement('div');
+        div.className = 'link-entry';
+        div.innerHTML = `
+          <a href="${baseUrl}?id=${id}" target="_blank">🔗 ${page.name || id}</a>
+          <button onclick="deletePage('${id}')">Delete</button>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function deletePage(id) {
+      gun.get(id).put(null);
+      gun.get('products_index').map().once((data, key) => {
+        if (key === id) {
+          gun.get('products_index').get(key).put(null);
+        }
+      });
+      displayLinks();
+    }
+
+    function exportPages() {
+      const allData = {};
+      gun.get('products_index').map().once((product, id) => {
+        if (!product || !id) return;
+        gun.get(id).once(data => {
+          allData[id] = data;
+          if (Object.keys(allData).length > 0) {
+            const blob = new Blob([JSON.stringify(allData, null, 2)], { type: 'application/json' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'pages_backup.json';
+            a.click();
+          }
+        });
+      });
+    }
+
+    function importPages(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const data = JSON.parse(e.target.result);
+        for (const id in data) {
+          gun.get(id).put(data[id]);
+          gun.get('products_index').set(gun.get(id));
+        }
+        alert('✅ Pages imported successfully!');
+        displayLinks();
+      };
+      reader.readAsText(file);
+    }
+
+    document.getElementById('export-btn').addEventListener('click', exportPages);
+    document.getElementById('import-btn').addEventListener('click', () => document.getElementById('import-input').click());
+    document.getElementById('import-input').addEventListener('change', importPages);
+
+    displayLinks();
+  </script>
 </body>
-</html>
+      </html>
