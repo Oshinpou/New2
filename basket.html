@@ -218,15 +218,22 @@
         currency: "INR",
         name: "imacx Shop",
         description: `Order ID: ${orderId}`,
-        notes: {
-          orderId,
-          recipient: shipping.recipient,
-          email: shipping.email,
-          phone: shipping.countryCode + shipping.phone,
-          address: shipping.address,
-          total,
-          items: basket.map(i => `${i.name} x${i.quantity}`).join(', ')
-        },
+        notes: { 
+            orderId,
+      recipient: shipping.recipient,
+      email: shipping.email,
+      phone: `${shipping.countryCode}${shipping.phone}`,
+      address: shipping.address,
+      area: shipping.area,
+      city: shipping.city,
+      state: shipping.state,
+      country: shipping.country,
+      zip: shipping.zip,
+      countryCode: shipping.countryCode,
+      grandTotal: `₹${total}`,
+      itemCount: basket.length,
+      items: basket.map(i => `${i.name} x${i.quantity} = ₹${i.price * i.quantity}`).join(', ')
+ },
         handler: function (response) {
           alert("✅ Payment Successful! Razorpay ID: " + response.razorpay_payment_id);
           globalOrders.get(orderId).get('status').put('Payment Done');
