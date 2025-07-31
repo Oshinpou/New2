@@ -1,58 +1,53 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Digital Page Generator</title>
-    <style>
-        body { font-family: Arial, sans-serif; }
-        #pageList { margin-top: 20px; }
-        .page { margin: 10px 0; }
-        .delete-btn { color: red; cursor: pointer; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Softcoded Product Page Generator</title>
 </head>
 <body>
-    <h1>Digital Page Generator</h1>
-    <input type="text" id="pageData" placeholder="Enter page data">
-    <button id="generateBtn">Generate Page</button>
-    <div id="pageList"></div>
+  <h1>Softcoded Product Page Generator</h1>
+  <button onclick="generateAllProductPages()">Generate Product Pages</button>
 
-    <script>
-        const pages = {};
+  <script src="products-data.js"></script>
+  <script>
+    function generateAllProductPages() {
+      allProducts.forEach(product => {
+        const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${product.name} - imacx</title>
+  <style>
+    body { font-family: Arial; padding: 20px; background: #f4f4f4; }
+    .product-container { background: white; padding: 20px; border-radius: 8px; max-width: 600px; margin: auto; }
+    img { max-width: 100%; border-radius: 8px; }
+    h1 { margin-top: 0; }
+    p.price { font-size: 1.5rem; color: green; }
+  </style>
+</head>
+<body>
+  <div class="product-container">
+    <img src="${product.image}" alt="${product.name}">
+    <h1>${product.name}</h1>
+    <p class="price">₹${product.price}</p>
+    <p>Category: ${product.category}</p>
+    <p>Subcategory: ${product.subcategory}</p>
+    <button>Add to Basket</button>
+  </div>
+</body>
+</html>
+        `.trim();
 
-        document.getElementById('generateBtn').addEventListener('click', () => {
-            const data = document.getElementById('pageData').value;
-            const uniqueId = Date.now();
-            pages[uniqueId] = data;
-
-            renderPages();
-            document.getElementById('pageData').value = '';
-        });
-
-        function renderPages() {
-            const pageList = document.getElementById('pageList');
-            pageList.innerHTML = '';
-
-            for (const id in pages) {
-                const pageDiv = document.createElement('div');
-                pageDiv.className = 'page';
-                pageDiv.innerHTML = `
-                    <a href="#" onclick="openPage(${id})">View Page ${id}</a>
-                    <span class="delete-btn" onclick="deletePage(${id})">Delete</span>
-                `;
-                pageList.appendChild(pageDiv);
-            }
-        }
-
-        function openPage(id) {
-            const data = pages[id];
-            alert(data ? `Page Data: ${data}` : 'No data for this page.');
-        }
-
-        function deletePage(id) {
-            delete pages[id];
-            renderPages();
-        }
-    </script>
+        const blob = new Blob([html], { type: 'text/html' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = product.link; // e.g. product-soleme-cheese.html
+        a.click();
+      });
+    }
+  </script>
 </body>
 </html>
