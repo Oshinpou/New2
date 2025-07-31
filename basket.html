@@ -183,8 +183,11 @@
   alert("✅ Order saved to admin database.");
   document.getElementById('orderOutput').textContent = JSON.stringify(newOrder, null, 2);
     }
-  
- function startPaymentFlow() {
+
+    localStorage.setItem('admin_orders', JSON.stringify([...(JSON.parse(localStorage.getItem('admin_orders')) || []), newOrder]));
+
+    
+    function startPaymentFlow() {
       const basket = getBasket();
       if (!orderId || Object.keys(shipping).length === 0 || basket.length === 0) {
         alert('Please save the order first.');
