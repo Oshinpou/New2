@@ -4,237 +4,449 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Digital Page Generator</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --primary-color: #007bff;
-            --danger-color: #dc3545;
-            --light-gray: #f8f9fa;
-            --border-color: #dee2e6;
-            --text-color: #333;
-            --link-color: #0056b3;
-        }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            line-height: 1.6;
-            background-color: var(--light-gray);
-            color: var(--text-color);
-            margin: 0;
-            padding: 20px;
-            display: flex;
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            color: #374151;
+        }
+        /* Custom modal styles */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1000; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
             justify-content: center;
-        }
-        .container {
-            max-width: 900px;
-            width: 100%;
-            background: #fff;
-            padding: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-        h1, h2 {
-            color: var(--primary-color);
-            border-bottom: 2px solid var(--border-color);
-            padding-bottom: 10px;
-        }
-        button {
-            cursor: pointer;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 5px;
-            font-size: 1rem;
-            font-weight: bold;
-            transition: background-color 0.2s;
-        }
-        #create-page-btn {
-            background-color: var(--primary-color);
-            color: white;
-            margin-bottom: 1.5rem;
-        }
-        #create-page-btn:hover {
-            background-color: var(--link-color);
-        }
-        .delete-btn {
-            background-color: var(--danger-color);
-            color: white;
-            font-size: 0.8rem;
-            padding: 5px 10px;
-        }
-        .delete-btn:hover {
-            background-color: #c82333;
-        }
-        #page-list ul {
-            list-style: none;
-            padding: 0;
-        }
-        #page-list li {
-            display: flex;
-            justify-content: space-between;
             align-items: center;
-            padding: 12px;
-            border: 1px solid var(--border-color);
-            border-radius: 5px;
-            margin-bottom: 10px;
-            background: #fff;
         }
-        #page-list a {
-            text-decoration: none;
-            color: var(--link-color);
-            font-weight: 500;
-        }
-        #page-list a:hover {
-            text-decoration: underline;
-        }
-        #page-content {
-            margin-top: 2rem;
-            padding: 1.5rem;
-            border: 1px dashed var(--border-color);
-            border-radius: 5px;
-            min-height: 150px;
-            background-color: #fff;
-        }
-        .page-placeholder {
-            color: #6c757d;
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
             text-align: center;
+        }
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
         }
     </style>
 </head>
-<body>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
 
-    <div class="container">
-        <h1>📑 Digital Page Generator</h1>
-        
-        <section id="controls">
-            <h2>Controls</h2>
-            <button id="create-page-btn">✨ Create a New Page</button>
-        </section>
+    <!-- Main Application Container -->
+    <div id="app-container" class="bg-white p-8 rounded-xl shadow-lg w-full max-w-3xl">
+        <!-- Content will be dynamically loaded here by JavaScript -->
+        <h1 class="text-3xl font-bold text-center mb-6 text-gray-800">Digital Page Generator</h1>
+        <div id="loading-indicator" class="text-center text-blue-500 font-medium hidden">
+            Loading...
+        </div>
+        <div id="error-message" class="text-center text-red-500 font-medium hidden">
+            An error occurred. Please try again.
+        </div>
+        <div id="main-content">
+            <!-- Generator UI -->
+            <div id="generator-ui" class="space-y-6">
+                <textarea id="page-content-input"
+                          class="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y min-h-[150px]"
+                          placeholder="Enter content for your digital page..."></textarea>
+                <button id="generate-page-button"
+                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                    Generate Digital Page
+                </button>
 
-        <section id="page-list-container">
-            <h2>My Pages</h2>
-            <div id="page-list">
+                <h2 class="text-2xl font-semibold mt-8 mb-4 text-gray-700">Your Pages</h2>
+                <div id="pages-list" class="space-y-4">
+                    <!-- Generated pages will be listed here -->
+                    <p class="text-gray-500 text-center" id="no-pages-message">No pages generated yet. Start by creating one!</p>
                 </div>
-        </section>
+            </div>
 
-        <section id="page-content">
-            </section>
+            <!-- Digital Page UI (hidden by default) -->
+            <div id="digital-page-ui" class="hidden">
+                <div class="bg-gray-100 p-6 rounded-lg mb-6 shadow-inner">
+                    <h2 class="text-2xl font-bold mb-4 text-gray-800">Page Content</h2>
+                    <div id="display-page-content" class="prose max-w-none text-gray-700">
+                        <!-- Content loaded from Firestore will appear here -->
+                    </div>
+                </div>
+                <div class="flex flex-col sm:flex-row justify-center gap-4">
+                    <button id="delete-page-button"
+                            class="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                        Delete This Page
+                    </button>
+                    <button id="back-to-generator-button"
+                            class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                        Back to Generator
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const createPageBtn = document.getElementById('create-page-btn');
-            const pageList = document.getElementById('page-list');
-            const pageContent = document.getElementById('page-content');
+    <!-- Custom Modal for Confirmation/Messages -->
+    <div id="customModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <p id="modalMessage" class="text-lg font-medium text-gray-700 mb-4"></p>
+            <div id="modalButtons" class="flex justify-center gap-4">
+                <!-- Buttons will be added here dynamically -->
+            </div>
+        </div>
+    </div>
 
-            const loadPages = () => {
-                const pagesJSON = localStorage.getItem('digitalPages');
-                return pagesJSON ? JSON.parse(pagesJSON) : {};
-            };
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, query, onSnapshot, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-            const savePages = (pages) => {
-                localStorage.setItem('digitalPages', JSON.stringify(pages));
-            };
+        // Global variables for Firebase instances
+        let app;
+        let db;
+        let auth;
+        let userId = null;
+        let isAuthReady = false;
 
-            const generateUniqueId = () => `page-${Date.now()}`;
+        // Get elements
+        const generatorUi = document.getElementById('generator-ui');
+        const digitalPageUi = document.getElementById('digital-page-ui');
+        const pageContentInput = document.getElementById('page-content-input');
+        const generatePageButton = document.getElementById('generate-page-button');
+        const pagesList = document.getElementById('pages-list');
+        const noPagesMessage = document.getElementById('no-pages-message');
+        const displayPageContent = document.getElementById('display-page-content');
+        const deletePageButton = document.getElementById('delete-page-button');
+        const backToGeneratorButton = document.getElementById('back-to-generator-button');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const errorMessage = document.getElementById('error-message');
 
-            const renderPageList = () => {
-                const pages = loadPages();
-                pageList.innerHTML = ''; 
+        // Modal elements
+        const customModal = document.getElementById('customModal');
+        const modalMessage = document.getElementById('modalMessage');
+        const modalButtons = document.getElementById('modalButtons');
+        const closeButton = document.querySelector('.close-button');
 
-                if (Object.keys(pages).length === 0) {
-                    pageList.innerHTML = '<p>No pages created yet.</p>';
-                    return;
-                }
+        /**
+         * Displays a custom modal with a message and optional buttons.
+         * @param {string} message - The message to display.
+         * @param {Array<{text: string, className: string, onClick: Function}>} buttons - An array of button configurations.
+         */
+        function showModal(message, buttons = []) {
+            modalMessage.textContent = message;
+            modalButtons.innerHTML = ''; // Clear previous buttons
 
-                const ul = document.createElement('ul');
-                for (const pageId in pages) {
-                    const page = pages[pageId];
-                    const li = document.createElement('li');
-                    
-                    const pageLink = document.createElement('a');
-                    pageLink.href = `#${pageId}`;
-                    pageLink.textContent = page.title;
-                    pageLink.dataset.pageId = pageId;
-
-                    // Display the full link on hover as a tooltip
-                    const fullPageLink = `${window.location.origin}${window.location.pathname}#${pageId}`;
-                    pageLink.title = `Link: ${fullPageLink}`;
-
-                    const deleteBtn = document.createElement('button');
-                    deleteBtn.className = 'delete-btn';
-                    deleteBtn.textContent = 'Delete';
-                    deleteBtn.dataset.pageId = pageId;
-
-                    li.appendChild(pageLink);
-                    li.appendChild(deleteBtn);
-                    ul.appendChild(li);
-                }
-                pageList.appendChild(ul);
-            };
-
-            // **CORRECTED FUNCTION**
-            // This now sets the content to be a blank slate.
-            const displayPage = (pageId) => {
-                const pages = loadPages();
-                const page = pages[pageId];
-                
-                if (page) {
-                    // Set the content area to be blank, as requested.
-                    // You can add an editor or other elements here later.
-                    pageContent.innerHTML = ''; 
-                } else {
-                    pageContent.innerHTML = '<p class="page-placeholder">Page not found. It may have been deleted.</p>';
-                }
-            };
-            
-            createPageBtn.addEventListener('click', () => {
-                const pages = loadPages();
-                const newPageId = generateUniqueId();
-                
-                pages[newPageId] = {
-                    title: `New Page (${new Date().toLocaleTimeString()})`,
-                    content: '' 
+            buttons.forEach(btnConfig => {
+                const button = document.createElement('button');
+                button.textContent = btnConfig.text;
+                button.className = `py-2 px-4 rounded-lg font-semibold transition duration-300 ease-in-out ${btnConfig.className}`;
+                button.onclick = () => {
+                    btnConfig.onClick();
+                    hideModal();
                 };
-                
-                savePages(pages);
-                renderPageList();
-                
-                window.location.hash = newPageId;
+                modalButtons.appendChild(button);
             });
 
-            pageList.addEventListener('click', (e) => {
-                const target = e.target;
-                
-                if (target.classList.contains('delete-btn')) {
-                    e.preventDefault();
-                    const pageIdToDelete = target.dataset.pageId;
-                    
-                    if (confirm(`Are you sure you want to delete this page? This action cannot be undone.`)) {
-                        const pages = loadPages();
-                        delete pages[pageIdToDelete];
-                        savePages(pages);
-                        renderPageList();
-                        
-                        if (window.location.hash === `#${pageIdToDelete}`) {
-                            window.location.hash = '';
+            customModal.style.display = 'flex'; // Show the modal
+        }
+
+        /**
+         * Hides the custom modal.
+         */
+        function hideModal() {
+            customModal.style.display = 'none';
+        }
+
+        // Close modal when close button is clicked
+        closeButton.onclick = hideModal;
+
+        // Close modal when clicking outside of the modal content
+        window.onclick = function(event) {
+            if (event.target == customModal) {
+                hideModal();
+            }
+        };
+
+        /**
+         * Displays the loading indicator.
+         */
+        function showLoading() {
+            loadingIndicator.classList.remove('hidden');
+            errorMessage.classList.add('hidden');
+        }
+
+        /**
+         * Hides the loading indicator.
+         */
+        function hideLoading() {
+            loadingIndicator.classList.add('hidden');
+        }
+
+        /**
+         * Displays an error message.
+         * @param {string} message - The error message to display.
+         */
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.remove('hidden');
+            hideLoading();
+        }
+
+        /**
+         * Hides the error message.
+         */
+        function hideError() {
+            errorMessage.classList.add('hidden');
+        }
+
+        /**
+         * Initializes Firebase and authenticates the user.
+         */
+        async function initializeFirebase() {
+            showLoading();
+            try {
+                // Firebase configuration is provided by the environment
+                const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                // Listen for auth state changes
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        isAuthReady = true;
+                        console.log("Authenticated with user ID:", userId);
+                        // Once authenticated, render the appropriate UI
+                        renderUIBasedOnURL();
+                        // Start listening to pages if on generator UI
+                        if (window.location.hash === '') {
+                             setupPagesListener();
+                        }
+                    } else {
+                        // Sign in anonymously if no user is logged in
+                        try {
+                            const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+                            if (initialAuthToken) {
+                                await signInWithCustomToken(auth, initialAuthToken);
+                            } else {
+                                await signInAnonymously(auth);
+                            }
+                        } catch (anonError) {
+                            console.error("Anonymous sign-in failed:", anonError);
+                            showError("Failed to authenticate. Please refresh the page.");
                         }
                     }
-                }
-            });
+                    hideLoading();
+                });
+            } catch (error) {
+                console.error("Firebase initialization failed:", error);
+                showError("Failed to initialize the application. Please check your network connection.");
+                hideLoading();
+            }
+        }
 
-            const checkUrlAndDisplayPage = () => {
-                const pageId = window.location.hash.substring(1); 
-                if (pageId) {
-                    displayPage(pageId);
+        /**
+         * Sets up a real-time listener for pages created by the current user.
+         */
+        function setupPagesListener() {
+            if (!db || !userId || !isAuthReady) {
+                console.log("Firestore not ready or user not authenticated for listener.");
+                return;
+            }
+
+            const pagesCollectionRef = collection(db, `artifacts/${__app_id}/users/${userId}/digital_pages`);
+            // Note: orderBy is commented out to avoid potential index issues as per instructions.
+            // If sorting is needed, it should be done client-side after fetching.
+            const q = query(pagesCollectionRef /*, orderBy('createdAt', 'desc')*/);
+
+            onSnapshot(q, (snapshot) => {
+                pagesList.innerHTML = ''; // Clear existing list
+                if (snapshot.empty) {
+                    noPagesMessage.classList.remove('hidden');
                 } else {
-                    pageContent.innerHTML = '<p class="page-placeholder">Select a page from the list above or create a new one.</p>';
+                    noPagesMessage.classList.add('hidden');
+                    snapshot.forEach(doc => {
+                        const pageData = doc.data();
+                        const pageId = doc.id;
+                        const pageLink = `${window.location.origin}/#${pageId}`;
+
+                        const pageItem = document.createElement('div');
+                        pageItem.className = 'bg-gray-50 p-4 rounded-lg border border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3';
+                        pageItem.innerHTML = `
+                            <a href="${pageLink}" class="text-blue-600 hover:underline font-medium break-all flex-1">
+                                ${pageLink}
+                            </a>
+                            <span class="text-sm text-gray-500">Created: ${pageData.createdAt ? new Date(pageData.createdAt.toDate()).toLocaleString() : 'N/A'}</span>
+                        `;
+                        pagesList.appendChild(pageItem);
+                    });
                 }
-            };
+            }, (error) => {
+                console.error("Error fetching pages:", error);
+                showError("Failed to load your pages.");
+            });
+        }
 
-            window.addEventListener('hashchange', checkUrlAndDisplayPage);
+        /**
+         * Generates a new digital page.
+         */
+        generatePageButton.addEventListener('click', async () => {
+            const content = pageContentInput.value.trim();
+            if (!content) {
+                showModal("Please enter some content for your page.");
+                return;
+            }
+            if (!db || !userId || !isAuthReady) {
+                showModal("Application not ready. Please wait a moment or refresh.");
+                return;
+            }
 
-            renderPageList();
-            checkUrlAndDisplayPage();
+            showLoading();
+            try {
+                const newPageRef = doc(collection(db, `artifacts/${__app_id}/users/${userId}/digital_pages`));
+                await setDoc(newPageRef, {
+                    content: content,
+                    createdAt: serverTimestamp()
+                });
+                const pageLink = `${window.location.origin}/#${newPageRef.id}`;
+                pageContentInput.value = ''; // Clear input
+                showModal(`Page created! Share this link: <br><a href="${pageLink}" target="_blank" class="text-blue-600 hover:underline break-all">${pageLink}</a>`, [
+                    { text: 'Copy Link', className: 'bg-blue-500 hover:bg-blue-600 text-white', onClick: () => copyToClipboard(pageLink) },
+                    { text: 'Close', className: 'bg-gray-200 hover:bg-gray-300 text-gray-800', onClick: () => {} }
+                ]);
+            } catch (e) {
+                console.error("Error adding document: ", e);
+                showError("Failed to generate page. Please try again.");
+            } finally {
+                hideLoading();
+            }
         });
-    </script>
 
-</body>
-</html>
+        /**
+         * Copies text to the clipboard.
+         * @param {string} text - The text to copy.
+         */
+        function copyToClipboard(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                showModal("Link copied to clipboard!");
+            } catch (err) {
+                console.error('Failed to copy: ', err);
+                showModal("Failed to copy link. Please copy manually.");
+            }
+            document.body.removeChild(textarea);
+        }
+
+        /**
+         * Renders the digital page UI based on the provided page ID.
+         * @param {string} pageId - The ID of the page to display.
+         */
+        async function renderDigitalPage(pageId) {
+            generatorUi.classList.add('hidden');
+            digitalPageUi.classList.remove('hidden');
+            displayPageContent.innerHTML = '<p class="text-gray-500">Loading page content...</p>';
+            hideError();
+            showLoading();
+
+            if (!db || !userId || !isAuthReady) {
+                showError("Application not ready. Please wait a moment or refresh.");
+                hideLoading();
+                return;
+            }
+
+            try {
+                const pageDocRef = doc(db, `artifacts/${__app_id}/users/${userId}/digital_pages`, pageId);
+                const pageSnap = await getDoc(pageDocRef);
+
+                if (pageSnap.exists()) {
+                    const pageData = pageSnap.data();
+                    displayPageContent.textContent = pageData.content || 'No content found for this page.';
+                    deletePageButton.dataset.pageId = pageId; // Store pageId for deletion
+                } else {
+                    displayPageContent.textContent = 'This digital page does not exist or has been deleted.';
+                    deletePageButton.classList.add('hidden'); // Hide delete button if page doesn't exist
+                }
+            } catch (e) {
+                console.error("Error fetching page: ", e);
+                showError("Failed to load page content.");
+                displayPageContent.textContent = 'Error loading page content.';
+                deletePageButton.classList.add('hidden');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        /**
+         * Renders the generator UI.
+         */
+        function renderGeneratorPage() {
+            digitalPageUi.classList.add('hidden');
+            generatorUi.classList.remove('hidden');
+            deletePageButton.classList.remove('hidden'); // Ensure delete button is visible for next page load
+            hideError();
+            // Start listening to pages when on generator UI
+            if (isAuthReady) {
+                setupPagesListener();
+            }
+        }
+
+        /**
+         * Handles the deletion of a digital page.
+         */
+        deletePageButton.addEventListener('click', () => {
+            const pageIdToDelete = deletePageButton.dataset.pageId;
+            if (!pageIdToDelete) {
+                showModal("No page ID found to delete.");
+                return;
+            }
+
+            showModal(`Are you sure you want to permanently delete this page? This action cannot be undone.`, [
+                { text: 'Yes, Delete', className: 'bg-red-600 hover:bg-red-700 text-white', onClick: async () => {
+                    showLoading();
+                    try {
+                        if (!db || !userId || !isAuthReady) {
+                            showModal("Application not ready. Please wait a moment or refresh.");
+                            return;
+                        }
+                        await deleteDoc(doc(db, `artifacts/${__app_id}/users/${userId}/digital_pages`, pageIdToDelete));
+                        showModal("Page deleted successfully!");
+                        window.location.hash = ''; // Go back to generator
+                    } catch (e) {
+                        console.error("Error deleting document: ", e);
+                        showError("Failed to delete page. Please try again.");
+                    } finally {
+                        hideLoading();
+                    }
+                }},
+                { text: 'Cancel', className: 'bg-gray-200 hover:bg-gray-300 text-gray-800', onClick: () => {} }
+            ]);
+        });
+
+        /**
+         * Handles navigation back to the generator.
+         */
+        backToGeneratorButton.ad
