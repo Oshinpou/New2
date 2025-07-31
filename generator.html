@@ -1,184 +1,111 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Digital Product Page Generator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Digital Page Generator</title>
+  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: sans-serif;
       padding: 20px;
-      background-color: #f9f9f9;
+      background: #f4f4f4;
+      color: #222;
     }
-    input, select, textarea, button {
-      display: block;
-      width: 100%;
-      margin-bottom: 15px;
-      padding: 8px;
-    }
-    .image-preview {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-bottom: 15px;
-    }
-    .image-preview img {
-      max-width: 100px;
-      height: auto;
-    }
-    .variant-group, .category-group {
+    h1 {
+      color: #111;
       margin-bottom: 20px;
-      padding: 10px;
-      background: #fff;
-      border: 1px solid #ccc;
     }
-    .star-rating span {
-      font-size: 24px;
+    button {
+      padding: 10px 20px;
+      margin: 10px 0;
+      font-size: 16px;
       cursor: pointer;
-      color: #ccc;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
     }
-    .star-rating span.selected {
-      color: gold;
+    button.danger {
+      background-color: #dc3545;
+    }
+    input, textarea {
+      padding: 10px;
+      margin: 10px 0;
+      width: 100%;
+      font-size: 16px;
+    }
+    .link-box {
+      background: #fff;
+      padding: 15px;
+      border-radius: 6px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      margin-top: 20px;
+    }
+    a {
+      word-break: break-all;
+    }
+    #status {
+      margin-top: 10px;
+      font-weight: bold;
+      color: green;
     }
   </style>
 </head>
 <body>
-  <h1>Create a Digital Product Page</h1>  <input type="text" id="productName" placeholder="Product Name" required />  <div id="variantSection">
-    <h3>Product Variants</h3>
-    <div id="variantList"></div>
-    <select id="variantType">
-      <option value="Color">Color</option>
-      <option value="Size">Size</option>
-      <option value="Material">Material</option>
-      <option value="Custom">Custom</option>
-    </select>
-    <input type="text" id="variantOptions" placeholder="Options (comma separated)" />
-    <button onclick="addVariant()">Add Variant</button>
-  </div>  <div id="variantPrices"></div>  <input type="text" id="basePrice" placeholder="Base Price in ₹ (INR)" />  <textarea id="productDescription" placeholder="Product Description"></textarea>  <input type="text" id="imageNames" placeholder="Image Titles (optional)" />
-  <input type="file" id="imageUploader" multiple accept="image/*" />
-  <div class="image-preview" id="imagePreview"></div>  <div class="category-group">
-    <h3>Category</h3>
-    <select id="mainCategory">
-      <option value="">Select Main Category</option>
-      <option value="Food">Food</option>
-      <option value="Jewellery">Jewellery</option>
-      <option value="Cosmetics">Cosmetics</option>
-      <option value="Digital">Digital</option>
-    </select>
-    <input type="text" id="subCategory" placeholder="Subcategory (e.g. Cheese, Cream)" />
-  </div>  <div class="star-rating" id="starRating">
-    <span onclick="rate(1)">★</span>
-    <span onclick="rate(2)">★</span>
-    <span onclick="rate(3)">★</span>
-    <span onclick="rate(4)">★</span>
-    <span onclick="rate(5)">★</span>
-  </div><button onclick="generateProductPage()">Generate Page</button>
 
-  <h2>Generated Pages</h2>
-  <ul id="productLinks"></ul>  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>  <script>
-    const db = Gun();
-    let selectedRating = 0;
-    const imageUploader = document.getElementById("imageUploader");
-    const imagePreview = document.getElementById("imagePreview");
-    const productLinks = document.getElementById("productLinks");
-    const variantList = document.getElementById("variantList");
-    const variantPrices = document.getElementById("variantPrices");
-    const variants = {};
+  <div id="main"></div>
 
-    imageUploader.addEventListener("change", () => {
-      imagePreview.innerHTML = "";
-      Array.from(imageUploader.files).forEach(file => {
-        const reader = new FileReader();
-        reader.onload = e => {
-          const img = document.createElement("img");
-          img.src = e.target.result;
-          imagePreview.appendChild(img);
-        };
-        reader.readAsDataURL(file);
-      });
-    });
+  <script>
+    const gun = Gun();
+    const params = new URLSearchParams(window.location.search);
+    const pageId = params.get('id');
+    const main = document.getElementById('main');
 
-    function rate(stars) {
-      selectedRating = stars;
-      document.querySelectorAll(".star-rating span").forEach((star, i) => {
-        star.classList.toggle("selected", i < stars);
-      });
-    }
-
-    function addVariant() {
-      const type = document.getElementById("variantType").value;
-      const options = document.getElementById("variantOptions").value.split(",").map(v => v.trim());
-      if (!variants[type]) variants[type] = [];
-      variants[type].push(...options);
-
-      renderVariants();
-      document.getElementById("variantOptions").value = "";
-    }
-
-    function renderVariants() {
-      variantList.innerHTML = "";
-      variantPrices.innerHTML = "";
-      Object.keys(variants).forEach(type => {
-        const title = document.createElement("h4");
-        title.innerText = type;
-        variantList.appendChild(title);
-
-        variants[type].forEach(option => {
-          const priceInput = document.createElement("input");
-          priceInput.type = "text";
-          priceInput.placeholder = `Price for ${type} - ${option} (₹)`;
-          priceInput.dataset.variant = `${type}:${option}`;
-          variantPrices.appendChild(priceInput);
-        });
-      });
-    }
-
-    function generateProductPage() {
-      const name = document.getElementById("productName").value;
-      const description = document.getElementById("productDescription").value;
-      const imageTitles = document.getElementById("imageNames").value;
-      const basePrice = document.getElementById("basePrice").value;
-      const mainCategory = document.getElementById("mainCategory").value;
-      const subCategory = document.getElementById("subCategory").value;
-
-      const images = [];
-      Array.from(imageUploader.files).forEach(file => {
-        const reader = new FileReader();
-        reader.onload = e => {
-          images.push(e.target.result);
-        };
-        reader.readAsDataURL(file);
+    // If there's a page ID, show that page for editing
+    if (pageId) {
+      gun.get('pages').get(pageId).once(data => {
+        const content = data && data.content ? data.content : '';
+        main.innerHTML = `
+          <h1>📄 Digital Page: ${pageId}</h1>
+          <textarea id="pageContent" rows="12" placeholder="Write something...">${content}</textarea><br/>
+          <button onclick="saveContent()">💾 Save</button>
+          <button class="danger" onclick="deletePage()">🗑️ Delete</button>
+          <p id="status"></p>
+        `;
       });
 
-      setTimeout(() => {
-        const variantPricing = {};
-        document.querySelectorAll("#variantPrices input").forEach(input => {
-          variantPricing[input.dataset.variant] = input.value;
-        });
+      window.saveContent = function () {
+        const content = document.getElementById('pageContent').value;
+        gun.get('pages').get(pageId).put({ content });
+        document.getElementById('status').innerText = '✅ Content saved.';
+      }
 
-        const id = Date.now().toString();
-        const product = {
-          name,
-          description,
-          imageTitles,
-          images,
-          basePrice,
-          mainCategory,
-          subCategory,
-          rating: selectedRating,
-          variants,
-          variantPricing
-        };
-        db.get("products").get(id).put(product);
+      window.deletePage = function () {
+        gun.get('pages').get(pageId).put(null);
+        document.getElementById('status').innerText = '❌ Page deleted.';
+      }
 
-        const li = document.createElement("li");
-        li.innerHTML = `<a href="product.html#${id}" target="_blank">${name}</a> <button onclick="deleteProduct('${id}', this)">Delete</button>`;
-        productLinks.appendChild(li);
-      }, 1000);
+    } else {
+      // No page ID, show the generator
+      main.innerHTML = `
+        <h1>✨ Digital Pages Generator</h1>
+        <button onclick="createPage()">Create New Blank Page</button>
+        <div id="output"></div>
+      `;
+
+      window.createPage = function () {
+        const id = 'page-' + Date.now() + '-' + Math.random().toString(36).substr(2, 6);
+        gun.get('pages').get(id).put({ created: new Date().toISOString() });
+        const link = location.origin + location.pathname + '?id=' + id;
+        document.getElementById('output').innerHTML = `
+          <div class="link-box">
+            <p><strong>🔗 Your new digital page link:</strong></p>
+            <a href="${link}" target="_blank">${link}</a>
+          </div>
+        `;
+      }
     }
-
-    function deleteProduct(id, btn) {
-      db.get("products").get(id).put(null);
-      btn.parentElement.remove();
-    }
-  </script></body>
+  </script>
+</body>
 </html>
