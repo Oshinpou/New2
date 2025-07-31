@@ -157,7 +157,8 @@
       console.log("Generated Order ID:", orderId);
     }
 
-    function storeToAdmin() {
+    
+  function storeToAdmin() {
   const basket = getBasket();
   if (!orderId || Object.keys(shipping).length === 0 || basket.length === 0) {
     alert("❗ Please collect shipping info, generate order ID, and have items in basket.");
@@ -174,20 +175,23 @@
     timestamp: Date.now()
   };
 
-  // ✅ Save in GunDB by ID for direct reference
-  globalOrders.get(orderId).put(newOrder);
+  // ✅ Step 1: Save to GunDB using .get(orderId).put(newOrder)
+  const orderRef = globalOrders.get(orderId).put(newOrder);
 
-  // ✅ Save in GunDB set for visibility via .map()
-  globalOrders.set(newOrder);
+  // ✅ Step 2: Ensure the orderId is inside the object itself for .map() to work
+  orderRef.get('orderId').put(orderId);
 
-  // ✅ Optional local save for user's own device
+  // ✅ Step 3: Add to the GunDB set (makes it globally visible in admin)
+  globalOrders.set(orderRef);
+
+  // ✅ Step 4: Optional localStorage for user’s local view
   const existingOrders = JSON.parse(localStorage.getItem('admin_orders')) || [];
   existingOrders.push(newOrder);
   localStorage.setItem('admin_orders', JSON.stringify(existingOrders));
 
   alert("✅ Order saved to GunDB and localStorage.");
   document.getElementById('orderOutput').textContent = JSON.stringify(newOrder, null, 2);
-    }
+  }
     
 
    function startPaymentFlow() {
