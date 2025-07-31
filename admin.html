@@ -59,80 +59,81 @@
   <p id="noOrders">No orders found in localStorage.</p>
 
   <script>
-    const STATUS_LIST = [
-      'Order Created',
-      'Payment Done',
-      'Order Cancelled',
-      'Order Processing',
-      'Out for Shipping',
-      'Shipped',
-      'Out for Delivery',
-      'Delivered'
-    ];
+  const STATUS_LIST = [
+    'Order Created',
+    'Payment Done',
+    'Order Cancelled',
+    'Order Processing',
+    'Out for Shipping',
+    'Shipped',
+    'Out for Delivery',
+    'Delivered'
+  ];
 
-    function loadOrders() {
-      const orders = JSON.parse(localStorage.getItem('admin_orders')) || [];
-      const container = document.getElementById('ordersContainer');
-      const noOrders = document.getElementById('noOrders');
+  function loadOrders() {
+    const orders = JSON.parse(localStorage.getItem('admin_orders')) || [];
+    const container = document.getElementById('ordersContainer');
+    const noOrders = document.getElementById('noOrders');
 
-      if (orders.length === 0) {
-        noOrders.style.display = 'block';
-        return;
-      } else {
-        noOrders.style.display = 'none';
-      }
+    container.innerHTML = ''; // Clear previous content
 
-      container.innerHTML = '';
-      orders.forEach((order, index) => {
-        const block = document.createElement('div');
-        block.className = 'order-block';
-
-        const orderPre = document.createElement('pre');
-        orderPre.textContent = JSON.stringify(order, null, 2);
-
-        const statusLabel = document.createElement('label');
-        statusLabel.textContent = "Update Status: ";
-        const statusSelect = document.createElement('select');
-
-        STATUS_LIST.forEach(status => {
-          const option = document.createElement('option');
-          option.value = status;
-          option.textContent = status;
-          if (status === order.status) option.selected = true;
-          statusSelect.appendChild(option);
-        });
-
-        const updateBtn = document.createElement('button');
-        updateBtn.className = 'btn update-btn';
-        updateBtn.textContent = 'Update';
-        updateBtn.onclick = () => {
-          order.status = statusSelect.value;
-          orders[index] = order;
-          localStorage.setItem('admin_orders', JSON.stringify(orders));
-          alert("✅ Status updated locally");
-        };
-
-        const deleteBtn = document.createElement('button');
-        deleteBtn.className = 'btn delete-btn';
-        deleteBtn.textContent = 'Delete';
-        deleteBtn.onclick = () => {
-          if (confirm("❌ Delete this order?")) {
-            orders.splice(index, 1);
-            localStorage.setItem('admin_orders', JSON.stringify(orders));
-            loadOrders(); // refresh
-          }
-        };
-
-        block.appendChild(orderPre);
-        block.appendChild(statusLabel);
-        block.appendChild(statusSelect);
-        block.appendChild(updateBtn);
-        block.appendChild(deleteBtn);
-        container.appendChild(block);
-      });
+    if (orders.length === 0) {
+      noOrders.style.display = 'block';
+      return;
+    } else {
+      noOrders.style.display = 'none';
     }
 
-    window.onload = loadOrders;
-  </script>
+    orders.forEach((order, index) => {
+      const block = document.createElement('div');
+      block.className = 'order-block';
+
+      const orderPre = document.createElement('pre');
+      orderPre.textContent = JSON.stringify(order, null, 2);
+
+      const statusLabel = document.createElement('label');
+      statusLabel.textContent = "Update Status: ";
+      const statusSelect = document.createElement('select');
+
+      STATUS_LIST.forEach(status => {
+        const option = document.createElement('option');
+        option.value = status;
+        option.textContent = status;
+        if (status === order.status) option.selected = true;
+        statusSelect.appendChild(option);
+      });
+
+      const updateBtn = document.createElement('button');
+      updateBtn.className = 'btn update-btn';
+      updateBtn.textContent = 'Update';
+      updateBtn.onclick = () => {
+        orders[index].status = statusSelect.value;
+        localStorage.setItem('admin_orders', JSON.stringify(orders));
+        alert("✅ Status updated locally");
+        loadOrders(); // Refresh the UI and print updated data
+      };
+
+      const deleteBtn = document.createElement('button');
+      deleteBtn.className = 'btn delete-btn';
+      deleteBtn.textContent = 'Delete';
+      deleteBtn.onclick = () => {
+        if (confirm("❌ Delete this order?")) {
+          orders.splice(index, 1);
+          localStorage.setItem('admin_orders', JSON.stringify(orders));
+          loadOrders(); // Refresh the UI and remove deleted item
+        }
+      };
+
+      block.appendChild(orderPre);
+      block.appendChild(statusLabel);
+      block.appendChild(statusSelect);
+      block.appendChild(updateBtn);
+      block.appendChild(deleteBtn);
+      container.appendChild(block);
+    });
+  }
+
+  window.onload = loadOrders;
+</script>
 </body>
 </html>
