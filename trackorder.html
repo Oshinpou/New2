@@ -62,33 +62,32 @@
       'Out for Delivery', 'Delivered'
     ];
 
-    function searchOrder() {
-      const orderId = document.getElementById('orderIdInput').value.trim().toUpperCase();
-      if (!orderId.startsWith('IMX')) {
-        alert('⚠️ Please enter a valid Order ID starting with "IMX".');
-        return;
-      }
+     function searchOrder() {
+  const orderId = document.getElementById('orderIdInput').value.trim().toUpperCase();
+  if (!orderId.startsWith('IMX')) {
+    alert('⚠️ Please enter a valid Order ID starting with "IMX".');
+    return;
+  }
 
-      globalOrders.get(orderId).once(order => {
-        const resultBox = document.getElementById('result');
-        if (!order || !order.orderId) {
-          resultBox.innerHTML = `<p style="color:red">❌ Order not found.</p>`;
-          resultBox.style.display = 'block';
-          return;
-        }
-
-        // Display order
-        resultBox.innerHTML = `
-          <pre>${JSON.stringify(order, null, 2)}</pre>
-          <label for="statusSelect">Status: </label>
-          <select id="statusSelect">
-            ${STATUS_LIST.map(s => `<option value="${s}" ${s === order.status ? 'selected' : ''}>${s}</option>`).join('')}
-          </select>
-          <button onclick="updateStatus('${orderId}')">Update Status</button>
-        `;
-        resultBox.style.display = 'block';
-      });
+  globalOrders.get(orderId).once(order => {
+    const resultBox = document.getElementById('result');
+    if (!order || !order.orderId) {
+      resultBox.innerHTML = `<p style="color:red">❌ Order not found.</p>`;
+      resultBox.style.display = 'block';
+      return;
     }
+
+    // Display order (hide update button, keep status select)
+    resultBox.innerHTML = `
+      <pre>${JSON.stringify(order, null, 2)}</pre>
+      <label for="statusSelect">Status: </label>
+      <select id="statusSelect" disabled>
+        ${STATUS_LIST.map(s => `<option value="${s}" ${s === order.status ? 'selected' : ''}>${s}</option>`).join('')}
+      </select>
+    `;
+    resultBox.style.display = 'block';
+  });
+}   
 
     function updateStatus(orderId) {
       const newStatus = document.getElementById('statusSelect').value;
