@@ -1,183 +1,72 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Product Generator - imacx Shop</title>
-  <style>
-    body {
-      font-family: 'Cursive', sans-serif;
-      background-color: #fff;
-      color: goldenrod;
-      padding: 1rem;
-    }
-    .product-card {
-      border: 1px solid goldenrod;
-      padding: 1rem;
-      margin: 1rem 0;
-    }
-    .slider {
-      display: flex;
-      overflow: hidden;
-      width: 100%;
-    }
-    .slider img {
-      width: 100%;
-      transition: transform 0.5s ease;
-    }
-    .nav {
-      display: flex;
-      justify-content: space-between;
-      background: goldenrod;
-      padding: 1rem;
-    }
-    .nav a {
-      color: white;
-      text-decoration: none;
-    }
-    .hidden {
-      display: none;
-    }
-
-    /* Media Slider Styles */
-    .media-slider {
-      overflow: hidden;
-      position: relative;
-      width: 100%;
-      margin: 20px 0;
-    }
-
-    .media-track {
-      display: flex;
-      transition: transform 0.3s ease-in-out;
-      touch-action: pan-x;
-    }
-
-    .media-track img,
-    .media-track video {
-      width: 100%;
-      max-width: 300px;
-      height: auto;
-      margin-right: 10px;
-      border-radius: 10px;
-      flex-shrink: 0;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Generated Page</title>
+<style>
+  body { font-family: Arial, sans-serif; padding: 20px; }
+  nav { background: #eee; padding: 10px; margin-bottom: 20px; }
+  #slider { display: flex; overflow-x: auto; gap: 10px; margin-bottom: 20px; }
+  #slider img, #slider video { max-height: 200px; }
+  #product { margin-top: 20px; }
+</style>
 </head>
 <body>
-  <div class="nav">
-    <h1>imacx</h1>
-    <div>
-      <a href="home.html">Home</a>
-      <a href="basket.html">Basket</a>
-    </div>
-  </div>
 
-  <!-- Media Slider -->
-  <div class="media-slider" id="mediaSlider">
-    <div class="media-track" id="mediaTrack">
-      <img src="https://via.placeholder.com/300x200?text=1" alt="1" />
-      <img src="https://via.placeholder.com/300x200?text=2" alt="2" />
-      <img src="https://via.placeholder.com/300x200?text=3" alt="3" />
-      <img src="https://via.placeholder.com/300x200?text=4" alt="4" />
-      <img src="https://via.placeholder.com/300x200?text=5" alt="5" />
-      <!-- Add up to 30 images or videos here -->
-    </div>
-  </div>
+<div id="content"></div>
 
-  <h2>Product Generator</h2>
-  <button id="generatePage">Generate Product Page</button>
-  <div id="productList"></div>
+<script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+<script>
+const urlParams = new URLSearchParams(window.location.search);
+const id = urlParams.get('id');
+const gun = Gun();
 
-  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-  <script>
-    const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
-    const products = [];
-
-    document.getElementById('generatePage').addEventListener('click', () => {
-      const productName = prompt('Enter Product Name:');
-      const productCategory = prompt('Enter Product Category:');
-      const productSubcategory = prompt('Enter Product Subcategory:');
-      const productPrice = parseFloat(prompt('Enter Product Price:'));
-      const productDiscountedPrice = parseFloat(prompt('Enter Discounted Price (optional):')) || null;
-      const productVariants = prompt('Enter Variants (comma separated):').split(',');
-      const productDetails = prompt('Enter Product Details:');
-      const productImages = prompt('Enter Image URLs (comma separated):').split(',');
-
-      const product = {
-        name: productName,
-        category: productCategory,
-        subcategory: productSubcategory,
-        price: productPrice,
-        discountedPrice: productDiscountedPrice,
-        variants: productVariants,
-        details: productDetails,
-        images: productImages
-      };
-
-      products.push(product);
-      renderProducts();
-    });
-
-    function renderProducts() {
-      const productList = document.getElementById('productList');
-      productList.innerHTML = '';
-      products.forEach((product, index) => {
-        const productCard = document.createElement('div');
-        productCard.className = 'product-card';
-        productCard.innerHTML = `<h3>${product.name}</h3>
-          <div class='slider'>${product.images.map(img => `<img src='${img}' alt='${product.name}'>`).join('')}</div>
-          <p>Category: ${product.category}</p>
-          <p>Subcategory: ${product.subcategory}</p>
-          <p>Price: ₹${product.price} ${product.discountedPrice ? '(Discounted: ₹' + product.discountedPrice + ')' : ''}</p>
-          <p>Details: ${product.details}</p>
-          <button onclick='deleteProduct(${index})'>Delete Page</button>`;
-        productList.appendChild(productCard);
-      });
+if(!id) {
+  document.body.innerHTML = 'Invalid page.';
+} else {
+  gun.get('pages').get(id).once(data => {
+    if(!data) {
+      document.body.innerHTML = 'Page not found.';
+      return;
     }
-
-    function deleteProduct(index) {
-      if (confirm('Are you sure you want to delete this product page?')) {
-        products.splice(index, 1);
-        renderProducts();
+    // Build nav
+    document.getElementById('content').innerHTML = `
+      <nav>
+        <img src="${data.logo}" alt="Logo" width="50" />
+        <a href="${data.accountLink}">Account</a>
+        <a href="${data.homeLink}">Home</a>
+        <a href="${data.basketLink}">Basket</a>
+      </nav>
+      
+      <div id="slider"></div>
+      
+      <div id="product">
+        <h2>${data.productName}</h2>
+        <p>Category: ${data.category}</p>
+        <p>Subcategory: ${data.subcategory}</p>
+        <p>Variants: ${data.variantsOptions}</p>
+        <button id="addToBasket">Add to Basket</button>
+      </div>
+    `;
+    
+    // Populate slider
+    const sliderDiv = document.getElementById('slider');
+    data.sliderItems.forEach(item => {
+      if(item.type === 'image') {
+        sliderDiv.innerHTML += `<img src="${item.src}">`;
+      } else if(item.type === 'video') {
+        sliderDiv.innerHTML += `<video src="${item.src}" controls></video>`;
       }
-    }
-
-    // Slider swipe functionality
-    const mediaTrack = document.getElementById('mediaTrack');
-    let isDown = false;
-    let startX;
-    let scrollLeft;
-
-    mediaTrack.addEventListener('mousedown', e => {
-      isDown = true;
-      startX = e.pageX - mediaTrack.offsetLeft;
-      scrollLeft = mediaTrack.scrollLeft;
     });
+    
+    // Handle add to basket (simple example)
+    document.getElementById('addToBasket').onclick = () => {
+      alert('Added to basket! (Implement basket storage)');
+    };
+  });
+}
+</script>
 
-    mediaTrack.addEventListener('mouseleave', () => isDown = false);
-    mediaTrack.addEventListener('mouseup', () => isDown = false);
-
-    mediaTrack.addEventListener('mousemove', e => {
-      if (!isDown) return;
-      e.preventDefault();
-      const x = e.pageX - mediaTrack.offsetLeft;
-      const walk = (x - startX) * 2;
-      mediaTrack.scrollLeft = scrollLeft - walk;
-    });
-
-    // Touch support
-    let touchStartX = 0;
-    mediaTrack.addEventListener('touchstart', e => {
-      touchStartX = e.touches[0].clientX;
-    });
-
-    mediaTrack.addEventListener('touchmove', e => {
-      const touchX = e.touches[0].clientX;
-      const diff = touchStartX - touchX;
-      mediaTrack.scrollLeft += diff;
-      touchStartX = touchX;
-    });
-  </script>
 </body>
-</html> 
+</html>
