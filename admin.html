@@ -1,139 +1,95 @@
-<!DOCTYPE html>
-<html lang="en">
+<!-- ✅ Basket Page (basket.html) --><!DOCTYPE html><html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Admin - imacx Orders (Local Only)</title>
+  <title>imacx - Basket</title>
+  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+</head>
+<body>
+  <h2>🛒 Basket</h2>
+  <!-- Your basket rendering logic here --><button onclick="storeOrder()">Save Order</button>
+
+  <script>
+    const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
+    const orders = gun.get('imacx_orders');
+
+    function getBasket() {
+      return JSON.parse(localStorage.getItem('basket')) || [];
+    }
+
+    function storeOrder() {
+      const basket = getBasket();
+      const orderId = 'IMX' + Math.random().toString(36).substr(2, 9).toUpperCase();
+      const shipping = {
+        recipient: 'Test User',
+        email: 'test@example.com',
+        phone: '+911234567890',
+        address: 'Somewhere in India'
+      };
+
+      const total = basket.reduce((sum, item) => sum + item.quantity * item.price, 0);
+
+      const newOrder = {
+        orderId,
+        basket,
+        shipping,
+        total,
+        status: 'Order Created',
+        timestamp: Date.now()
+      };
+
+      orders.get(orderId).put(newOrder);
+      orders.set(newOrder);
+
+      alert("✅ Order saved");
+    }
+  </script></body>
+</html><!-- ✅ Admin Page (admin.html) --><!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>imacx - Admin</title>
+  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
   <style>
-    body {
-      font-family: monospace;
-      background: #fefefe;
-      color: #222;
-      padding: 20px;
-    }
-    h1 {
-      text-align: center;
-      font-family: sans-serif;
-    }
-    .order-block {
-      border: 1px solid #ccc;
-      padding: 15px;
-      margin-bottom: 20px;
-      border-radius: 5px;
-      background: #fffbe6;
-    }
-    pre {
-      white-space: pre-wrap;
-      word-break: break-word;
-      font-size: 14px;
-    }
-    select, button {
-      margin-top: 10px;
-      padding: 6px 10px;
-      border-radius: 4px;
-      border: 1px solid #bbb;
-      font-family: sans-serif;
-    }
-    .btn {
-      cursor: pointer;
-      margin-left: 5px;
-    }
-    .update-btn {
-      background: #3498db;
-      color: white;
-    }
-    .delete-btn {
-      background: #e74c3c;
-      color: white;
-    }
-    #noOrders {
-      text-align: center;
-      color: #888;
-      margin-top: 40px;
-    }
+    body { font-family: sans-serif; }
+    .order { border: 1px solid #ccc; padding: 10px; margin: 10px; }
   </style>
 </head>
 <body>
-
-  <h1>🧾 imacx Admin Panel (Local Orders Only)</h1>
-  <div id="ordersContainer"></div>
-  <p id="noOrders">No orders found in localStorage.</p>
-
-  <script>
-  const STATUS_LIST = [
-    'Order Created',
-    'Payment Done',
-    'Order Cancelled',
-    'Order Processing',
-    'Out for Shipping',
-    'Shipped',
-    'Out for Delivery',
-    'Delivered'
-  ];
-
-  function loadOrders() {
-    const orders = JSON.parse(localStorage.getItem('admin_orders')) || [];
+  <h1>📦 All Global Orders</h1>
+  <div id="ordersContainer">Loading...</div>  <script>
+    const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
+    const orders = gun.get('imacx_orders');
     const container = document.getElementById('ordersContainer');
-    const noOrders = document.getElementById('noOrders');
 
-    container.innerHTML = ''; // Clear previous content
+    orders.map().once(order => {
+      if (!order || !order.orderId) return;
 
-    if (orders.length === 0) {
-      noOrders.style.display = 'block';
-      return;
-    } else {
-      noOrders.style.display = 'none';
+      const div = document.createElement('div');
+      div.className = 'order';
+      div.innerHTML = `
+        <b>Order ID:</b> ${order.orderId}<br>
+        <b>Recipient:</b> ${order.shipping.recipient}<br>
+        <b>Email:</b> ${order.shipping.email}<br>
+        <b>Phone:</b> ${order.shipping.phone}<br>
+        <b>Address:</b> ${order.shipping.address}<br>
+        <b>Total:</b> ₹${order.total}<br>
+        <b>Status:</b> ${order.status}<br>
+        <button onclick="updateStatus('${order.orderId}', 'Shipped')">Mark Shipped</button>
+        <button onclick="deleteOrder('${order.orderId}', this.parentElement)">Delete</button>
+        <hr>
+      `;
+      container.appendChild(div);
+    });
+
+    function updateStatus(orderId, newStatus) {
+      orders.get(orderId).get('status').put(newStatus);
+      alert("✅ Status updated");
     }
 
-    orders.forEach((order, index) => {
-      const block = document.createElement('div');
-      block.className = 'order-block';
-
-      const orderPre = document.createElement('pre');
-      orderPre.textContent = JSON.stringify(order, null, 2);
-
-      const statusLabel = document.createElement('label');
-      statusLabel.textContent = "Update Status: ";
-      const statusSelect = document.createElement('select');
-
-      STATUS_LIST.forEach(status => {
-        const option = document.createElement('option');
-        option.value = status;
-        option.textContent = status;
-        if (status === order.status) option.selected = true;
-        statusSelect.appendChild(option);
-      });
-
-      const updateBtn = document.createElement('button');
-      updateBtn.className = 'btn update-btn';
-      updateBtn.textContent = 'Update';
-      updateBtn.onclick = () => {
-        orders[index].status = statusSelect.value;
-        localStorage.setItem('admin_orders', JSON.stringify(orders));
-        alert("✅ Status updated locally");
-        loadOrders(); // Refresh the UI and print updated data
-      };
-
-      const deleteBtn = document.createElement('button');
-      deleteBtn.className = 'btn delete-btn';
-      deleteBtn.textContent = 'Delete';
-      deleteBtn.onclick = () => {
-        if (confirm("❌ Delete this order?")) {
-          orders.splice(index, 1);
-          localStorage.setItem('admin_orders', JSON.stringify(orders));
-          loadOrders(); // Refresh the UI and remove deleted item
-        }
-      };
-
-      block.appendChild(orderPre);
-      block.appendChild(statusLabel);
-      block.appendChild(statusSelect);
-      block.appendChild(updateBtn);
-      block.appendChild(deleteBtn);
-      container.appendChild(block);
-    });
-  }
-
-  window.onload = loadOrders;
-</script>
-</body>
+    function deleteOrder(orderId, element) {
+      if (confirm("Delete this order?")) {
+        orders.get(orderId).put(null);
+        element.remove();
+      }
+    }
+  </script></body>
 </html>
