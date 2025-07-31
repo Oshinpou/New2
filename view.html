@@ -3,182 +3,198 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Imacx Digital Page Generator</title>
+  <title>Imacx Page Generator</title>
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
       padding: 20px;
-      background-color: #f0f0f0;
+      background: #f0f0f0;
     }
-    input, textarea, select {
+    input, textarea, select, button {
       display: block;
-      margin-bottom: 10px;
-      padding: 8px;
       width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      font-size: 14px;
     }
-    button {
-      padding: 10px 15px;
-      margin: 5px 0;
-      cursor: pointer;
-    }
-    .link-card {
-      background: white;
+    .product-card {
+      background: #fff;
+      border: 1px solid #ccc;
       padding: 15px;
       margin: 10px 0;
-      border-radius: 8px;
-      box-shadow: 0 0 5px rgba(0,0,0,0.1);
     }
-    .link-card a {
-      word-break: break-all;
+    img {
+      max-width: 100%;
+      margin-top: 10px;
     }
   </style>
 </head>
 <body>
-  <h1>🌐 Imacx Page Generator</h1>
 
-  <input id="title" placeholder="Page Title (e.g., Imacx Star)" />
-  <textarea id="details" placeholder="Details (short description)"></textarea>
-  <input id="image" placeholder="Image URL" />
-  <input id="price" placeholder="Price (e.g., ₹1999)" />
-  <input id="variants" placeholder="Variants (e.g., Red,Blue,Green)" />
-  <button onclick="generatePage()">Generate Page</button>
+<h1>🪄 Imacx Digital Page Generator</h1>
 
-  <h2>🔗 Generated Pages</h2>
-  <div id="links"></div>
+<input id="title" placeholder="📝 Product Title" />
+<textarea id="details" placeholder="📄 Product Details"></textarea>
+<input id="category" placeholder="🧩 Category" />
+<input id="subcategory" placeholder="📁 Subcategory" />
+<input id="price" type="number" placeholder="💸 Price (INR)" />
+<input id="quantity" type="number" placeholder="🔢 Quantity" />
+<input id="variants" placeholder="🎨 Variants (e.g. red,blue,green)" />
+<input id="image" placeholder="🖼️ Image URL" />
 
-  <hr />
-  <button id="export-btn">📤 Export All Pages</button>
-  <input type="file" id="import-input" style="display:none;" />
-  <button id="import-btn">📥 Import Pages</button>
+<button onclick="createPage()">Generate Page Link</button>
 
-  <script>
-    const gun = Gun();
-    const baseURL = location.origin + location.pathname.replace(/[^/]+$/, '');
+<h2>🔗 Generated Links</h2>
+<div id="links"></div>
 
-    function generatePage() {
-      const id = 'page_' + Date.now();
-      const title = document.getElementById('title').value.trim();
-      const details = document.getElementById('details').value.trim();
-      const image = document.getElementById('image').value.trim();
-      const price = document.getElementById('price').value.trim();
-      const variants = document.getElementById('variants').value.trim();
+<hr>
 
-      if (!title || !details) {
-        alert("Title and details required");
-        return;
-      }
+<button id="export-btn">📤 Export All Pages</button>
+<input type="file" id="import-input" style="display:none;" />
+<button id="import-btn">📥 Import Pages</button>
 
-      const pageData = {
-        id,
-        title,
-        details,
-        image,
-        price,
-        variants
-      };
+<script>
+const gun = Gun();
 
-      gun.get(id).put(pageData);
-      gun.get("index").set(gun.get(id));
+// Generate unique ID
+function createId() {
+  return 'page_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8);
+}
 
-      displayLinks();
-    }
+// Create and store page data
+function createPage() {
+  const id = createId();
+  const data = {
+    id,
+    name: document.getElementById('title').value,
+    details: document.getElementById('details').value,
+    category: document.getElementById('category').value,
+    subcategory: document.getElementById('subcategory').value,
+    image: document.getElementById('image').value,
+    createdAt: new Date().toISOString()
+  };
+  const variants = document.getElementById('variants').value;
+  const pricing = {
+    price: parseFloat(document.getElementById('price').value || 0),
+    quantity: parseInt(document.getElementById('quantity').value || 0)
+  };
 
-    function displayLinks() {
-      document.getElementById('links').innerHTML = '';
-      gun.get("index").map().once((data, key) => {
-        if (!data || !data.id) return;
-        const linkDiv = document.createElement('div');
-        linkDiv.className = "link-card";
+  gun.get(id).put(data);
+  gun.get(id).get('variants').put(variants);
+  gun.get(id).get('pricing').put(pricing);
+  gun.get('products_index').set(gun.get(id));
 
-        const link = document.createElement('a');
-        link.href = baseURL + '?id=' + data.id;
-        link.target = "_blank";
-        link.textContent = baseURL + '?id=' + data.id;
+  displayLinks();
+}
 
-        const del = document.createElement('button');
-        del.textContent = '🗑️ Delete';
-        del.onclick = () => {
-          gun.get(data.id).put(null);
-          gun.get("index").get(data.id).put(null);
-          displayLinks();
-        };
+// Display saved links
+function displayLinks() {
+  const container = document.getElementById('links');
+  container.innerHTML = '';
+  gun.get('products_index').map().once((product, id) => {
+    if (!product || !id) return;
+    const link = location.origin + location.pathname + '?id=' + id;
+    const div = document.createElement('div');
+    div.className = 'product-card';
+    div.innerHTML = `
+      <b>${product.name || 'Untitled Product'}</b><br/>
+      <a href="${link}" target="_blank">${link}</a><br/>
+      <button onclick="deletePage('${id}')">🗑️ Delete</button>
+    `;
+    container.appendChild(div);
+  });
+}
 
-        linkDiv.appendChild(link);
-        linkDiv.appendChild(document.createElement('br'));
-        linkDiv.appendChild(del);
-        document.getElementById('links').appendChild(linkDiv);
-      });
-    }
+// Delete a page
+function deletePage(id) {
+  gun.get(id).put(null);
+  gun.get('products_index').map().once((page, key) => {
+    if (key === id) gun.get('products_index').get(key).put(null);
+  });
+  setTimeout(displayLinks, 500);
+}
 
-    function renderPageFromURL() {
-      const params = new URLSearchParams(window.location.search);
-      const pageId = params.get("id");
-      if (!pageId) return;
-
-      document.body.innerHTML = '<p>Loading page...</p>';
-      gun.get(pageId).once(data => {
-        if (!data) {
-          document.body.innerHTML = '<h1>This page was deleted or does not exist</h1>';
-          return;
-        }
-        document.body.innerHTML = `
-          <nav style="padding: 15px; background: #222; color: white;">
-            <h2>✨ ${data.title}</h2>
-          </nav>
-          <div style="padding: 20px;">
-            <img src="${data.image}" alt="Image" style="max-width:100%; border-radius:10px;" />
-            <p>${data.details}</p>
-            <h3>Price: ${data.price}</h3>
-            <p><strong>Variants:</strong> ${data.variants}</p>
-          </div>
-        `;
-      });
-    }
-
-    function exportPages() {
-      const allData = {};
-      gun.get("index").map().once((product, id) => {
-        if (!product || !id) return;
-        gun.get(id).once(data => {
-          allData[id] = data;
+// Export all data
+function exportPages() {
+  const allData = {};
+  gun.get('products_index').map().once((product, id) => {
+    if (!product || !id) return;
+    gun.get(id).once(data => {
+      gun.get(id).get('variants').once(variants => {
+        gun.get(id).get('pricing').once(pricing => {
+          allData[id] = { ...data, variants, pricing };
           if (Object.keys(allData).length > 0) {
             const blob = new Blob([JSON.stringify(allData, null, 2)], { type: 'application/json' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = 'imacx_pages_backup.json';
+            a.download = 'pages_backup.json';
             a.click();
           }
         });
       });
-    }
+    });
+  });
+}
 
-    function importPages(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const data = JSON.parse(e.target.result);
-        for (const id in data) {
-          const entry = data[id];
-          gun.get(id).put(entry);
-          gun.get("index").set(gun.get(id));
-        }
-        alert('✅ Pages imported successfully!');
-        displayLinks();
-      };
-      reader.readAsText(file);
+// Import all data
+function importPages(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const data = JSON.parse(e.target.result);
+    for (const id in data) {
+      const entry = data[id];
+      gun.get(id).put({
+        id,
+        name: entry.name,
+        details: entry.details,
+        category: entry.category,
+        subcategory: entry.subcategory,
+        image: entry.image
+      });
+      gun.get(id).get('variants').put(entry.variants);
+      gun.get(id).get('pricing').put(entry.pricing);
+      gun.get('products_index').set(gun.get(id));
     }
+    alert('✅ Imported successfully!');
+    displayLinks();
+  };
+  reader.readAsText(file);
+}
 
-    // Setup event listeners
-    if (!window.location.search.includes('id=')) {
-      displayLinks();
-      document.getElementById('export-btn').addEventListener('click', exportPages);
-      document.getElementById('import-btn').addEventListener('click', () => document.getElementById('import-input').click());
-      document.getElementById('import-input').addEventListener('change', importPages);
-    } else {
-      renderPageFromURL();
-    }
-  </script>
+// On load
+window.onload = () => {
+  displayLinks();
+  document.getElementById('export-btn').addEventListener('click', exportPages);
+  document.getElementById('import-btn').addEventListener('click', () => document.getElementById('import-input').click());
+  document.getElementById('import-input').addEventListener('change', importPages);
+
+  // If link has ?id=, show the product directly
+  const params = new URLSearchParams(location.search);
+  const pageId = params.get('id');
+  if (pageId) {
+    gun.get(pageId).once(data => {
+      if (!data) return document.body.innerHTML = '<h2>❌ Page not found or deleted.</h2>';
+      gun.get(pageId).get('variants').once(variants => {
+        gun.get(pageId).get('pricing').once(pricing => {
+          document.body.innerHTML = `
+            <h1>${data.name || 'No Title'}</h1>
+            <img src="${data.image}" />
+            <p>${data.details}</p>
+            <p><b>Category:</b> ${data.category}</p>
+            <p><b>Subcategory:</b> ${data.subcategory}</p>
+            <p><b>Variants:</b> ${variants || 'N/A'}</p>
+            <p><b>Price:</b> ₹${pricing?.price || '0'}</p>
+            <p><b>Quantity:</b> ${pricing?.quantity || '0'}</p>
+            <hr><a href="${location.origin + location.pathname}">🔙 Back to Generator</a>
+          `;
+        });
+      });
+    });
+  }
+}
+</script>
 </body>
-</html>
+  </html>
