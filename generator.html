@@ -1,86 +1,42 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Softcoded Page Generator</title>
+  <title>Imacx Softcoded Product</title>
+  <script src="pages-data.js" defer></script>
   <style>
-    body { font-family: sans-serif; padding: 20px; }
-    .card { border: 1px solid #ddd; padding: 10px; margin: 10px 0; }
-    .hidden { display: none; }
-    input, textarea { width: 100%; margin-bottom: 10px; }
+    body { font-family: sans-serif; padding: 20px; background: #f4f4f4; }
+    .product { background: #fff; padding: 20px; border: 1px solid #ccc; max-width: 600px; margin: auto; }
+    .product img { width: 100%; height: auto; }
   </style>
 </head>
 <body>
+  <div id="content">Loading...</div>
 
-<h2>Softcoded Page Generator</h2>
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const pageId = urlParams.get('page');
+      const container = document.getElementById('content');
 
-<div id="generator">
-  <input id="title" placeholder="Title">
-  <textarea id="description" placeholder="Description"></textarea>
-  <input id="image" placeholder="Image URL">
-  <button onclick="generatePage()">Generate Page</button>
-</div>
+      if (typeof softcodedPages === 'undefined') {
+        container.innerHTML = "<h2>Data file not loaded</h2>";
+        return;
+      }
 
-<h3>Generated Links:</h3>
-<div id="links"></div>
-
-<hr>
-
-<div id="page-render" class="hidden">
-  <h2 id="page-title"></h2>
-  <img id="page-image" src="" style="max-width: 200px;">
-  <p id="page-description"></p>
-</div>
-
-<script>
-  // Memory database (softcoded)
-  const pagesData = {};
-
-  // Check if URL has a page
-  const params = new URLSearchParams(window.location.search);
-  const pageId = params.get("page");
-
-  if (pageId && pagesData[pageId]) {
-    renderPage(pageId);
-  }
-
-  function generatePage() {
-    const id = Date.now().toString(36); // unique ID
-    pagesData[id] = {
-      title: document.getElementById("title").value,
-      description: document.getElementById("description").value,
-      image: document.getElementById("image").value
-    };
-
-    const link = `${location.origin}${location.pathname}?page=${id}`;
-    const div = document.createElement("div");
-    div.className = "card";
-    div.innerHTML = `
-      <a href="${link}" target="_blank">${pagesData[id].title}</a>
-      <button onclick="deletePage('${id}', this)">Delete</button>
-    `;
-    document.getElementById("links").appendChild(div);
-  }
-
-  function deletePage(id, btn) {
-    delete pagesData[id];
-    btn.parentElement.remove();
-  }
-
-  function renderPage(id) {
-    const data = pagesData[id];
-    if (!data) {
-      document.body.innerHTML = "<h2>Page not found.</h2>";
-      return;
-    }
-
-    document.getElementById("page-render").classList.remove("hidden");
-    document.getElementById("page-title").textContent = data.title;
-    document.getElementById("page-description").textContent = data.description;
-    document.getElementById("page-image").src = data.image;
-    document.getElementById("generator").classList.add("hidden");
-    document.getElementById("links").classList.add("hidden");
-  }
-</script>
-
+      if (pageId && softcodedPages[pageId]) {
+        const data = softcodedPages[pageId];
+        container.innerHTML = `
+          <div class="product">
+            <h1>${data.title}</h1>
+            <img src="${data.image}" alt="${data.title}">
+            <p>${data.description}</p>
+            <h3>₹${data.price}</h3>
+          </div>
+        `;
+      } else {
+        container.innerHTML = "<h2>Page not found</h2>";
+      }
+    });
+  </script>
 </body>
 </html>
