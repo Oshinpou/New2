@@ -271,5 +271,69 @@
     }
 
     renderBasket();
-  </script></body>
+  </script>
+<script src="products-data.js"></script>
+<script>
+  function renderProducts(products) {
+    const container = document.getElementById("products");
+    container.innerHTML = "";
+    products.forEach(p => {
+      const card = document.createElement("div");
+      card.className = "product-card";
+      card.setAttribute("data-name", p.name);
+      card.setAttribute("data-price", p.price);
+      card.setAttribute("data-category", p.category);
+      card.setAttribute("data-subcategory", p.subcategory);
+      card.innerHTML = `
+        <a href="${p.link}">
+          <img src="${p.image}" alt="${p.name}">
+          <div>${p.name}</div>
+          <div>₹${p.price}</div>
+        </a>
+        <div class="quantity-controls">
+          <button onclick="updateQty(this, -1)">-</button>
+          <input type="number" value="0" readonly>
+          <button onclick="updateQty(this, 1)">+</button>
+        </div>
+        <button class="add-to-basket-btn" onclick="addToBasket(this)">Add to Basket</button>
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  // Initial render
+  renderProducts(allProducts);
+
+  // Search by product name
+  document.getElementById('searchBar').addEventListener('input', function () {
+    const search = this.value.toLowerCase();
+    const results = allProducts.filter(p => p.name.toLowerCase().includes(search));
+    renderProducts(results);
+  });
+
+  // Sort
+  document.getElementById('sort').addEventListener('change', function () {
+    const dir = this.value;
+    let sorted = [...allProducts];
+    if (dir === 'low') sorted.sort((a, b) => a.price - b.price);
+    else if (dir === 'high') sorted.sort((a, b) => b.price - a.price);
+    renderProducts(sorted);
+  });
+
+  // Filter
+  function applyFilters() {
+    const cat = document.getElementById('filter-category').value;
+    const sub = document.getElementById('filter-subcategory').value;
+    const filtered = allProducts.filter(p => {
+      const catMatch = !cat || p.category === cat;
+      const subMatch = !sub || p.subcategory === sub;
+      return catMatch && subMatch;
+    });
+    renderProducts(filtered);
+  }
+
+  document.getElementById('filter-category').addEventListener('change', applyFilters);
+  document.getElementById('filter-subcategory').addEventListener('change', applyFilters);
+</script>
+</body>
 </html>
