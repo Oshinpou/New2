@@ -174,18 +174,23 @@
     timestamp: Date.now()
   };
 
-  // Save order to localStorage for admin page
+  // ✅ Save in GunDB by ID for direct reference
+  globalOrders.get(orderId).put(newOrder);
+
+  // ✅ Save in GunDB set for visibility via .map()
+  globalOrders.set(newOrder);
+
+  // ✅ Optional local save for user's own device
   const existingOrders = JSON.parse(localStorage.getItem('admin_orders')) || [];
   existingOrders.push(newOrder);
   localStorage.setItem('admin_orders', JSON.stringify(existingOrders));
 
-  alert("✅ Order saved locally (admin_orders).");
-
+  alert("✅ Order saved to GunDB and localStorage.");
   document.getElementById('orderOutput').textContent = JSON.stringify(newOrder, null, 2);
     }
+    
 
-  
-    function startPaymentFlow() {
+   function startPaymentFlow() {
       const basket = getBasket();
       if (!orderId || Object.keys(shipping).length === 0 || basket.length === 0) {
         alert('Please save the order first.');
