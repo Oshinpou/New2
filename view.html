@@ -1,111 +1,106 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Product Generator - imacx Shop</title>
-  <style>
-    body {
-      font-family: 'Cursive', sans-serif;
-      background-color: #fff;
-      color: goldenrod;
-      padding: 1rem;
-    }
-    .product-card {
-      border: 1px solid goldenrod;
-      padding: 1rem;
-      margin: 1rem 0;
-    }
-    .slider {
-      display: flex;
-      overflow: hidden;
-      width: 100%;
-    }
-    .slider img {
-      width: 100%;
-      transition: transform 0.5s ease;
-    }
-    .nav {
-      display: flex;
-      justify-content: space-between;
-      background: goldenrod;
-      padding: 1rem;
-    }
-    .nav a {
-      color: white;
-      text-decoration: none;
-    }
-    .hidden {
-      display: none;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Page Generator & Link Manager</title>
+<script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+<style>
+  body { font-family: Arial, sans-serif; padding: 20px; }
+  button { margin: 5px; padding: 8px 12px; }
+  #linksContainer { margin-top: 20px; }
+</style>
 </head>
 <body>
-  <div class="nav">
-    <h1>imacx</h1>
-    <div>
-      <a href="home.html">Home</a>
-      <a href="basket.html">Basket</a>
-    </div>
-  </div>
 
-  <h2>Product Generator</h2>
-  <button id="generatePage">Generate Product Page</button>
-  <div id="productList"></div>
+<h1>Page Generator & Link Manager</h1>
 
-  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-  <script>
-    const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
-    const products = [];
+<!-- Form to create a new page -->
+<h2>Create New Page</h2>
+<button id="createPageBtn">Create Sample Page</button>
 
-    document.getElementById('generatePage').addEventListener('click', () => {
-      const productName = prompt('Enter Product Name:');
-      const productCategory = prompt('Enter Product Category:');
-      const productSubcategory = prompt('Enter Product Subcategory:');
-      const productPrice = parseFloat(prompt('Enter Product Price:'));
-      const productDiscountedPrice = parseFloat(prompt('Enter Discounted Price (optional):')) || null;
-      const productVariants = prompt('Enter Variants (comma separated):').split(',');
-      const productDetails = prompt('Enter Product Details:');
-      const productImages = prompt('Enter Image URLs (comma separated):').split(',');
+<!-- Container for generated links -->
+<h2>Generated Links</h2>
+<div id="linksContainer"></div>
 
-      const product = {
-        name: productName,
-        category: productCategory,
-        subcategory: productSubcategory,
-        price: productPrice,
-        discountedPrice: productDiscountedPrice,
-        variants: productVariants,
-        details: productDetails,
-        images: productImages
-      };
+<!-- Container for delete buttons -->
+<h2>Manage Pages</h2>
+<div id="deleteButtons"></div>
 
-      products.push(product);
-      renderProducts();
-    });
+<script>
+const gun = Gun();
 
-    function renderProducts() {
-      const productList = document.getElementById('productList');
-      productList.innerHTML = '';
-      products.forEach((product, index) => {
-        const productCard = document.createElement('div');
-        productCard.className = 'product-card';
-        productCard.innerHTML = `<h3>${product.name}</h3>
-          <div class='slider'>${product.images.map(img => `<img src='${img}' alt='${product.name}'>`).join('')}</div>
-          <p>Category: ${product.category}</p>
-          <p>Subcategory: ${product.subcategory}</p>
-          <p>Price: ₹${product.price} ${product.discountedPrice ? '(Discounted: ₹' + product.discountedPrice + ')' : ''}</p>
-          <p>Details: ${product.details}</p>
-          <button onclick='deleteProduct(${index})'>Delete Page</button>`;
-        productList.appendChild(productCard);
-      });
+// Function to create a sample page data
+function createSamplePage() {
+  const pageId = Date.now(); // Unique ID
+  const data = {
+    logo: 'imacxstarone.png',
+    accountLink: '#account',
+    homeLink: '#home',
+    basketLink: '#basket',
+    sliderItems: [
+      { type: 'image', src: 'https://via.placeholder.com/600x300?text=Slide1' },
+      { type: 'video', src: 'https://www.w3schools.com/html/mov_bbb.mp4' }
+    ],
+    productName: 'Sample Product',
+    category: 'digital',
+    subcategory: 'gadgets',
+    variantsOptions: 'Size,Color',
+    variants: [
+      { size: 'S,M,L', color: 'Red,Blue', price: 100, discount: 80 },
+      { size: 'XL,XXL', color: 'Green,Black', price: 150, discount: 120 }
+    ],
+    price: 100,
+  };
+  // Save page data
+  gun.get('pages').get(pageId).put(data);
+  // Generate link
+  const link = `${window.location.origin}${window.location.pathname}?id=${pageId}`;
+  // Store link info
+  gun.get('links').set({ id: pageId, link });
+  // Create delete button
+  addDeleteButton(pageId);
+  // Refresh links list
+  loadLinks();
+}
+
+// Function to add delete button for a page
+function addDeleteButton(pageId) {
+  const btn = document.createElement('button');
+  btn.textContent = `Delete Page ${pageId}`;
+  btn.onclick = () => {
+    gun.get('pages').get(pageId).put(null);
+    // Remove from links list
+    loadLinks();
+  };
+  document.getElementById('deleteButtons').appendChild(btn);
+}
+
+// Load all links and delete buttons
+function loadLinks() {
+  document.getElementById('linksContainer').innerHTML = '';
+  document.getElementById('deleteButtons').innerHTML = '';
+  gun.get('links').map().once(linkData => {
+    if(linkData && linkData.link) {
+      // Create link element
+      const a = document.createElement('a');
+      a.href = linkData.link;
+      a.textContent = linkData.link;
+      a.target = '_blank';
+      document.getElementById('linksContainer').appendChild(a);
+      // Add delete button
+      addDeleteButton(linkData.id);
     }
+  });
+}
 
-    function deleteProduct(index) {
-      if (confirm('Are you sure you want to delete this product page?')) {
-        products.splice(index, 1);
-        renderProducts();
-      }
-    }
-  </script>
+// Event listener for creating a page
+document.getElementById('createPageBtn').onclick = createSamplePage;
+
+// Initial load
+loadLinks();
+</script>
+
 </body>
 </html>
+          
