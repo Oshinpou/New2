@@ -36,15 +36,15 @@
   </style>
 </head>
 <body>
-  <h2>📄 Generate Digital Product Page</h2>  <input type="text" id="productName" placeholder="Product Name">
-  <input type="number" id="basePrice" placeholder="Base Price">
-  <input type="number" id="discountPrice" placeholder="Discount Price (Optional)">  <textarea id="description" placeholder="Product Description"></textarea><label>Variants (e.g., Color): <input type="text" id="variantType" placeholder="Color"></label> <input type="text" id="variantOptions" placeholder="Comma-separated options (e.g., Red, Blue, Custom)">
+  <h2>📄 Generate Digital Product Page</h2>  <input type="text" id="productName" placeholder="Product Name"><label>Variants (e.g., Color): <input type="text" id="variantType" placeholder="Color"></label> <input type="text" id="variantOptions" placeholder="Comma-separated options (e.g., Red, Blue, Custom)">
 
 <label>Variant Prices:</label>
 
-  <textarea id="variantPrices" placeholder='{"Red": 1800, "Blue": 1850, "Custom": 2000}'></textarea><label>Category: <input type="text" id="category"></label> <label>Subcategory: <input type="text" id="subcategory"></label>
+  <textarea id="variantPrices" placeholder='{"Red": 1800, "Blue": 1850, "Custom": 2000}'></textarea>  <textarea id="description" placeholder="Product Description"></textarea><label>Category: <select id="category"> <option value="Food">Food</option> <option value="Jewellery">Jewellery</option> <option value="Cosmetics">Cosmetics</option> <option value="Digital">Digital</option> <option value="other">Other</option> </select> <input type="text" id="customCategory" placeholder="Custom Category (if Other)"> </label>
 
-<label>Rating (e.g., 4.5): <input type="number" step="0.1" id="rating"></label>
+<label>Subcategory: <select id="subcategory"> <option value="">Select Subcategory</option> <option value="Spread">Spread</option> <option value="Cheese">Cheese</option> <option value="Serum">Serum</option> <option value="Makeup">Makeup</option> <option value="Accessory">Accessory</option> <option value="other">Other</option> </select> <input type="text" id="customSubcategory" placeholder="Custom Subcategory (if Other)"> </label>
+
+<label>Rating: <span id="stars"> <span onclick="setRating(1)">★</span> <span onclick="setRating(2)">★</span> <span onclick="setRating(3)">★</span> <span onclick="setRating(4)">★</span> <span onclick="setRating(5)">★</span> </span> </label> <input type="hidden" id="rating" value="0">
 
 <label>Select Product Images: <input type="file" id="imageUpload" multiple></label>
 
@@ -75,17 +75,29 @@
     });
   });
 
+  function setRating(stars) {
+    document.getElementById('rating').value = stars;
+    [...document.querySelectorAll('#stars span')].forEach((s, i) => {
+      s.style.color = i < stars ? 'gold' : 'gray';
+    });
+  }
+
   function generateProductPage() {
     const id = 'prod_' + Math.random().toString(36).substring(2, 9);
     const name = document.getElementById('productName').value;
-    const basePrice = +document.getElementById('basePrice').value;
-    const discountPrice = +document.getElementById('discountPrice').value;
+    const basePrice = 0; // Price shown after selecting variant
+    const discountPrice = 0;
     const description = document.getElementById('description').value;
     const variantType = document.getElementById('variantType').value;
     const variantOptions = document.getElementById('variantOptions').value.split(',').map(v => v.trim());
     const variantPrices = JSON.parse(document.getElementById('variantPrices').value || '{}');
-    const category = document.getElementById('category').value;
-    const subcategory = document.getElementById('subcategory').value;
+
+    let category = document.getElementById('category').value;
+    if (category === 'other') category = document.getElementById('customCategory').value;
+
+    let subcategory = document.getElementById('subcategory').value;
+    if (subcategory === 'other') subcategory = document.getElementById('customSubcategory').value;
+
     const rating = +document.getElementById('rating').value;
 
     const productData = {
@@ -137,4 +149,4 @@
 
   renderProductList();
 </script></body>
-  </html>
+</html>
