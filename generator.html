@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Digital Page Generator</title>
     <style>
-        /* --- Basic CSS for Styling --- */
         :root {
             --primary-color: #007bff;
             --danger-color: #dc3545;
@@ -14,7 +13,6 @@
             --text-color: #333;
             --link-color: #0056b3;
         }
-
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             line-height: 1.6;
@@ -25,7 +23,6 @@
             display: flex;
             justify-content: center;
         }
-
         .container {
             max-width: 900px;
             width: 100%;
@@ -34,13 +31,11 @@
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
-
         h1, h2 {
             color: var(--primary-color);
             border-bottom: 2px solid var(--border-color);
             padding-bottom: 10px;
         }
-
         button {
             cursor: pointer;
             padding: 10px 15px;
@@ -50,33 +45,27 @@
             font-weight: bold;
             transition: background-color 0.2s;
         }
-
         #create-page-btn {
             background-color: var(--primary-color);
             color: white;
             margin-bottom: 1.5rem;
         }
-
         #create-page-btn:hover {
             background-color: var(--link-color);
         }
-        
         .delete-btn {
             background-color: var(--danger-color);
             color: white;
             font-size: 0.8rem;
             padding: 5px 10px;
         }
-        
         .delete-btn:hover {
             background-color: #c82333;
         }
-
         #page-list ul {
             list-style: none;
             padding: 0;
         }
-
         #page-list li {
             display: flex;
             justify-content: space-between;
@@ -87,39 +76,26 @@
             margin-bottom: 10px;
             background: #fff;
         }
-        
         #page-list a {
             text-decoration: none;
             color: var(--link-color);
             font-weight: 500;
         }
-        
         #page-list a:hover {
             text-decoration: underline;
         }
-
         #page-content {
             margin-top: 2rem;
             padding: 1.5rem;
             border: 1px dashed var(--border-color);
             border-radius: 5px;
             min-height: 150px;
-            background-color: var(--light-gray);
+            background-color: #fff;
         }
-
         .page-placeholder {
             color: #6c757d;
             text-align: center;
         }
-        
-        .page-link-display {
-            font-family: 'Courier New', Courier, monospace;
-            background: #e9ecef;
-            padding: 5px 8px;
-            border-radius: 4px;
-            word-break: break-all;
-        }
-
     </style>
 </head>
 <body>
@@ -139,36 +115,29 @@
         </section>
 
         <section id="page-content">
-            <p class="page-placeholder">Select a page from the list above or create a new one.</p>
-        </section>
+            </section>
     </div>
 
     <script>
-        // --- JavaScript Logic ---
-
         document.addEventListener('DOMContentLoaded', () => {
             const createPageBtn = document.getElementById('create-page-btn');
             const pageList = document.getElementById('page-list');
             const pageContent = document.getElementById('page-content');
 
-            // Load pages from localStorage or initialize an empty object
             const loadPages = () => {
                 const pagesJSON = localStorage.getItem('digitalPages');
                 return pagesJSON ? JSON.parse(pagesJSON) : {};
             };
 
-            // Save pages to localStorage
             const savePages = (pages) => {
                 localStorage.setItem('digitalPages', JSON.stringify(pages));
             };
 
-            // Generate a unique ID for a page based on timestamp
             const generateUniqueId = () => `page-${Date.now()}`;
 
-            // Render the list of pages
             const renderPageList = () => {
                 const pages = loadPages();
-                pageList.innerHTML = ''; // Clear the current list
+                pageList.innerHTML = ''; 
 
                 if (Object.keys(pages).length === 0) {
                     pageList.innerHTML = '<p>No pages created yet.</p>';
@@ -185,6 +154,10 @@
                     pageLink.textContent = page.title;
                     pageLink.dataset.pageId = pageId;
 
+                    // Display the full link on hover as a tooltip
+                    const fullPageLink = `${window.location.origin}${window.location.pathname}#${pageId}`;
+                    pageLink.title = `Link: ${fullPageLink}`;
+
                     const deleteBtn = document.createElement('button');
                     deleteBtn.className = 'delete-btn';
                     deleteBtn.textContent = 'Delete';
@@ -197,49 +170,39 @@
                 pageList.appendChild(ul);
             };
 
-            // Display the content of a specific page
+            // **CORRECTED FUNCTION**
+            // This now sets the content to be a blank slate.
             const displayPage = (pageId) => {
                 const pages = loadPages();
                 const page = pages[pageId];
                 
                 if (page) {
-                    // This is the unique, shareable link for the page
-                    const fullPageLink = `${window.location.origin}${window.location.pathname}#${pageId}`;
-
-                    pageContent.innerHTML = `
-                        <h2>${page.title}</h2>
-                        <p><strong>🔗 Sharable Link:</strong> <span class="page-link-display">${fullPageLink}</span></p>
-                        <hr>
-                        <p><em>This is a blank page. In the future, you could add a form here to edit and save content.</em></p>
-                    `;
+                    // Set the content area to be blank, as requested.
+                    // You can add an editor or other elements here later.
+                    pageContent.innerHTML = ''; 
                 } else {
-                    // If page ID from URL doesn't exist, show placeholder
                     pageContent.innerHTML = '<p class="page-placeholder">Page not found. It may have been deleted.</p>';
                 }
             };
             
-            // Handle creating a new page
             createPageBtn.addEventListener('click', () => {
                 const pages = loadPages();
                 const newPageId = generateUniqueId();
                 
                 pages[newPageId] = {
                     title: `New Page (${new Date().toLocaleTimeString()})`,
-                    content: '' // Initially blank content
+                    content: '' 
                 };
                 
                 savePages(pages);
                 renderPageList();
                 
-                // Navigate to the new page automatically
                 window.location.hash = newPageId;
             });
 
-            // Handle deleting a page or navigating to a page (using event delegation)
             pageList.addEventListener('click', (e) => {
                 const target = e.target;
                 
-                // Handle delete button click
                 if (target.classList.contains('delete-btn')) {
                     e.preventDefault();
                     const pageIdToDelete = target.dataset.pageId;
@@ -250,18 +213,15 @@
                         savePages(pages);
                         renderPageList();
                         
-                        // If the currently viewed page is the one being deleted, clear the content area
                         if (window.location.hash === `#${pageIdToDelete}`) {
-                            window.location.hash = ''; // Clear hash to avoid a broken link
-                            pageContent.innerHTML = '<p class="page-placeholder">The page you were viewing has been deleted.</p>';
+                            window.location.hash = '';
                         }
                     }
                 }
             });
 
-            // Function to check the URL hash and display the correct page
             const checkUrlAndDisplayPage = () => {
-                const pageId = window.location.hash.substring(1); // Get hash without '#'
+                const pageId = window.location.hash.substring(1); 
                 if (pageId) {
                     displayPage(pageId);
                 } else {
@@ -269,12 +229,10 @@
                 }
             };
 
-            // Listen for hash changes (e.g., clicking a link, using browser back/forward buttons)
             window.addEventListener('hashchange', checkUrlAndDisplayPage);
 
-            // Initial setup on page load
             renderPageList();
-            checkUrlAndDisplayPage(); // Display page if URL already has a hash
+            checkUrlAndDisplayPage();
         });
     </script>
 
