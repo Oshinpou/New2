@@ -463,6 +463,73 @@
     }
 
   });
-  </script>
+ 
+  // --- 🔒 ENSURE DATA SAVING FOR DYNAMIC PAGES ---
+    function saveFullPageDataWithIntegrity() {
+      const newPageId = Gun.SEA.random(16).toString('hex');
+      const product = {
+        id: newPageId,
+        name: document.getElementById('product-name').value,
+        details: document.getElementById('product-details').value,
+        category: document.getElementById('category-select').value,
+        subcategory: document.getElementById('subcategory-select').value,
+        images: document.getElementById('slider-images').value.split(',').map(s => s.trim()).filter(Boolean)
+      };
+
+      if (!product.name || !product.details) {
+        alert("Please fill in all product details.");
+        return;
+      }
+
+      const variants = [];
+      document.querySelectorAll('.variant-block').forEach((block) => {
+        const name = block.querySelector('.variant-name').value;
+        const options = block.querySelector('.variant-options').value
+          .split(',')
+          .map(o => o.trim())
+          .filter(Boolean);
+        if (name && options.length) {
+          variants.push({ name, options });
+        }
+      });
+
+      const pricing = {};
+      document.querySelectorAll('.price-input').forEach((priceInput) => {
+        const combo = priceInput.dataset.combo;
+        const discountedInput = document.querySelector(`.discount-input[data-combo="${combo}"]`);
+        pricing[combo] = {
+          price: parseFloat(priceInput.value) || 0,
+          discounted: parseFloat(discountedInput?.value || '') || null
+        };
+      });
+
+      // Put main product data
+      gun.get(newPageId).put(product);
+
+      // Store variants & pricing as structured JSON
+      gun.get(newPageId).get('variants').put(JSON.stringify(variants));
+      gun.get(newPageId).get('pricing').put(JSON.stringify(pricing));
+
+      // Store a timestamp & hash for validation/debugging
+      const timestamp = Date.now();
+      gun.get(newPageId).get('timestamp').put(timestamp);
+      Gun.SEA.work(JSON.stringify(product), null, null, (hash) => {
+        gun.get(newPageId).get('hash').put(hash);
+      });
+
+      // Index for listing
+      gun.get('products_index').set(gun.get(newPageId));
+
+      alert(`✔️ Page saved: ${newPageId}`);
+      displayLinks();
+    }
+
+    // Optional override old generate button with secure version
+    const generateBtn = document.getElementById('generate-page-btn');
+    if (generateBtn) {
+      generateBtn.removeEventListener('click', saveProduct); // remove if exists
+      generateBtn.addEventListener('click', saveFullPageDataWithIntegrity);
+        }
+                </script>
 </body>
 </html>
