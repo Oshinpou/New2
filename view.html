@@ -7,152 +7,113 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      margin: 0;
+      background: #f4f4f4;
       padding: 20px;
-      background-color: #f3f4f6;
     }
     h1 {
-      color: #111827;
-      text-align: center;
+      color: #333;
+      margin-bottom: 10px;
     }
     form {
-      background-color: #ffffff;
+      background: #fff;
       padding: 20px;
-      border-radius: 8px;
-      max-width: 600px;
-      margin: 0 auto;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
-    label {
+    input, select, button {
       display: block;
-      margin-top: 10px;
-      font-weight: bold;
-    }
-    input {
       width: 100%;
-      padding: 8px;
-      margin-top: 5px;
-      border: 1px solid #d1d5db;
-      border-radius: 4px;
-    }
-    .variant-input {
-      margin-bottom: 5px;
+      padding: 10px;
+      margin-top: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
     }
     button {
-      margin-top: 15px;
-      background-color: #2563eb;
+      background: #4CAF50;
       color: white;
-      padding: 10px 16px;
       border: none;
-      border-radius: 4px;
       cursor: pointer;
     }
-    .message {
-      margin-top: 15px;
-      padding: 10px;
-      border-radius: 5px;
-      text-align: center;
-    }
-    .success {
-      background-color: #d1fae5;
-      color: #065f46;
-    }
-    .error {
-      background-color: #fee2e2;
-      color: #991b1b;
+    button:hover {
+      background: #45a049;
     }
     ul {
-      list-style-type: none;
+      list-style: none;
       padding: 0;
-      margin-top: 30px;
-      max-width: 600px;
-      margin-left: auto;
-      margin-right: auto;
     }
     li {
-      background: white;
+      background: #fff;
       padding: 10px;
-      margin-bottom: 8px;
-      border-radius: 6px;
+      margin-bottom: 10px;
+      border-radius: 8px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
     .delete-btn {
-      background-color: #ef4444;
-      color: white;
+      background: #e74c3c;
+      padding: 6px 10px;
+      color: #fff;
       border: none;
-      padding: 4px 10px;
-      border-radius: 4px;
+      border-radius: 5px;
       margin-left: 10px;
       cursor: pointer;
+    }
+    .success, .error {
+      padding: 10px;
+      border-radius: 5px;
+      margin-bottom: 15px;
+    }
+    .success {
+      background-color: #d4edda;
+      color: #155724;
+    }
+    .error {
+      background-color: #f8d7da;
+      color: #721c24;
     }
   </style>
 </head>
 <body>
+  <h1>Product Generator</h1>
 
-  <h1>imacx Product Generator</h1>
+  <div id="success-message" class="success" style="display:none;"></div>
+  <div id="error-message" class="error" style="display:none;"></div>
 
   <form id="product-form">
-    <label for="product-name">Product Name</label>
-    <input type="text" id="product-name" required />
-
-    <label for="product-price">Product Price</label>
-    <input type="text" id="product-price" required />
-
-    <label for="product-image">Image URL</label>
-    <input type="text" id="product-image" required />
-
-    <label for="product-category">Category</label>
-    <input type="text" id="product-category" required />
-
-    <label for="product-subcategory">Subcategory</label>
-    <input type="text" id="product-subcategory" required />
-
-    <label>Variants (Add multiple)</label>
-    <div id="variant-fields">
-      <input type="text" class="variant-input" placeholder="Variant 1" />
-    </div>
-    <button type="button" onclick="addVariant()">Add Variant</button>
-
-    <button type="submit">Generate Product Link</button>
-
-    <div id="success-message" class="message success hidden"></div>
-    <div id="error-message" class="message error hidden"></div>
+    <input type="text" id="product-name" placeholder="Product Name" required />
+    <input type="text" id="product-price" placeholder="Price" required />
+    <input type="text" id="product-image" placeholder="Image URL" required />
+    <input type="text" id="product-category" placeholder="Category" required />
+    <input type="text" id="product-subcategory" placeholder="Subcategory" required />
+    <input type="text" class="variant-input" placeholder="Variant (Optional)" />
+    <button type="submit">Generate Product</button>
   </form>
 
+  <h2>Generated Products</h2>
   <ul id="product-list"></ul>
 
-  <!-- GunDB Script & Product Logic -->
   <script type="module">
     import Gun from 'https://cdn.jsdelivr.net/npm/gun/gun.js';
     const gun = Gun();
 
     const productForm = document.getElementById("product-form");
+    const productList = document.getElementById("product-list");
     const successMessage = document.getElementById("success-message");
     const errorMessage = document.getElementById("error-message");
-    const productList = document.getElementById("product-list");
-    const variantFields = document.getElementById("variant-fields");
 
-    function addVariant() {
-      const input = document.createElement("input");
-      input.type = "text";
-      input.className = "variant-input";
-      input.placeholder = `Variant ${variantFields.children.length + 1}`;
-      variantFields.appendChild(input);
+    function showSuccess(msg) {
+      successMessage.textContent = msg;
+      successMessage.style.display = "block";
+      errorMessage.style.display = "none";
     }
 
-    function showSuccess(message) {
-      successMessage.textContent = message;
-      successMessage.classList.remove("hidden");
-      errorMessage.classList.add("hidden");
+    function showError(msg) {
+      errorMessage.textContent = msg;
+      errorMessage.style.display = "block";
+      successMessage.style.display = "none";
     }
 
-    function showError(message) {
-      errorMessage.textContent = message;
-      errorMessage.classList.remove("hidden");
-      successMessage.classList.add("hidden");
-    }
-
-    function generateUniqueId() {
+    function generateId() {
       return 'page_' + Date.now() + Math.floor(Math.random() * 10000);
     }
 
@@ -165,10 +126,10 @@
       });
     }
 
-    productForm.addEventListener("submit", async (event) => {
-      event.preventDefault();
+    productForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
 
-      const id = generateUniqueId();
+      const id = generateId();
       const product = {
         id,
         name: document.getElementById("product-name").value,
@@ -182,34 +143,32 @@
 
       try {
         await saveProductToGun(product, id);
-        showSuccess("Product saved successfully!");
-        renderProductItem(product);
+        showSuccess("Product saved!");
         productForm.reset();
-        variantFields.innerHTML = '<input type="text" class="variant-input" placeholder="Variant 1" />';
+        addProductToList(product, id);
       } catch (error) {
         console.error("GunDB error:", error);
         showError("Failed to save product. Try again.");
       }
     });
 
-    function renderProductItem(data) {
-      const id = data.id;
-      const productItem = document.createElement("li");
-      productItem.innerHTML = `
-        <strong>${data.name}</strong><br/>
-        <a href="product.html#${id}" target="_blank" style="color: #2563eb;">View Product</a>
+    function addProductToList(data, id) {
+      const li = document.createElement("li");
+      li.innerHTML = `
+        <strong>${data.name}</strong> - ₹${data.price}<br/>
+        <a href="product.html#${id}" target="_blank">Open Product Page</a>
         <button class="delete-btn" data-id="${id}">Delete</button>
       `;
-      productList.appendChild(productItem);
+      productList.appendChild(li);
     }
 
     // Load existing products
     gun.get('products').map().once((data, id) => {
       if (!data || !data.name) return;
-      renderProductItem({ ...data, id });
+      addProductToList(data, id);
     });
 
-    // Delete handler
+    // Delete button functionality
     productList.addEventListener("click", (e) => {
       if (e.target.classList.contains("delete-btn")) {
         const id = e.target.getAttribute("data-id");
@@ -218,6 +177,5 @@
       }
     });
   </script>
-
 </body>
 </html>
