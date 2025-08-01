@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Cloud Web Page</title>
+  <style>
+    body { font-family: Arial, sans-serif; }
+    .container { width: 80%; margin: auto; padding: 20px; }
+    .product { margin-top: 20px; font-size: 20px; }
+    .nav { margin-bottom: 20px; }
+    .nav a { margin-right: 10px; text-decoration: none; color: #000; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Product Details</h1>
+    <div class="nav">
+      <a href="generator.html">Back to Generator</a>
+      <a href="basket.html">Basket</a>
+    </div>
+    <div class="product" id="productDetails">
+      <!-- Product details will be displayed here -->
+    </div>
+  </div>
+
+  <!-- Script to load and display product details -->
+  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+  <script>
+    const gun = Gun();
+    const productDetails = document.getElementById('productDetails');
+
+    // Get the token from the URL hash
+    const token = window.location.hash.substring(1);
+
+    // Load the product data from GunDB
+    gun.get('products').get(token).on((productData) => {
+      if (productData) {
+        productDetails.innerHTML = `
+          <strong>Product Name:</strong> ${productData.name}<br>
+          <strong>Product Price:</strong> INR ${productData.price}
+        `;
+      } else {
+        productDetails.innerHTML = 'Product not found or deleted.';
+      }
+    });
+  </script>
+</body>
+</html>
