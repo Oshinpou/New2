@@ -86,9 +86,13 @@
     <!-- Product Page UI (hidden by default) -->
     <div id="product-view" class="container mt-8 bg-white p-8 rounded-xl shadow-lg hidden">
         <div class="text-center mb-8">
-            <h1 id="product-name-display" class="text-5xl font-extrabold text-indigo-600"></h1>
-            <p id="product-price-display" class="text-3xl font-light text-gray-500 mt-2"></p>
-            <div class="mt-8 text-gray-600">
+            <!-- Loading state message -->
+            <p id="loading-message" class="text-xl text-gray-500">Loading product details...</p>
+
+            <!-- Product details will be displayed here once fetched -->
+            <h1 id="product-name-display" class="text-5xl font-extrabold text-indigo-600 hidden"></h1>
+            <p id="product-price-display" class="text-3xl font-light text-gray-500 mt-2 hidden"></p>
+            <div id="product-static-content" class="mt-8 text-gray-600 hidden">
                 <p>This is a cloud web page generated with a unique token link. The data for this page is fetched from a distributed database.</p>
                 <p class="mt-2">You can add more static or dynamic content here as needed.</p>
             </div>
@@ -110,8 +114,10 @@
             const productPriceInput = document.getElementById('productPrice');
             const pagesList = document.getElementById('pages-list');
 
+            const loadingMessage = document.getElementById('loading-message');
             const productNameDisplay = document.getElementById('product-name-display');
             const productPriceDisplay = document.getElementById('product-price-display');
+            const productStaticContent = document.getElementById('product-static-content');
             
             // Function to generate a random UUID token
             const generateToken = () => crypto.randomUUID();
@@ -125,7 +131,7 @@
                 const productPrice = productPriceInput.value.trim();
                 
                 if (!productName || !productPrice) {
-                    alert('Please enter both a product name and a price.'); // Note: User requested no alerts. Using this for simple feedback.
+                    alert('Please enter both a product name and a price.');
                     return;
                 }
 
@@ -217,20 +223,37 @@
 
             /**
              * Initializes the product page view by fetching and displaying the product data.
+             * We use .on() to listen for data, which is more robust for a distributed system
+             * and prevents the "Product Not Found" error if data hasn't fully synced yet.
              * @param {string} token The unique token from the URL query parameter.
              */
             const initializeProductView = (token) => {
                 generatorView.classList.add('hidden');
                 productView.classList.remove('hidden');
 
-                // Fetch product data from GunDB using the token
-                gun.get('product_pages').get(token).once(data => {
-                    if (data) {
+                gun.get('product_pages').get(token).on(data => {
+                    // Hide the loading message once data is received
+                    loadingMessage.classList.add('hidden');
+                    
+                    if (data && data.name && data.price) {
+                        // Display the product details
                         productNameDisplay.textContent = data.name;
                         productPriceDisplay.textContent = `₹ ${data.price.toFixed(2)}`;
+                        
+                        // Make sure the display elements are visible
+                        productNameDisplay.classList.remove('hidden');
+                        productPriceDisplay.classList.remove('hidden');
+                        productStaticContent.classList.remove('hidden');
+
                     } else {
+                        // Handle the case where the product data is not found or deleted
                         productNameDisplay.textContent = 'Product Not Found';
                         productPriceDisplay.textContent = 'This page may have been deleted or never existed.';
+                        
+                        // Make sure the display elements are visible, but not the static content
+                        productNameDisplay.classList.remove('hidden');
+                        productPriceDisplay.classList.remove('hidden');
+                        productStaticContent.classList.add('hidden');
                     }
                 });
             };
