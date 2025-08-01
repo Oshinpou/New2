@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>All Product Links</title>
+  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+</head>
+<body>
+  <h2>All Saved Product Pages</h2>
+  <div id="list"></div>
+
+  <script>
+    const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
+    const views = gun.get("imacx-product-links");
+
+    views.map().once((data, key) => {
+      if (data && data.link) {
+        const div = document.createElement('div');
+        div.innerHTML = `
+          <p><a href="${data.link}" target="_blank">${data.name} - ₹${data.price}</a></p>
+        `;
+        document.getElementById("list").appendChild(div);
+      }
+    });
+  </script>
+</body>
+</html>
