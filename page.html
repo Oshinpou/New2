@@ -1,62 +1,81 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Product Token Generator - imacx</title>
+  <title>Token Page Generator - imacx</title>
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; background: #f9f9f9; }
-    h1 { color: #222; }
-    input, button { padding: 10px; margin: 5px; border: 1px solid #ccc; border-radius: 5px; }
-    button { background: #007bff; color: white; cursor: pointer; }
-    ul { list-style-type: none; padding: 0; }
-    li { background: #fff; margin: 5px 0; padding: 10px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; }
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+    }
+    input, button {
+      padding: 10px;
+      margin: 5px 0;
+      width: 100%;
+      font-size: 16px;
+    }
+    .token-link {
+      margin-top: 10px;
+      padding: 10px;
+      background: #f0f0f0;
+      word-break: break-all;
+    }
   </style>
 </head>
 <body>
-  <h1>Generate Product Token Link</h1>
-  <input type="text" id="productName" placeholder="Product Name" />
-  <input type="text" id="productPrice" placeholder="Price in INR" />
-  <button onclick="generateTokenLink()">Generate Token Link</button>  <h2>Generated Links</h2>
-  <ul id="tokenLinks"></ul>  <script>
-    const gun = Gun();
-    const linksNode = gun.get('imacx-products');
+  <h1>🔗 Token Page Generator</h1>
 
-    function generateTokenLink() {
-      const name = document.getElementById('productName').value;
-      const price = document.getElementById('productPrice').value;
-      if (!name || !price) return alert('Enter both name and price');
+  <div id="creator">
+    <input id="name" placeholder="Enter product name" />
+    <input id="price" placeholder="Enter product price" />
+    <button onclick="generateToken()">Generate Link</button>
+    <div id="linkOutput"></div>
+  </div>
 
-      const id = 'token_' + Date.now();
-      const data = { id, name, price };
-      linksNode.get(id).put(data);
+  <div id="viewer" style="display:none;">
+    <h2>🧾 Token Page</h2>
+    <p><strong>Name:</strong> <span id="viewName"></span></p>
+    <p><strong>Price:</strong> <span id="viewPrice"></span></p>
+  </div>
 
-      addLinkToList(data);
+  <script>
+    const gun = Gun('https://gun-manhattan.herokuapp.com/gun');
+    const path = window.location.pathname;
+
+    if (path.startsWith('/token_')) {
+      const tokenId = path.replace('/token_', '');
+      document.getElementById('creator').style.display = 'none';
+      document.getElementById('viewer').style.display = 'block';
+
+      gun.get('tokens').get(tokenId).once(data => {
+        if (data) {
+          document.getElementById('viewName').textContent = data.name || 'No name';
+          document.getElementById('viewPrice').textContent = data.price || 'No price';
+        } else {
+          document.getElementById('viewName').textContent = 'Not Found';
+          document.getElementById('viewPrice').textContent = '-';
+        }
+      });
     }
 
-    function addLinkToList({ id, name, price }) {
-      const li = document.createElement('li');
-      const a = document.createElement('a');
-      a.href = `view.html?id=${id}`;
-      a.target = '_blank';
-      a.textContent = `${name} - ₹${price}`;
-      
-      const del = document.createElement('button');
-      del.textContent = 'Delete';
-      del.onclick = () => {
-        linksNode.get(id).put(null);
-        li.remove();
-      };
+    function generateToken() {
+      const name = document.getElementById('name').value.trim();
+      const price = document.getElementById('price').value.trim();
 
-      li.appendChild(a);
-      li.appendChild(del);
-      document.getElementById('tokenLinks').appendChild(li);
-    }
-
-    linksNode.map().once(data => {
-      if (data && data.id) {
-        addLinkToList(data);
+      if (!name || !price) {
+        alert('Please enter both name and price.');
+        return;
       }
-    });
-  </script></body>
+
+      const tokenId = 'token_' + Date.now();
+      gun.get('tokens').get(tokenId).put({ name, price });
+
+      const link = window.location.origin + '/' + tokenId;
+      document.getElementById('linkOutput').innerHTML =
+        `<div class="token-link">Link created: <a href="${link}" target="_blank">${link}</a></div>`;
+    }
+  </script>
+</body>
 </html>
