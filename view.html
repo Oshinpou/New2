@@ -9,27 +9,43 @@
   <h2>Product Details</h2>
   <p><strong>Name:</strong> <span id="name">Loading...</span></p>
   <p><strong>Price:</strong> <span id="price">Loading...</span></p>
+  <p><strong>Page Link:</strong> <span id="pageLink">Saving...</span></p>
 
   <script>
+    const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
+    const db = gun.get("imacx-products");
+    const views = gun.get("imacx-product-links");
+
     const urlParams = new URLSearchParams(window.location.search);
     const id = urlParams.get("id");
 
-    const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
-    const db = gun.get("imacx-products");
-
     if (id) {
+      const fullLink = window.location.href;
+      document.getElementById("pageLink").textContent = fullLink;
+
       db.get(id).once(data => {
         if (data) {
-          document.getElementById("name").textContent = data.name || "Not found";
-          document.getElementById("price").textContent = data.price || "Not found";
+          const { name, price } = data;
+
+          document.getElementById("name").textContent = name || "Not found";
+          document.getElementById("price").textContent = price || "Not found";
+
+          // ✅ Store the link + data for future list
+          views.get(id).put({
+            name,
+            price,
+            link: fullLink
+          });
         } else {
           document.getElementById("name").textContent = "No data";
           document.getElementById("price").textContent = "No data";
+          document.getElementById("pageLink").textContent = "Invalid ID";
         }
       });
     } else {
       document.getElementById("name").textContent = "No ID";
       document.getElementById("price").textContent = "No ID";
+      document.getElementById("pageLink").textContent = "Missing ?id=";
     }
   </script>
 </body>
