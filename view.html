@@ -3,120 +3,221 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Product Generator - imacx Admin</title>
-  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Product Generator - imacx Shop</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f3f4f6;
+    }
+    h1 {
+      color: #111827;
+      text-align: center;
+    }
+    form {
+      background-color: #ffffff;
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 600px;
+      margin: 0 auto;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    input {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+    }
+    .variant-input {
+      margin-bottom: 5px;
+    }
+    button {
+      margin-top: 15px;
+      background-color: #2563eb;
+      color: white;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .message {
+      margin-top: 15px;
+      padding: 10px;
+      border-radius: 5px;
+      text-align: center;
+    }
+    .success {
+      background-color: #d1fae5;
+      color: #065f46;
+    }
+    .error {
+      background-color: #fee2e2;
+      color: #991b1b;
+    }
+    ul {
+      list-style-type: none;
+      padding: 0;
+      margin-top: 30px;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    li {
+      background: white;
+      padding: 10px;
+      margin-bottom: 8px;
+      border-radius: 6px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .delete-btn {
+      background-color: #ef4444;
+      color: white;
+      border: none;
+      padding: 4px 10px;
+      border-radius: 4px;
+      margin-left: 10px;
+      cursor: pointer;
+    }
+  </style>
 </head>
-<body class="bg-gray-100 p-4">
-  <h1 class="text-2xl font-bold mb-4">imacx Product Generator</h1>
+<body>
 
-  <form id="productForm" class="bg-white p-4 rounded shadow-md space-y-4 max-w-xl mx-auto">
-    <input type="text" id="name" placeholder="Product Name" class="w-full p-2 border rounded" required />
-    <input type="number" id="price" placeholder="Price (in ₹)" class="w-full p-2 border rounded" required />
-    <input type="text" id="category" placeholder="Category" class="w-full p-2 border rounded" required />
-    <input type="text" id="subcategory" placeholder="Subcategory" class="w-full p-2 border rounded" />
+  <h1>imacx Product Generator</h1>
 
-    <textarea id="images" placeholder="Image URLs (comma separated)" class="w-full p-2 border rounded" required></textarea>
+  <form id="product-form">
+    <label for="product-name">Product Name</label>
+    <input type="text" id="product-name" required />
 
-    <div>
-      <label class="block font-medium">Variants (name=value format, comma separated):</label>
-      <input type="text" id="variants" placeholder="e.g. size=S,M,L,color=Red,Blue" class="w-full p-2 border rounded" />
+    <label for="product-price">Product Price</label>
+    <input type="text" id="product-price" required />
+
+    <label for="product-image">Image URL</label>
+    <input type="text" id="product-image" required />
+
+    <label for="product-category">Category</label>
+    <input type="text" id="product-category" required />
+
+    <label for="product-subcategory">Subcategory</label>
+    <input type="text" id="product-subcategory" required />
+
+    <label>Variants (Add multiple)</label>
+    <div id="variant-fields">
+      <input type="text" class="variant-input" placeholder="Variant 1" />
     </div>
+    <button type="button" onclick="addVariant()">Add Variant</button>
 
-    <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Generate Product</button>
-    <div id="message" class="mt-2 text-center font-semibold"></div>
+    <button type="submit">Generate Product Link</button>
+
+    <div id="success-message" class="message success hidden"></div>
+    <div id="error-message" class="message error hidden"></div>
   </form>
 
-  <div class="max-w-2xl mx-auto mt-6">
-    <h2 class="text-xl font-bold mb-2">Generated Products</h2>
-    <ul id="productList" class="space-y-2"></ul>
-  </div>
+  <ul id="product-list"></ul>
 
-  <script>
+  <!-- GunDB Script & Product Logic -->
+  <script type="module">
+    import Gun from 'https://cdn.jsdelivr.net/npm/gun/gun.js';
     const gun = Gun();
-    const db = gun.get('imacx-products');
-    const productList = document.getElementById("productList");
-    const productForm = document.getElementById("productForm");
-    const message = document.getElementById("message");
 
-    productForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      message.textContent = "Creating product...";
+    const productForm = document.getElementById("product-form");
+    const successMessage = document.getElementById("success-message");
+    const errorMessage = document.getElementById("error-message");
+    const productList = document.getElementById("product-list");
+    const variantFields = document.getElementById("variant-fields");
 
-      const name = document.getElementById("name").value.trim();
-      const price = parseFloat(document.getElementById("price").value.trim());
-      const category = document.getElementById("category").value.trim();
-      const subcategory = document.getElementById("subcategory").value.trim();
-      const images = document.getElementById("images").value.split(",").map(img => img.trim());
-      const variantsRaw = document.getElementById("variants").value.trim();
+    function addVariant() {
+      const input = document.createElement("input");
+      input.type = "text";
+      input.className = "variant-input";
+      input.placeholder = `Variant ${variantFields.children.length + 1}`;
+      variantFields.appendChild(input);
+    }
 
-      const variants = {};
-      if (variantsRaw) {
-        variantsRaw.split(",").forEach(v => {
-          const [key, val] = v.split("=");
-          if (key && val) {
-            variants[key.trim()] = val.split(";").map(x => x.trim());
-          }
+    function showSuccess(message) {
+      successMessage.textContent = message;
+      successMessage.classList.remove("hidden");
+      errorMessage.classList.add("hidden");
+    }
+
+    function showError(message) {
+      errorMessage.textContent = message;
+      errorMessage.classList.remove("hidden");
+      successMessage.classList.add("hidden");
+    }
+
+    function generateUniqueId() {
+      return 'page_' + Date.now() + Math.floor(Math.random() * 10000);
+    }
+
+    async function saveProductToGun(productData, id) {
+      return new Promise((resolve, reject) => {
+        gun.get('products').get(id).put(productData, (ack) => {
+          if (ack.err) reject(ack.err);
+          else resolve();
         });
-      }
+      });
+    }
 
-      const pageId = "page_" + Date.now();
-      const product = { name, price, category, subcategory, images, variants, pageId };
+    productForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const id = generateUniqueId();
+      const product = {
+        id,
+        name: document.getElementById("product-name").value,
+        price: document.getElementById("product-price").value,
+        image: document.getElementById("product-image").value,
+        category: document.getElementById("product-category").value,
+        subcategory: document.getElementById("product-subcategory").value,
+        variants: Array.from(document.querySelectorAll(".variant-input")).map(el => el.value),
+        timestamp: Date.now()
+      };
 
       try {
-        await new Promise((resolve) => {
-          db.get(pageId).put(product, ack => {
-            if (ack.err) {
-              message.textContent = "❌ Failed to save product.";
-              return;
-            }
-            resolve();
-          });
-        });
-
-        message.textContent = "✅ Product created!";
-        appendProductToList(pageId, product);
-
+        await saveProductToGun(product, id);
+        showSuccess("Product saved successfully!");
+        renderProductItem(product);
         productForm.reset();
-      } catch (err) {
-        console.error("Error:", err);
-        message.textContent = "❌ An unexpected error occurred.";
+        variantFields.innerHTML = '<input type="text" class="variant-input" placeholder="Variant 1" />';
+      } catch (error) {
+        console.error("GunDB error:", error);
+        showError("Failed to save product. Try again.");
       }
     });
 
-    function appendProductToList(pageId, product) {
-      if (!pageId || !product.name) return;
-      const li = document.createElement("li");
-      li.className = "bg-white p-3 shadow rounded flex justify-between items-center";
-
-      const link = document.createElement("a");
-      link.href = `product.html#${pageId}`;
-      link.textContent = `${product.name} - ₹${product.price}`;
-      link.className = "text-blue-600 hover:underline";
-
-      const delBtn = document.createElement("button");
-      delBtn.textContent = "Delete";
-      delBtn.className = "bg-red-500 text-white px-3 py-1 rounded ml-4";
-      delBtn.onclick = () => {
-        db.get(pageId).put(null);
-        li.remove();
-      };
-
-      li.appendChild(link);
-      li.appendChild(delBtn);
-      productList.appendChild(li);
+    function renderProductItem(data) {
+      const id = data.id;
+      const productItem = document.createElement("li");
+      productItem.innerHTML = `
+        <strong>${data.name}</strong><br/>
+        <a href="product.html#${id}" target="_blank" style="color: #2563eb;">View Product</a>
+        <button class="delete-btn" data-id="${id}">Delete</button>
+      `;
+      productList.appendChild(productItem);
     }
 
     // Load existing products
-    db.map().once((product, pageId) => {
-      if (product && product.name) {
-        appendProductToList(pageId, product);
-      }
+    gun.get('products').map().once((data, id) => {
+      if (!data || !data.name) return;
+      renderProductItem({ ...data, id });
     });
 
-    // Optional: clear message after 3 seconds
-    setInterval(() => (message.textContent = ""), 3000);
+    // Delete handler
+    productList.addEventListener("click", (e) => {
+      if (e.target.classList.contains("delete-btn")) {
+        const id = e.target.getAttribute("data-id");
+        gun.get('products').get(id).put(null);
+        e.target.parentElement.remove();
+      }
+    });
   </script>
+
 </body>
 </html>
