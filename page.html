@@ -6,69 +6,44 @@
   <title>Product Page</title>
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #fefefe;
-      padding: 20px;
-    }
-    nav {
-      background: #333;
-      color: white;
-      padding: 10px;
-    }
-    nav a {
-      color: white;
-      text-decoration: none;
-      margin-right: 10px;
-    }
-    .product-box {
-      background: #fff;
-      padding: 20px;
-      box-shadow: 0 0 10px #ccc;
-      margin-top: 20px;
-    }
+    body { font-family: sans-serif; background: #fafafa; padding: 20px; }
+    nav { background: #222; color: white; padding: 10px; }
+    nav a { color: white; margin-right: 10px; text-decoration: none; }
+    .product-box { background: white; padding: 20px; margin-top: 20px; box-shadow: 0 0 10px #ddd; }
   </style>
 </head>
 <body>
 
-<nav>
-  <a href="basket.html">🛒 Basket</a>
-</nav>
+<nav><a href="basket.html">🛒 Basket</a></nav>
 
-<div class="product-box" id="productBox">
-  <h2>Loading...</h2>
-</div>
+<div class="product-box" id="productBox"><h2>Loading...</h2></div>
 
 <script>
   const gun = Gun('https://gun-manhattan.herokuapp.com/gun');
   const id = new URLSearchParams(location.search).get("id");
   const productBox = document.getElementById("productBox");
 
-  if (!id) {
-    productBox.innerHTML = "<h2>Invalid page ID</h2>";
-  } else {
-    let tries = 0;
-
-    function tryLoadData() {
-      gun.get('products').get(id).once(data => {
-        if (data && data.name && data.price) {
-          productBox.innerHTML = `
-            <h2>${data.name}</h2>
-            <p><strong>Price:</strong> ₹${data.price}</p>
-          `;
-        } else {
-          tries++;
-          if (tries < 10) {
-            setTimeout(tryLoadData, 500); // Try again in 500ms
-          } else {
-            productBox.innerHTML = "<h2>Product not found or expired</h2>";
-          }
-        }
-      });
+  function fetchProduct(retries = 10) {
+    if (!id) {
+      productBox.innerHTML = "<h2>Invalid page ID</h2>";
+      return;
     }
 
-    tryLoadData();
+    gun.get('products').get(id).once(data => {
+      if (data && data.name && data.price) {
+        productBox.innerHTML = `
+          <h2>${data.name}</h2>
+          <p><strong>Price:</strong> ₹${data.price}</p>
+        `;
+      } else if (retries > 0) {
+        setTimeout(() => fetchProduct(retries - 1), 800);
+      } else {
+        productBox.innerHTML = "<h2>Product not found or expired</h2>";
+      }
+    });
   }
+
+  fetchProduct();
 </script>
 
 </body>
