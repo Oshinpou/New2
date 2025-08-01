@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title id="pageTitle">Product Page - imacx Shop</title>
-    <!-- Tailwind CSS CDN for modern styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Custom font and base styling */
@@ -38,13 +37,11 @@
 </head>
 <body class="bg-gray-50 text-gray-800">
 
-    <!-- Custom Message Box for alerts -->
     <div id="messageBox" class="message-box"></div>
 
     <nav class="bg-white p-4 flex items-center justify-between border-b border-gray-200 shadow-sm sticky top-0 z-50">
         <div class="flex items-center space-x-3">
             <span class="text-2xl font-bold text-yellow-600">imacx</span>
-            <!-- Using a placeholder image for the logo -->
             <img src="https://placehold.co/40x40/d6a32d/ffffff?text=im" alt="imacx logo" class="h-10 w-10 rounded-full">
         </div>
         <div class="flex items-center space-x-4">
@@ -55,7 +52,6 @@
     </nav>
 
     <div class="container mx-auto p-4 md:p-8 max-w-7xl flex flex-wrap lg:flex-nowrap gap-8 mt-6">
-        <!-- Product Media Section -->
         <div class="product-media w-full lg:w-1/2 p-4 bg-white rounded-xl shadow-md border border-gray-200">
             <div id="slider-content" class="w-full h-96 flex items-center justify-center overflow-hidden bg-gray-100 rounded-xl mb-4">
                 <p class="text-gray-400">Loading images...</p>
@@ -66,7 +62,6 @@
             </div>
         </div>
 
-        <!-- Product Info Section -->
         <div class="product-info w-full lg:w-1/2 p-4">
             <h1 id="productName" class="text-4xl font-extrabold text-gray-900 mb-2">Loading Product...</h1>
             <p class="text-sm text-gray-500 mb-4">
@@ -79,8 +74,7 @@
             </p>
 
             <div id="productVariants" class="flex flex-wrap items-center gap-4 my-4">
-                <!-- Variants will be rendered here -->
-            </div>
+                </div>
 
             <div class="flex items-center space-x-4 my-4">
                 <div class="quantity-control flex items-center border border-gray-300 rounded-md">
@@ -93,7 +87,6 @@
         </div>
     </div>
 
-    <!-- Product Description Section -->
     <div class="container mx-auto p-4 md:p-8 max-w-7xl mt-8">
         <h2 class="text-2xl font-bold text-yellow-600 border-b-2 border-yellow-600 pb-2 mb-4">Product Details</h2>
         <div id="productDescription" class="text-gray-600 leading-relaxed">
@@ -101,7 +94,6 @@
         </div>
     </div>
 
-    <!-- Customer Reviews Section -->
     <div class="container mx-auto p-4 md:p-8 max-w-7xl mt-8">
         <h2 class="text-2xl font-bold text-yellow-600 border-b-2 border-yellow-600 pb-2 mb-4">Customer Reviews</h2>
         <div id="reviewsList" class="space-y-4">
@@ -130,7 +122,6 @@
         </form>
     </div>
 
-    <!-- Product Search Section -->
     <div class="container mx-auto p-4 md:p-8 max-w-7xl mt-8">
         <h2 class="text-2xl font-bold text-yellow-600 border-b-2 border-yellow-600 pb-2 mb-4">Search Other Products</h2>
         <input type="text" id="productSearch" placeholder="Search by product name, category..." class="w-full max-w-lg p-3 border border-gray-300 rounded-md mb-6 focus:ring-yellow-500 focus:border-yellow-500">
@@ -153,10 +144,8 @@
         </div>
     </footer>
 
-    <!-- GunDB Library -->
     <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
 
-    <!-- Main JavaScript Logic -->
     <script>
         // Initialize GunDB with a public server
         const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
@@ -332,12 +321,12 @@
             document.getElementById('productPrice').textContent = finalPrice.toFixed(2);
             const discountedPriceElement = document.getElementById('discountedPrice');
             if (discountedPrice !== null && discountedPrice < finalPrice) {
-                 // Correctly display the original price and the discounted price
+                    // Correctly display the original price and the discounted price
                 document.getElementById('productPrice').textContent = discountedPrice.toFixed(2);
                 discountedPriceElement.textContent = `(MRP ₹${finalPrice.toFixed(2)})`;
             } else {
-                 document.getElementById('productPrice').textContent = finalPrice.toFixed(2);
-                 discountedPriceElement.textContent = '';
+                    document.getElementById('productPrice').textContent = finalPrice.toFixed(2);
+                    discountedPriceElement.textContent = '';
             }
         }
 
@@ -556,12 +545,22 @@
             const reviewsListDiv = document.getElementById('reviewsList');
             reviewsListDiv.innerHTML = '<p class="text-gray-400">Loading reviews...</p>';
             let hasReviews = false;
-            let firstLoad = true;
+            let initialLoadHandled = false; // Flag to ensure initial message is cleared once
 
-            // Use on() and map() for real-time updates of reviews
+            // Clear previous listeners to prevent duplicates if loadProduct is called multiple times
+            productsDB.get(productId).get('reviews').off(); 
+
             productsDB.get(productId).get('reviews').map().on((review, key) => {
+                // Ensure review data is valid and not a deletion signal from GunDB (null/undefined)
                 if (review && review.reviewer && review.comment && review.rating) {
                     hasReviews = true;
+                    // Only clear the "Loading reviews..." message on the first valid review received
+                    if (!initialLoadHandled) {
+                        reviewsListDiv.innerHTML = ''; // Clear initial message
+                        initialLoadHandled = true;
+                    }
+                    
+                    // Check if the review already exists to avoid re-adding
                     if (!document.getElementById(`review-${key}`)) {
                         const reviewDiv = document.createElement('div');
                         reviewDiv.className = 'review-item bg-gray-100 p-4 rounded-xl shadow-sm border border-gray-200';
@@ -576,20 +575,24 @@
                             <div class="flex my-1">${starsHtml}</div>
                             <p class="text-gray-700 mt-2">${review.comment}</p>
                         `;
-                        reviewsListDiv.prepend(reviewDiv);
+                        reviewsListDiv.prepend(reviewDiv); // Add new reviews at the top
                     }
-                }
-                if (firstLoad) {
-                    reviewsListDiv.innerHTML = '';
-                    firstLoad = false;
+                } else if (!initialLoadHandled && key === undefined) { 
+                    // This handles the case where the review node is initially empty or cleared
+                    // and prevents "No reviews yet." from flashing before map() data arrives.
+                    // 'key === undefined' often indicates the initial 'on' call for an empty node.
+                    reviewsListDiv.innerHTML = '<p class="text-gray-400">No reviews yet.</p>';
+                    initialLoadHandled = true; // Mark as handled to avoid further clearing
                 }
             });
-
+            
+            // Fallback for when no reviews are found after a short delay (for async GunDB data)
+            // This is a common pattern with GunDB's async nature if no data is immediately present.
             setTimeout(() => {
-                if (!hasReviews && reviewsListDiv.children.length === 0) {
+                if (!hasReviews && !initialLoadHandled) { // Check both flags
                     reviewsListDiv.innerHTML = '<p class="text-gray-400">No reviews yet.</p>';
                 }
-            }, 1000);
+            }, 1500); // Give GunDB a moment to potentially fetch data
         }
 
         // --- Product Search from mock data ---
@@ -601,7 +604,7 @@
                 <a href="#${product.id}" class="product-card bg-white p-4 text-center rounded-xl shadow-md border border-gray-200 hover:shadow-lg transition-shadow duration-200 block">
                     <img src="${product.images[0]}" alt="${product.name}" onerror="this.onerror=null;this.src='https://placehold.co/120x120/d6a32d/ffffff?text=Product';" class="w-32 h-32 object-cover mx-auto mb-4 rounded-md">
                     <h3 class="text-lg font-semibold text-gray-900">${product.name}</h3>
-                    <p class="text-xl font-bold text-yellow-600 mb-4">₹${(product.discountedPrice || product.price).toFixed(2)}</p>
+                    <p class="text-xl font-bold text-yellow-600 mb-4">₹${(product.discountedPrice !== null ? product.discountedPrice : product.price).toFixed(2)}</p>
                     <span class="inline-block bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-yellow-700 transition-colors duration-200">View Product</span>
                 </a>
             `;
@@ -639,67 +642,65 @@
 
         /**
          * Loads and renders a product from GunDB based on its ID.
+         * If the product is not in GunDB, it falls back to the mock data.
          * @param {string} productId The ID of the product to load.
          */
         function loadProduct(productId) {
-            if (productId) {
-                productsDB.get(productId).on(data => {
-                    if (data && data.name) {
-                        // Unsubscribe from previous product data to avoid duplicate listeners
-                        if (currentProduct) {
-                            productsDB.get(currentProduct.id).off();
-                        }
-                        renderProduct(data);
-                        renderReviews(productId);
-                    } else if (data === null) {
-                        // Product was explicitly deleted
-                        document.getElementById('productName').textContent = 'Product Not Found (Deleted).';
-                        document.getElementById('productDescription').innerHTML = '<p class="text-gray-600">This product may have been removed.</p>';
-                        document.getElementById('reviewsList').innerHTML = '<p class="text-gray-400">No reviews available.</p>';
-                        document.getElementById('slider-content').innerHTML = '<p class="text-gray-400">No media available.</p>';
-                        document.getElementById('addToBasketBtn').disabled = true;
-                    }
-                });
-            } else {
-                // No product ID in URL
-                document.getElementById('productName').textContent = 'Welcome! Select a product.';
-                document.getElementById('productDescription').innerHTML = '<p class="text-gray-600">Use the generator page to create products, or search below.</p>';
-                document.getElementById('reviewsList').innerHTML = '<p class="text-gray-400">No product selected.</p>';
-                document.getElementById('slider-content').innerHTML = '<p class="text-gray-400">Select a product to view media.</p>';
-                document.getElementById('addToBasketBtn').disabled = true;
+            if (!productId) {
+                // If no product ID is specified, load the first product by default or show a message
+                productId = allProducts[0]?.id; // Load the first product from mock data
+                if (!productId) {
+                    document.getElementById('productName').textContent = 'No Product Selected';
+                    document.getElementById('productDescription').innerHTML = '<p class="text-gray-600">Please select a product to view its details.</p>';
+                    document.getElementById('productPrice').textContent = '0.00';
+                    document.getElementById('discountedPrice').textContent = '';
+                    document.getElementById('productCategory').textContent = 'N/A';
+                    document.getElementById('productSubcategory').textContent = 'N/A';
+                    document.getElementById('slider-content').innerHTML = '<p class="text-gray-400">No media to display.</p>';
+                    document.getElementById('productVariants').innerHTML = '<p class="text-gray-400">No configurable variants.</p>';
+                    document.getElementById('addToBasketBtn').disabled = true;
+                    document.getElementById('reviewsList').innerHTML = '<p class="text-gray-400">No reviews yet.</p>';
+                    return;
+                }
             }
-        }
-        
-        /**
-         * Seeds the GunDB with the mock product data if it's empty.
-         */
-        function seedDatabase() {
-            // Check if any products exist to avoid re-seeding
-            let productExists = false;
-            productsDB.map().on((data) => {
-                if(data && !productExists) {
-                    productExists = true;
+
+            // Attempt to load from GunDB first
+            productsDB.get(productId).once(data => {
+                if (data && data.name) {
+                    renderProduct(data);
+                    renderReviews(productId);
+                } else {
+                    // Fallback to mock data if not found in GunDB
+                    const productFromMock = allProducts.find(p => p.id === productId);
+                    if (productFromMock) {
+                        // Persist mock data to GunDB so it's available next time
+                        productsDB.put({ [productId]: productFromMock }); // Use computed property name
+                        renderProduct(productFromMock);
+                        renderReviews(productId); // Render reviews for the now-persisted product
+                    } else {
+                        console.error('Product not found in GunDB or mock data:', productId);
+                        showMessage('Product not found!', 'error');
+                        // Reset product display
+                        document.getElementById('productName').textContent = 'Product Not Found';
+                        document.getElementById('productDescription').innerHTML = '<p class="text-gray-600">The product you are looking for does not exist.</p>';
+                        document.getElementById('productPrice').textContent = '0.00';
+                        document.getElementById('discountedPrice').textContent = '';
+                        document.getElementById('productCategory').textContent = 'N/A';
+                        document.getElementById('productSubcategory').textContent = 'N/A';
+                        document.getElementById('slider-content').innerHTML = '<p class="text-gray-400">No media to display.</p>';
+                        document.getElementById('productVariants').innerHTML = '<p class="text-gray-400">No configurable variants.</p>';
+                        document.getElementById('addToBasketBtn').disabled = true;
+                        document.getElementById('reviewsList').innerHTML = '<p class="text-gray-400">No reviews yet.</p>';
+                    }
                 }
             });
-
-            // Wait a moment for GunDB to check, then seed if necessary
-            setTimeout(() => {
-                if (!productExists) {
-                    console.log("Seeding GunDB with mock product data...");
-                    allProducts.forEach(product => {
-                        productsDB.get(product.id).put(product);
-                    });
-                    showMessage('Database seeded with mock products! Try searching or navigate to a product ID in the URL hash.');
-                }
-                
-                // After seeding (or checking), load the initial product from the URL hash
-                const productId = window.location.hash.substring(1);
-                loadProduct(productId);
-            }, 1500); // Give GunDB a moment to sync
         }
 
-        // --- Initialize Page on load ---
-        window.onload = seedDatabase;
+        // Initial load of product based on URL hash or default
+        document.addEventListener('DOMContentLoaded', () => {
+            const initialProductId = window.location.hash.substring(1);
+            loadProduct(initialProductId);
+        });
     </script>
 </body>
 </html>
