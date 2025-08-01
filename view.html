@@ -1,50 +1,40 @@
-<!-- view.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Product View - imacx</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>View Product - imacx</title>
+  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #fff;
-      margin: 0;
-      padding: 0;
-    }
+    body { margin: 0; font-family: Arial; background: #fefefe; }
     nav {
-      background-color: #000;
-      color: #fff;
+      background: black;
+      color: white;
+      padding: 15px 20px;
       display: flex;
       justify-content: space-between;
-      padding: 15px 20px;
+      align-items: center;
     }
     nav a {
       color: white;
-      margin: 0 10px;
       text-decoration: none;
+      margin-left: 15px;
     }
     nav img {
       height: 24px;
       vertical-align: middle;
     }
-    .container {
-      padding: 20px;
-    }
+    .container { padding: 20px; }
     .product {
-      background: #f9f9f9;
+      background: #f2f2f2;
       padding: 20px;
-      border-radius: 10px;
+      border-radius: 12px;
       max-width: 600px;
       margin: 20px auto;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
-    .product h2 {
-      margin-bottom: 10px;
-    }
-    .product p {
-      font-size: 18px;
-    }
+    .product h2 { margin-bottom: 10px; }
+    .product p { font-size: 18px; }
   </style>
 </head>
 <body>
@@ -58,32 +48,36 @@
     </div>
   </nav>
   <div class="container">
-    <div class="product" id="product"></div>
+    <div class="product" id="product">Loading...</div>
   </div>
-<script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-<script>
-  const gun = Gun({
-    peers: ['https://gun-manhattan.herokuapp.com/gun']
-  });
 
-  const params = new URLSearchParams(window.location.search);
-  const id = params.get('id');
-
-  if (id) {
-    gun.get('imacx-products').get(id).once(data => {
-      if (data) {
-        document.getElementById('product').innerHTML = `
-          <h2>${data.name}</h2>
-          <p><strong>Price:</strong> ₹${data.price}</p>
-        `;
-      } else {
-        document.getElementById('product').innerHTML = '<p>Product not found.</p>';
-      }
+  <script>
+    const gun = Gun({
+      peers: [
+        'https://gun-manhattan.herokuapp.com/gun',
+        'https://gun-eu.herokuapp.com/gun',
+        'https://gunjs.herokuapp.com/gun',
+        'https://gun-deploy.vercel.app/gun'
+      ]
     });
-  } else {
-    document.getElementById('product').innerHTML = '<p>Invalid product ID.</p>';
-  }
-</script>
-  
+
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('id');
+
+    if (id) {
+      gun.get('imacx-products').get(id).once(data => {
+        if (data) {
+          document.getElementById('product').innerHTML = `
+            <h2>${data.name}</h2>
+            <p><strong>Price:</strong> ₹${data.price}</p>
+          `;
+        } else {
+          document.getElementById('product').innerHTML = '<p>Product not found.</p>';
+        }
+      });
+    } else {
+      document.getElementById('product').innerHTML = '<p>Invalid token link.</p>';
+    }
+  </script>
 </body>
 </html>
