@@ -1,54 +1,42 @@
-<!-- page.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Product Generator - imacx</title>
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      background: #f3f3f3;
-    }
-    input, button {
-      margin: 10px 0;
-      padding: 10px;
-      width: 100%;
-      max-width: 400px;
-    }
-    .link-item {
-      background: white;
-      padding: 10px;
-      margin-top: 10px;
-      border: 1px solid #ccc;
-    }
-    .delete {
-      color: red;
-      cursor: pointer;
-    }
+    body { font-family: Arial; padding: 20px; background: #f7f7f7; }
+    input, button { margin: 10px 0; padding: 10px; width: 100%; max-width: 400px; }
+    .link-item { background: #fff; padding: 10px; border: 1px solid #ccc; margin-top: 10px; }
+    .delete { color: red; cursor: pointer; }
   </style>
 </head>
 <body>
-  <h2>Generate Product Page</h2>
+  <h2>Generate Product</h2>
   <input id="name" placeholder="Product Name" />
-  <input id="price" placeholder="Price (INR)" type="number" />
-  <button onclick="generateLink()">Generate Link</button>
+  <input id="price" type="number" placeholder="Price (INR)" />
+  <button onclick="generateLink()">Generate Token Link</button>
 
   <h3>Generated Links</h3>
   <div id="links"></div>
 
   <script>
     const gun = Gun({
-  peers: ['https://gun-manhattan.herokuapp.com/gun']
-});
+      peers: [
+        'https://gun-manhattan.herokuapp.com/gun',
+        'https://gun-eu.herokuapp.com/gun',
+        'https://gunjs.herokuapp.com/gun',
+        'https://gun-deploy.vercel.app/gun'
+      ]
+    });
+
     const linksRef = gun.get('imacx-products');
 
     function generateLink() {
       const name = document.getElementById('name').value.trim();
       const price = document.getElementById('price').value.trim();
-      if (!name || !price) return alert('Please enter both name and price.');
+      if (!name || !price) return alert('Enter name and price.');
 
       const id = 'token_' + Date.now();
       linksRef.get(id).put({ id, name, price });
@@ -66,7 +54,7 @@
           div.className = 'link-item';
           div.innerHTML = `
             <strong>${data.name}</strong> - ₹${data.price}<br>
-            <a href="view.html?id=${data.id}" target="_blank">Open View</a>
+            <a href="view.html?id=${data.id}" target="_blank">View Product</a>
             <span class="delete" onclick="deleteLink('${data.id}')"> [Delete]</span>
           `;
           document.getElementById('links').appendChild(div);
