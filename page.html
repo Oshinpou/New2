@@ -3,76 +3,73 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Digital Product Generator</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Digital Page - imacx</title>
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    .hidden { display: none; }
+    .token-link {
+      margin-top: 10px;
+    }
+  </style>
 </head>
-<body class="bg-gray-100 font-sans min-h-screen flex items-center justify-center p-4">
-  <div class="w-full max-w-xl bg-white p-6 rounded-2xl shadow-xl">
-    <h1 class="text-3xl font-bold text-center mb-4 text-indigo-700">Digital Product Generator</h1>
+<body>
+  <div id="generator" class="">
+    <h2>Create New Digital Product Page</h2>
+    <input id="name" placeholder="Product Name" />
+    <input id="price" placeholder="Price" />
+    <textarea id="desc" placeholder="Description"></textarea>
+    <button onclick="generatePage()">Generate Link</button>
+    <div id="links"></div>
+  </div>
 
-    <!-- Form for creating product -->
-    <div id="form-section">
-      <input id="name" type="text" placeholder="Product Name" class="w-full mb-3 p-2 border rounded" />
-      <input id="price" type="text" placeholder="Price" class="w-full mb-3 p-2 border rounded" />
-      <textarea id="desc" rows="3" placeholder="Description (optional)" class="w-full mb-3 p-2 border rounded"></textarea>
-      <button onclick="createProduct()" class="w-full bg-indigo-600 text-white p-2 rounded hover:bg-indigo-700">Generate Link</button>
-    </div>
-
-    <!-- Link Output -->
-    <div id="link-section" class="mt-6 hidden">
-      <p class="text-green-600 font-semibold mb-2">Product link:</p>
-      <input id="product-link" readonly class="w-full p-2 border rounded text-blue-600" />
-    </div>
-
-    <!-- Product View -->
-    <div id="product-view" class="hidden mt-6 border-t pt-6">
-      <h2 class="text-xl font-bold mb-2 text-indigo-800" id="view-name"></h2>
-      <p class="text-gray-800 mb-1">Price: ₹<span id="view-price"></span></p>
-      <p class="text-gray-600" id="view-desc"></p>
-    </div>
+  <div id="viewer" class="hidden">
+    <h2 id="vname"></h2>
+    <h3 id="vprice"></h3>
+    <p id="vdesc"></p>
   </div>
 
   <script>
-    const db = Gun();
+    const gun = Gun();
 
-    function createProduct() {
-      const name = document.getElementById("name").value.trim();
-      const price = document.getElementById("price").value.trim();
-      const desc = document.getElementById("desc").value.trim();
-
-      if (!name || !price) {
-        alert("Please fill in product name and price.");
-        return;
-      }
-
-      const token = "product_" + Date.now();
-      db.get(token).put({ name, price, desc });
-
-      const link = `${window.location.origin}${window.location.pathname}?id=${token}`;
-      document.getElementById("product-link").value = link;
-      document.getElementById("link-section").classList.remove("hidden");
-    }
-
-    function loadProduct(token) {
-      db.get(token).once(data => {
-        if (!data || !data.name) {
-          alert("Product not found or may have expired.");
-          return;
-        }
-        document.getElementById("form-section").classList.add("hidden");
-        document.getElementById("link-section").classList.add("hidden");
-        document.getElementById("product-view").classList.remove("hidden");
-        document.getElementById("view-name").textContent = data.name;
-        document.getElementById("view-price").textContent = data.price;
-        document.getElementById("view-desc").textContent = data.desc || "No description.";
-      });
-    }
-
-    // Check if page opened with ?id=...
     const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get("id");
-    if (token) loadProduct(token);
+    const id = urlParams.get('id');
+
+    if (id) {
+      // VIEW MODE
+      document.getElementById('generator').classList.add('hidden');
+      document.getElementById('viewer').classList.remove('hidden');
+
+      gun.get(id).once(data => {
+        if (data) {
+          document.getElementById('vname').textContent = data.name || "No Name";
+          document.getElementById('vprice').textContent = "Price: ₹" + (data.price || "N/A");
+          document.getElementById('vdesc').textContent = data.desc || "No description available.";
+        } else {
+          document.getElementById('vname').textContent = "Product not found.";
+        }
+      });
+
+    } else {
+      // GENERATOR MODE
+      function generatePage() {
+        const name = document.getElementById('name').value.trim();
+        const price = document.getElementById('price').value.trim();
+        const desc = document.getElementById('desc').value.trim();
+        const token = "product_" + Date.now();
+
+        gun.get(token).put({ name, price, desc });
+
+        const link = `${window.location.origin}${window.location.pathname}?id=${token}`;
+        const el = document.createElement('div');
+        el.className = 'token-link';
+        el.innerHTML = `<a href="${link}" target="_blank">${link}</a>`;
+        document.getElementById('links').appendChild(el);
+      }
+    }
   </script>
 </body>
 </html>
