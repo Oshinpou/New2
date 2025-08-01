@@ -1,106 +1,122 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Page Generator & Link Manager</title>
-<script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-<style>
-  body { font-family: Arial, sans-serif; padding: 20px; }
-  button { margin: 5px; padding: 8px 12px; }
-  #linksContainer { margin-top: 20px; }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Product Generator - imacx Admin</title>
+  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
+<body class="bg-gray-100 p-4">
+  <h1 class="text-2xl font-bold mb-4">imacx Product Generator</h1>
 
-<h1>Page Generator & Link Manager</h1>
+  <form id="productForm" class="bg-white p-4 rounded shadow-md space-y-4 max-w-xl mx-auto">
+    <input type="text" id="name" placeholder="Product Name" class="w-full p-2 border rounded" required />
+    <input type="number" id="price" placeholder="Price (in ₹)" class="w-full p-2 border rounded" required />
+    <input type="text" id="category" placeholder="Category" class="w-full p-2 border rounded" required />
+    <input type="text" id="subcategory" placeholder="Subcategory" class="w-full p-2 border rounded" />
 
-<!-- Form to create a new page -->
-<h2>Create New Page</h2>
-<button id="createPageBtn">Create Sample Page</button>
+    <textarea id="images" placeholder="Image URLs (comma separated)" class="w-full p-2 border rounded" required></textarea>
 
-<!-- Container for generated links -->
-<h2>Generated Links</h2>
-<div id="linksContainer"></div>
+    <div>
+      <label class="block font-medium">Variants (name=value format, comma separated):</label>
+      <input type="text" id="variants" placeholder="e.g. size=S,M,L,color=Red,Blue" class="w-full p-2 border rounded" />
+    </div>
 
-<!-- Container for delete buttons -->
-<h2>Manage Pages</h2>
-<div id="deleteButtons"></div>
+    <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Generate Product</button>
+    <div id="message" class="mt-2 text-center font-semibold"></div>
+  </form>
 
-<script>
-const gun = Gun();
+  <div class="max-w-2xl mx-auto mt-6">
+    <h2 class="text-xl font-bold mb-2">Generated Products</h2>
+    <ul id="productList" class="space-y-2"></ul>
+  </div>
 
-// Function to create a sample page data
-function createSamplePage() {
-  const pageId = Date.now(); // Unique ID
-  const data = {
-    logo: 'imacxstarone.png',
-    accountLink: '#account',
-    homeLink: '#home',
-    basketLink: '#basket',
-    sliderItems: [
-      { type: 'image', src: 'https://via.placeholder.com/600x300?text=Slide1' },
-      { type: 'video', src: 'https://www.w3schools.com/html/mov_bbb.mp4' }
-    ],
-    productName: 'Sample Product',
-    category: 'digital',
-    subcategory: 'gadgets',
-    variantsOptions: 'Size,Color',
-    variants: [
-      { size: 'S,M,L', color: 'Red,Blue', price: 100, discount: 80 },
-      { size: 'XL,XXL', color: 'Green,Black', price: 150, discount: 120 }
-    ],
-    price: 100,
-  };
-  // Save page data
-  gun.get('pages').get(pageId).put(data);
-  // Generate link
-  const link = `${window.location.origin}${window.location.pathname}?id=${pageId}`;
-  // Store link info
-  gun.get('links').set({ id: pageId, link });
-  // Create delete button
-  addDeleteButton(pageId);
-  // Refresh links list
-  loadLinks();
-}
+  <script>
+    const gun = Gun();
+    const db = gun.get('imacx-products');
+    const productList = document.getElementById("productList");
+    const productForm = document.getElementById("productForm");
+    const message = document.getElementById("message");
 
-// Function to add delete button for a page
-function addDeleteButton(pageId) {
-  const btn = document.createElement('button');
-  btn.textContent = `Delete Page ${pageId}`;
-  btn.onclick = () => {
-    gun.get('pages').get(pageId).put(null);
-    // Remove from links list
-    loadLinks();
-  };
-  document.getElementById('deleteButtons').appendChild(btn);
-}
+    productForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      message.textContent = "Creating product...";
 
-// Load all links and delete buttons
-function loadLinks() {
-  document.getElementById('linksContainer').innerHTML = '';
-  document.getElementById('deleteButtons').innerHTML = '';
-  gun.get('links').map().once(linkData => {
-    if(linkData && linkData.link) {
-      // Create link element
-      const a = document.createElement('a');
-      a.href = linkData.link;
-      a.textContent = linkData.link;
-      a.target = '_blank';
-      document.getElementById('linksContainer').appendChild(a);
-      // Add delete button
-      addDeleteButton(linkData.id);
+      const name = document.getElementById("name").value.trim();
+      const price = parseFloat(document.getElementById("price").value.trim());
+      const category = document.getElementById("category").value.trim();
+      const subcategory = document.getElementById("subcategory").value.trim();
+      const images = document.getElementById("images").value.split(",").map(img => img.trim());
+      const variantsRaw = document.getElementById("variants").value.trim();
+
+      const variants = {};
+      if (variantsRaw) {
+        variantsRaw.split(",").forEach(v => {
+          const [key, val] = v.split("=");
+          if (key && val) {
+            variants[key.trim()] = val.split(";").map(x => x.trim());
+          }
+        });
+      }
+
+      const pageId = "page_" + Date.now();
+      const product = { name, price, category, subcategory, images, variants, pageId };
+
+      try {
+        await new Promise((resolve) => {
+          db.get(pageId).put(product, ack => {
+            if (ack.err) {
+              message.textContent = "❌ Failed to save product.";
+              return;
+            }
+            resolve();
+          });
+        });
+
+        message.textContent = "✅ Product created!";
+        appendProductToList(pageId, product);
+
+        productForm.reset();
+      } catch (err) {
+        console.error("Error:", err);
+        message.textContent = "❌ An unexpected error occurred.";
+      }
+    });
+
+    function appendProductToList(pageId, product) {
+      if (!pageId || !product.name) return;
+      const li = document.createElement("li");
+      li.className = "bg-white p-3 shadow rounded flex justify-between items-center";
+
+      const link = document.createElement("a");
+      link.href = `product.html#${pageId}`;
+      link.textContent = `${product.name} - ₹${product.price}`;
+      link.className = "text-blue-600 hover:underline";
+
+      const delBtn = document.createElement("button");
+      delBtn.textContent = "Delete";
+      delBtn.className = "bg-red-500 text-white px-3 py-1 rounded ml-4";
+      delBtn.onclick = () => {
+        db.get(pageId).put(null);
+        li.remove();
+      };
+
+      li.appendChild(link);
+      li.appendChild(delBtn);
+      productList.appendChild(li);
     }
-  });
-}
 
-// Event listener for creating a page
-document.getElementById('createPageBtn').onclick = createSamplePage;
+    // Load existing products
+    db.map().once((product, pageId) => {
+      if (product && product.name) {
+        appendProductToList(pageId, product);
+      }
+    });
 
-// Initial load
-loadLinks();
-</script>
-
+    // Optional: clear message after 3 seconds
+    setInterval(() => (message.textContent = ""), 3000);
+  </script>
 </body>
 </html>
-          
