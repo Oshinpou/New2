@@ -103,7 +103,6 @@
         // Use a self-invoking function to encapsulate all logic
         (function() {
             // GunDB initialization with a public peer
-            // This connects to the GunDB network, enabling distributed data storage.
             const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
             
             // DOM element references
@@ -135,21 +134,17 @@
                     return;
                 }
 
-                // Generate a unique token for the new page
                 const token = generateToken();
-
-                // Get the base URL for the new page
                 const baseUrl = window.location.origin + window.location.pathname;
                 const pageUrl = `${baseUrl}?token=${token}`;
 
-                // Store product data in GunDB under the unique token
-                // 'product_pages' is the main collection, and 'token' is the key
+                // Store product data in GunDB
                 gun.get('product_pages').get(token).put({
                     name: productName,
                     price: parseFloat(productPrice)
                 });
 
-                // Store the token in a list of all tokens for display on the generator page
+                // Store the token in a list of all tokens
                 gun.get('all_tokens').set(token);
             };
 
@@ -172,18 +167,16 @@
             const createPageLinkElement = (token) => {
                 const li = document.createElement('li');
                 li.className = 'flex justify-between items-center bg-gray-100 p-4 rounded-lg shadow-sm';
-                li.dataset.token = token; // Store token on the element for easy access
+                li.dataset.token = token;
 
                 const baseUrl = window.location.origin + window.location.pathname;
                 const pageUrl = `${baseUrl}?token=${token}`;
                 
-                // Create the anchor tag for the link
                 const link = document.createElement('a');
                 link.href = pageUrl;
                 link.className = 'text-indigo-600 hover:underline font-medium break-all';
                 link.textContent = `Token Link: ${token}`;
 
-                // Create the delete button
                 const deleteBtn = document.createElement('button');
                 deleteBtn.textContent = 'Delete';
                 deleteBtn.className = 'btn btn-danger ml-4';
@@ -195,21 +188,18 @@
             };
 
             /**
-             * Initializes the generator view by fetching and displaying all existing pages.
+             * Initializes the generator view.
              */
             const initializeGeneratorView = () => {
                 generatorView.classList.remove('hidden');
                 productView.classList.add('hidden');
                 
-                // Fetch all tokens from GunDB in real-time
                 gun.get('all_tokens').map().on((token, key) => {
                     if (token) {
-                        // Check if the link already exists to avoid duplicates on real-time updates
                         if (!document.querySelector(`li[data-token="${token}"]`)) {
                              createPageLinkElement(token);
                         }
                     } else {
-                        // If the token is null, it means it was deleted. Remove the corresponding UI element.
                         const deletedElement = document.querySelector(`li[data-token="${key}"]`);
                         if (deletedElement) {
                             deletedElement.remove();
@@ -217,40 +207,46 @@
                     }
                 });
 
-                // Attach event listener for the generate button
                 generateBtn.onclick = handleGenerate;
             };
 
             /**
-             * Initializes the product page view by fetching and displaying the product data.
-             * We use .on() to listen for data, which is more robust for a distributed system
-             * and prevents the "Product Not Found" error if data hasn't fully synced yet.
+             * Initializes the product page view, with a timeout for better user feedback on sync issues.
              * @param {string} token The unique token from the URL query parameter.
              */
             const initializeProductView = (token) => {
                 generatorView.classList.add('hidden');
                 productView.classList.remove('hidden');
-
-                gun.get('product_pages').get(token).on(data => {
-                    // Hide the loading message once data is received
+                
+                // Set a timeout to handle cases where data might not sync
+                const syncTimeout = setTimeout(() => {
                     loadingMessage.classList.add('hidden');
-                    
+                    productNameDisplay.textContent = 'Product Not Found or still syncing...';
+                    productPriceDisplay.textContent = 'Please try refreshing the page in a few moments.';
+                    productNameDisplay.classList.remove('hidden');
+                    productPriceDisplay.classList.remove('hidden');
+                    productStaticContent.classList.add('hidden');
+                }, 5000); // 5-second timeout
+
+                gun.get('product_pages').get(token).once(data => {
+                    // Once data is received, clear the timeout
+                    clearTimeout(syncTimeout);
+                    loadingMessage.classList.add('hidden');
+
                     if (data && data.name && data.price) {
                         // Display the product details
                         productNameDisplay.textContent = data.name;
                         productPriceDisplay.textContent = `₹ ${data.price.toFixed(2)}`;
                         
-                        // Make sure the display elements are visible
                         productNameDisplay.classList.remove('hidden');
                         productPriceDisplay.classList.remove('hidden');
                         productStaticContent.classList.remove('hidden');
 
                     } else {
-                        // Handle the case where the product data is not found or deleted
+                         // If data is null, it means it was deleted or never existed.
                         productNameDisplay.textContent = 'Product Not Found';
-                        productPriceDisplay.textContent = 'This page may have been deleted or never existed.';
+                        productPriceDisplay.textContent = 'This page may have been deleted.';
                         
-                        // Make sure the display elements are visible, but not the static content
                         productNameDisplay.classList.remove('hidden');
                         productPriceDisplay.classList.remove('hidden');
                         productStaticContent.classList.add('hidden');
@@ -258,23 +254,17 @@
                 });
             };
 
-            /**
-             * Main function to determine which UI to display on page load.
-             */
             const renderPage = () => {
                 const urlParams = new URLSearchParams(window.location.search);
                 const token = urlParams.get('token');
 
                 if (token) {
-                    // We are on a product page view
                     initializeProductView(token);
                 } else {
-                    // We are on the generator page view
                     initializeGeneratorView();
                 }
             };
 
-            // Call the main rendering function when the page loads
             renderPage();
         })();
     </script>
