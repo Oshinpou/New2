@@ -1,181 +1,94 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Product Generator - imacx Shop</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f4f4;
-      padding: 20px;
-    }
-    h1 {
-      color: #333;
-      margin-bottom: 10px;
-    }
-    form {
-      background: #fff;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    input, select, button {
-      display: block;
-      width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-      margin-bottom: 15px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-    }
-    button {
-      background: #4CAF50;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #45a049;
-    }
-    ul {
-      list-style: none;
-      padding: 0;
-    }
-    li {
-      background: #fff;
-      padding: 10px;
-      margin-bottom: 10px;
-      border-radius: 8px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-    .delete-btn {
-      background: #e74c3c;
-      padding: 6px 10px;
-      color: #fff;
-      border: none;
-      border-radius: 5px;
-      margin-left: 10px;
-      cursor: pointer;
-    }
-    .success, .error {
-      padding: 10px;
-      border-radius: 5px;
-      margin-bottom: 15px;
-    }
-    .success {
-      background-color: #d4edda;
-      color: #155724;
-    }
-    .error {
-      background-color: #f8d7da;
-      color: #721c24;
-    }
-  </style>
-</head>
-<body>
-  <h1>Product Generator</h1>
+<!DOCTYPE html><html lang="en"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product Generator - imacx Admin</title>
+  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head><body class="bg-gray-100 text-gray-900 p-4">
+  <div class="max-w-4xl mx-auto">
+    <h1 class="text-3xl font-bold mb-4">imacx Product Generator</h1>
+    <div id="message" class="text-center text-red-500 font-semibold mb-4"></div>
+    <form id="productForm" class="grid gap-4 bg-white p-4 rounded shadow">
+      <input type="text" id="name" placeholder="Product Name" class="border p-2 rounded" required>
+      <input type="text" id="price" placeholder="Price" class="border p-2 rounded" required>
+      <input type="text" id="image" placeholder="Main Image URL" class="border p-2 rounded" required>
+      <input type="text" id="image2" placeholder="Image 2 URL (optional)" class="border p-2 rounded">
+      <input type="text" id="image3" placeholder="Image 3 URL (optional)" class="border p-2 rounded">
+      <input type="text" id="category" placeholder="Category" class="border p-2 rounded" required>
+      <input type="text" id="subcategory" placeholder="Subcategory" class="border p-2 rounded">
+      <input type="text" id="variants" placeholder="Variants (comma separated)" class="border p-2 rounded">
+      <textarea id="description" placeholder="Description" class="border p-2 rounded"></textarea>
+      <button type="submit" class="bg-blue-600 text-white p-2 rounded">Generate Product</button>
+    </form><h2 class="text-xl font-semibold mt-10 mb-4">Generated Product Links</h2>
+<div id="generatedLinks" class="space-y-4"></div>
 
-  <div id="success-message" class="success" style="display:none;"></div>
-  <div id="error-message" class="error" style="display:none;"></div>
-
-  <form id="product-form">
-    <input type="text" id="product-name" placeholder="Product Name" required />
-    <input type="text" id="product-price" placeholder="Price" required />
-    <input type="text" id="product-image" placeholder="Image URL" required />
-    <input type="text" id="product-category" placeholder="Category" required />
-    <input type="text" id="product-subcategory" placeholder="Subcategory" required />
-    <input type="text" class="variant-input" placeholder="Variant (Optional)" />
-    <button type="submit">Generate Product</button>
-  </form>
-
-  <h2>Generated Products</h2>
-  <ul id="product-list"></ul>
-
-  <script type="module">
-    import Gun from 'https://cdn.jsdelivr.net/npm/gun/gun.js';
+  </div>  <script>
     const gun = Gun();
+    const productDB = gun.get('products');
+    const linksContainer = document.getElementById('generatedLinks');
+    const message = document.getElementById('message');
 
-    const productForm = document.getElementById("product-form");
-    const productList = document.getElementById("product-list");
-    const successMessage = document.getElementById("success-message");
-    const errorMessage = document.getElementById("error-message");
-
-    function showSuccess(msg) {
-      successMessage.textContent = msg;
-      successMessage.style.display = "block";
-      errorMessage.style.display = "none";
-    }
-
-    function showError(msg) {
-      errorMessage.textContent = msg;
-      errorMessage.style.display = "block";
-      successMessage.style.display = "none";
-    }
-
-    function generateId() {
-      return 'page_' + Date.now() + Math.floor(Math.random() * 10000);
-    }
-
-    async function saveProductToGun(productData, id) {
-      return new Promise((resolve, reject) => {
-        gun.get('products').get(id).put(productData, (ack) => {
-          if (ack.err) reject(ack.err);
-          else resolve();
-        });
-      });
-    }
-
-    productForm.addEventListener("submit", async (e) => {
+    document.getElementById('productForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-
-      const id = generateId();
+      const id = 'product_' + Date.now();
       const product = {
         id,
-        name: document.getElementById("product-name").value,
-        price: document.getElementById("product-price").value,
-        image: document.getElementById("product-image").value,
-        category: document.getElementById("product-category").value,
-        subcategory: document.getElementById("product-subcategory").value,
-        variants: Array.from(document.querySelectorAll(".variant-input")).map(el => el.value),
-        timestamp: Date.now()
+        name: name.value,
+        price: price.value,
+        image: image.value,
+        image2: image2.value,
+        image3: image3.value,
+        category: category.value,
+        subcategory: subcategory.value,
+        variants: variants.value.split(',').map(v => v.trim()),
+        description: description.value
       };
 
       try {
-        await saveProductToGun(product, id);
-        showSuccess("Product saved!");
-        productForm.reset();
-        addProductToList(product, id);
-      } catch (error) {
-        console.error("GunDB error:", error);
-        showError("Failed to save product. Try again.");
+        productDB.get(id).put(product, ack => {
+          if (ack.err) {
+            message.innerText = '❌ Failed to save product';
+          } else {
+            message.innerText = '✅ Product saved successfully';
+            appendLink(id);
+          }
+        });
+      } catch (err) {
+        message.innerText = '❌ Error occurred: ' + err.message;
       }
     });
 
-    function addProductToList(data, id) {
-      const li = document.createElement("li");
-      li.innerHTML = `
-        <strong>${data.name}</strong> - ₹${data.price}<br/>
-        <a href="product.html#${id}" target="_blank">Open Product Page</a>
-        <button class="delete-btn" data-id="${id}">Delete</button>
-      `;
-      productList.appendChild(li);
+    function appendLink(id) {
+      const wrapper = document.createElement('div');
+      wrapper.className = "bg-white p-3 rounded shadow flex justify-between items-center";
+
+      const link = document.createElement('a');
+      link.href = `product.html#${id}`;
+      link.innerText = `View Product → ${id}`;
+      link.className = "text-blue-600 hover:underline";
+
+      const delBtn = document.createElement('button');
+      delBtn.innerText = '🗑️ Delete';
+      delBtn.className = "text-red-600 hover:underline ml-4";
+      delBtn.onclick = () => deleteProduct(id, wrapper);
+
+      wrapper.appendChild(link);
+      wrapper.appendChild(delBtn);
+      linksContainer.prepend(wrapper);
     }
 
-    // Load existing products
-    gun.get('products').map().once((data, id) => {
-      if (!data || !data.name) return;
-      addProductToList(data, id);
-    });
+    function deleteProduct(id, element) {
+      productDB.get(id).put(null, ack => {
+        if (!ack.err) {
+          element.remove();
+        }
+      });
+    }
 
-    // Delete button functionality
-    productList.addEventListener("click", (e) => {
-      if (e.target.classList.contains("delete-btn")) {
-        const id = e.target.getAttribute("data-id");
-        gun.get('products').get(id).put(null);
-        e.target.parentElement.remove();
+    // Load previously saved products on page load
+    productDB.map().once((product, id) => {
+      if (product && product.name) {
+        appendLink(id);
       }
     });
-  </script>
-</body>
-</html>
+  </script></body></html>
