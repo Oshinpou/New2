@@ -4,236 +4,130 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Product Generator - imacx Admin</title>
+    <!-- Tailwind CSS CDN for modern styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        /* Custom font and base styling */
         body {
-            font-family: 'Cursive', sans-serif;
-            background-color: #f0f2f5;
-            color: #333;
-            margin: 0;
-            padding: 1rem;
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
         }
-        nav {
-            background-color: goldenrod;
-            padding: 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        /* Styles for the custom message box */
+        .message-box {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #4CAF50;
             color: white;
-            margin-bottom: 2rem;
-        }
-        nav h1 {
-            margin: 0;
-            color: white;
-        }
-        nav a {
-            color: white;
-            text-decoration: none;
-            margin-left: 15px;
-            font-weight: bold;
-        }
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-            background-color: #fff;
-            padding: 2rem;
+            padding: 15px 25px;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            transition: transform 0.5s ease-in-out, opacity 0.5s ease-in-out;
+            transform: translateX(120%);
+            opacity: 0;
         }
-        h2 {
-            color: goldenrod;
-            border-bottom: 2px solid goldenrod;
-            padding-bottom: 10px;
-            margin-bottom: 1.5rem;
-        }
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: bold;
-            color: #555;
-        }
-        input[type="text"],
-        input[type="number"],
-        textarea,
-        select {
-            width: calc(100% - 20px);
-            padding: 10px;
-            margin-bottom: 15px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 1rem;
-        }
-        textarea {
-            resize: vertical;
-            min-height: 80px;
-        }
-        button {
-            background-color: goldenrod;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 1rem;
-            margin-right: 10px;
-            transition: background-color 0.3s ease;
-        }
-        button:hover {
-            background-color: #bfa046;
-        }
-        .form-group {
-            margin-bottom: 1rem;
-        }
-        .variant-group {
-            border: 1px dashed #ddd;
-            padding: 15px;
-            margin-bottom: 15px;
-            border-radius: 5px;
-            background-color: #f9f9f9;
-        }
-        .variant-group label {
-            font-weight: normal;
-            margin-bottom: 5px;
-        }
-        .variant-option-input {
-            width: calc(100% - 80px); /* Adjust width for price and delete button */
-            display: inline-block;
-            vertical-align: middle;
-        }
-        .variant-option-price-input {
-            width: 80px;
-            display: inline-block;
-            vertical-align: middle;
-            margin-left: 5px;
-        }
-        .delete-option-btn {
-            background-color: #dc3545;
-            padding: 5px 10px;
-            margin-left: 5px;
-        }
-        .delete-option-btn:hover {
-            background-color: #c82333;
-        }
-
-        #productsList {
-            margin-top: 2rem;
-            border-top: 1px solid #eee;
-            padding-top: 2rem;
-        }
-        .product-item {
-            background-color: #f9f9f9;
-            border: 1px solid #ddd;
-            padding: 15px;
-            margin-bottom: 10px;
-            border-radius: 5px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .product-item a {
-            color: goldenrod;
-            text-decoration: none;
-            font-weight: bold;
-        }
-        .product-item button {
-            background-color: #dc3545;
-            padding: 8px 15px;
-        }
-        .product-item button:hover {
-            background-color: #c82333;
-        }
-        .category-subcategory-group {
-            display: flex;
-            gap: 15px;
-        }
-        .category-subcategory-group > div {
-            flex: 1;
-        }
-        .price-discount-group {
-            display: flex;
-            gap: 15px;
-        }
-        .price-discount-group > div {
-            flex: 1;
+        .message-box.show {
+            transform: translateX(0);
+            opacity: 1;
         }
     </style>
 </head>
-<body>
-    <nav>
-        <h1>imacx Product Generator</h1>
-        <div>
-            <a href="product.html">View Shop</a>
-            <a href="basket.html">Basket</a>
+<body class="bg-gray-50 text-gray-800">
+
+    <!-- Custom Message Box for alerts -->
+    <div id="messageBox" class="message-box"></div>
+
+    <nav class="bg-gray-100 p-4 flex items-center justify-between border-b border-gray-200 shadow-sm">
+        <div class="flex items-center space-x-3">
+            <span class="text-2xl font-bold text-yellow-600">imacx Admin</span>
+            <!-- Using a placeholder image for the logo -->
+            <img src="https://placehold.co/40x40/d6a32d/ffffff?text=im" alt="imacx logo" class="h-10 w-10 rounded-full">
+        </div>
+        <div class="flex items-center space-x-4">
+            <a href="product.html" class="text-yellow-600 hover:text-yellow-800 font-semibold transition-colors duration-200">View Shop</a>
+            <a href="basket.html" class="text-yellow-600 hover:text-yellow-800 font-semibold transition-colors duration-200">Basket</a>
         </div>
     </nav>
 
-    <div class="container">
-        <h2>Generate New Product Page</h2>
+    <div class="container mx-auto p-4 md:p-8 max-w-4xl bg-white rounded-lg shadow-xl mt-6">
+        <h2 class="text-3xl font-bold text-yellow-600 border-b-2 border-yellow-600 pb-2 mb-6">Generate New Product</h2>
         <form id="productForm">
-            <div class="form-group">
-                <label for="productName">Product Name:</label>
-                <input type="text" id="productName" required>
-            </div>
-
-            <div class="price-discount-group">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="form-group">
-                    <label for="basePrice">Base Price (₹):</label>
-                    <input type="number" id="basePrice" min="0" step="0.01" required>
+                    <label for="productName" class="block text-gray-700 font-semibold mb-2">Product Name:</label>
+                    <input type="text" id="productName" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-yellow-500 focus:border-yellow-500">
                 </div>
-                <div class="form-group">
-                    <label for="discountedPrice">Discounted Price (₹, optional):</label>
-                    <input type="number" id="discountedPrice" min="0" step="0.01">
-                </div>
-            </div>
 
-            <div class="category-subcategory-group">
                 <div class="form-group">
-                    <label for="category">Category:</label>
-                    <select id="category" required>
+                    <label for="imageUrls" class="block text-gray-700 font-semibold mb-2">Image URLs (comma-separated):</label>
+                    <input type="text" id="imageUrls" placeholder="e.g., img1.jpg, img2.png" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-yellow-500 focus:border-yellow-500">
+                </div>
+
+                <div class="form-group">
+                    <label for="basePrice" class="block text-gray-700 font-semibold mb-2">Base Price (₹):</label>
+                    <input type="number" id="basePrice" min="0" step="0.01" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-yellow-500 focus:border-yellow-500">
+                </div>
+                
+                <div class="form-group">
+                    <label for="discountedPrice" class="block text-gray-700 font-semibold mb-2">Discounted Price (₹, optional):</label>
+                    <input type="number" id="discountedPrice" min="0" step="0.01" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-yellow-500 focus:border-yellow-500">
+                </div>
+
+                <div class="form-group">
+                    <label for="category" class="block text-gray-700 font-semibold mb-2">Category:</label>
+                    <select id="category" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-yellow-500 focus:border-yellow-500">
                         <option value="">--Select Category--</option>
                         <option value="food">Food</option>
                         <option value="jewellery">Jewellery</option>
                         <option value="digital">Digital</option>
                         <option value="cosmetics">Cosmetics</option>
-                        </select>
+                    </select>
                 </div>
+
                 <div class="form-group">
-                    <label for="subcategory">Subcategory:</label>
-                    <select id="subcategory" required>
+                    <label for="subcategory" class="block text-gray-700 font-semibold mb-2">Subcategory:</label>
+                    <select id="subcategory" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-yellow-500 focus:border-yellow-500">
                         <option value="">--Select Subcategory--</option>
-                        </select>
+                    </select>
                 </div>
             </div>
 
-            <div class="form-group">
-                <label for="imageUrls">Image URLs (comma-separated):</label>
-                <input type="text" id="imageUrls" placeholder="e.g., img1.jpg, img2.png, https://example.com/img3.webp" required>
+            <div class="form-group mt-6">
+                <label for="productDetails" class="block text-gray-700 font-semibold mb-2">Product Details:</label>
+                <textarea id="productDetails" rows="6" placeholder="Enter detailed product description. You can use basic HTML tags." class="w-full p-3 border border-gray-300 rounded-lg focus:ring-yellow-500 focus:border-yellow-500"></textarea>
             </div>
 
-            <div class="form-group">
-                <label for="productDetails">Product Details (HTML allowed):</label>
-                <textarea id="productDetails" rows="8" placeholder="Enter detailed product description. You can use basic HTML tags like <p>, <strong>, <ul>, <li>."></textarea>
-            </div>
-
-            <h3>Product Variants</h3>
-            <div id="variantsContainer">
+            <div class="mt-6">
+                <h3 class="text-xl font-bold text-gray-700 mb-4">Product Variants</h3>
+                <div id="variantsContainer" class="space-y-4">
+                    <!-- Variant groups will be added here -->
                 </div>
-            <button type="button" id="addVariantBtn">Add Variant Type</button>
-            <hr style="margin: 20px 0;">
+                <button type="button" id="addVariantBtn" class="mt-4 px-6 py-2 bg-yellow-600 text-white font-bold rounded-lg hover:bg-yellow-700 transition-colors duration-200">Add Variant Type</button>
+            </div>
 
-            <button type="submit">Generate Product Page</button>
+            <hr class="my-8 border-gray-300">
+
+            <button type="submit" class="w-full px-6 py-3 bg-yellow-600 text-white font-bold rounded-lg shadow-lg hover:bg-yellow-700 transition-colors duration-200">
+                Generate Product Page
+            </button>
         </form>
+    </div>
 
-        <h2 id="generatedProductsHeading">Generated Product Pages</h2>
-        <div id="productsList">
-            <p>No products generated yet.</p>
+    <div class="container mx-auto p-4 md:p-8 max-w-4xl mt-6">
+        <h2 id="generatedProductsHeading" class="text-3xl font-bold text-yellow-600 border-b-2 border-yellow-600 pb-2 mb-6">Generated Products</h2>
+        <div id="productsList" class="space-y-4">
+            <p class="text-gray-500">No products generated yet.</p>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
     <script>
+        // --- GunDB Initialization ---
         const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
         const productsDB = gun.get('imacx_products'); // Root node for all products
 
+        // --- DOM Elements ---
         const productForm = document.getElementById('productForm');
         const productNameInput = document.getElementById('productName');
         const basePriceInput = document.getElementById('basePrice');
@@ -246,6 +140,21 @@
         const addVariantBtn = document.getElementById('addVariantBtn');
         const productsListDiv = document.getElementById('productsList');
         const generatedProductsHeading = document.getElementById('generatedProductsHeading');
+
+        /**
+         * Shows a custom message box with a given message.
+         * @param {string} message The message to display.
+         * @param {string} type 'success' (default) or 'error'.
+         */
+        function showMessage(message, type = 'success') {
+            const messageBox = document.getElementById('messageBox');
+            messageBox.textContent = message;
+            messageBox.style.backgroundColor = type === 'success' ? '#4CAF50' : '#f44336';
+            messageBox.classList.add('show');
+            setTimeout(() => {
+                messageBox.classList.remove('show');
+            }, 3000);
+        }
 
         // --- Subcategory Logic ---
         const subcategories = {
@@ -262,7 +171,7 @@
                 subcategories[selectedCategory].forEach(sub => {
                     const option = document.createElement('option');
                     option.value = sub;
-                    option.textContent = sub.charAt(0).toUpperCase() + sub.slice(1); // Capitalize
+                    option.textContent = sub.charAt(0).toUpperCase() + sub.slice(1);
                     subcategorySelect.appendChild(option);
                 });
             }
@@ -274,16 +183,19 @@
         addVariantBtn.addEventListener('click', () => {
             variantCounter++;
             const variantGroup = document.createElement('div');
-            variantGroup.className = 'variant-group';
+            variantGroup.className = 'variant-group p-4 border border-gray-200 rounded-lg bg-gray-50';
             variantGroup.dataset.id = variantCounter;
 
             variantGroup.innerHTML = `
-                <label>Variant Type Name (e.g., Color, Size):</label>
-                <input type="text" class="variant-type-name" placeholder="e.g., Color" required>
-                <button type="button" class="add-option-btn" style="float: right;">Add Option</button>
-                <div class="variant-options-list">
-                    </div>
-                <button type="button" class="delete-variant-btn" style="background-color: #dc3545; margin-top: 10px;">Delete This Variant Type</button>
+                <div class="flex items-center justify-between mb-4">
+                    <label class="font-medium text-gray-700">Variant Type Name (e.g., Color, Size):</label>
+                    <button type="button" class="delete-variant-btn text-white bg-red-500 hover:bg-red-600 px-3 py-1 rounded-lg transition-colors duration-200 text-sm">Delete</button>
+                </div>
+                <input type="text" class="variant-type-name w-full p-2 mb-3 border border-gray-300 rounded-lg focus:ring-yellow-500 focus:border-yellow-500" placeholder="e.g., Color" required>
+                
+                <h4 class="text-sm font-semibold text-gray-600 mb-2">Options:</h4>
+                <div class="variant-options-list space-y-2"></div>
+                <button type="button" class="add-option-btn mt-3 px-4 py-2 text-sm bg-gray-300 text-gray-800 font-semibold rounded-lg hover:bg-gray-400 transition-colors duration-200">Add Option</button>
             `;
             variantsContainer.appendChild(variantGroup);
 
@@ -295,12 +207,12 @@
         function addVariantOption(variantGroup) {
             const optionsList = variantGroup.querySelector('.variant-options-list');
             const optionDiv = document.createElement('div');
-            optionDiv.style.marginBottom = '8px';
+            optionDiv.className = 'flex items-center space-x-2';
             optionDiv.innerHTML = `
-                <input type="text" class="variant-option-input" placeholder="Option Value (e.g., Red)" required>
-                <input type="number" class="variant-option-price-modifier" placeholder="Price Mod (+/-)" step="0.01" value="0">
-                <input type="number" class="variant-option-discounted-price-modifier" placeholder="Disc Price Mod (+/-)" step="0.01" value="0">
-                <button type="button" class="delete-option-btn">Delete Option</button>
+                <input type="text" class="variant-option-input flex-grow p-2 border border-gray-300 rounded-lg focus:ring-yellow-500 focus:border-yellow-500" placeholder="Option Value (e.g., Red)" required>
+                <input type="number" class="variant-option-price-modifier w-24 p-2 border border-gray-300 rounded-lg focus:ring-yellow-500 focus:border-yellow-500" placeholder="Mod Price" step="0.01" value="0">
+                <input type="number" class="variant-option-discounted-price-modifier w-24 p-2 border border-gray-300 rounded-lg focus:ring-yellow-500 focus:border-yellow-500" placeholder="Mod Disc Price" step="0.01" value="0">
+                <button type="button" class="delete-option-btn text-white bg-red-500 hover:bg-red-600 px-3 py-1 rounded-lg transition-colors duration-200">x</button>
             `;
             optionsList.appendChild(optionDiv);
             optionDiv.querySelector('.delete-option-btn').addEventListener('click', () => optionDiv.remove());
@@ -310,6 +222,7 @@
         productForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
+            // Get form data
             const productName = productNameInput.value.trim();
             const basePrice = parseFloat(basePriceInput.value);
             const discountedPrice = discountedPriceInput.value ? parseFloat(discountedPriceInput.value) : null;
@@ -319,20 +232,21 @@
             const productDetails = productDetailsInput.value.trim();
 
             if (!productName || isNaN(basePrice) || !category || !subcategory || imageUrls.length === 0) {
-                alert('Please fill in all required product fields.');
+                showMessage('Please fill in all required product fields.', 'error');
                 return;
             }
 
             const variants = [];
             document.querySelectorAll('.variant-group').forEach(variantGroup => {
                 const typeName = variantGroup.querySelector('.variant-type-name').value.trim();
-                if (!typeName) return; // Skip if variant type name is empty
+                if (!typeName) return;
 
                 const options = [];
-                variantGroup.querySelectorAll('.variant-option-input').forEach(optionInput => {
+                variantGroup.querySelectorAll('.variant-options-list > div').forEach(optionDiv => {
+                    const optionInput = optionDiv.querySelector('.variant-option-input');
                     const value = optionInput.value.trim();
-                    const priceModifier = parseFloat(optionInput.nextElementSibling.value) || 0;
-                    const discountedPriceModifier = parseFloat(optionInput.nextElementSibling.nextElementSibling.value) || 0;
+                    const priceModifier = parseFloat(optionDiv.querySelector('.variant-option-price-modifier').value) || 0;
+                    const discountedPriceModifier = parseFloat(optionDiv.querySelector('.variant-option-discounted-price-modifier').value) || 0;
                     if (value) {
                         options.push({
                             value: value,
@@ -351,7 +265,7 @@
             });
 
             // Generate a unique ID for the product
-            const newProductId = Gun.SEA.pair().pub; // Using Gun.SEA for a more unique key
+            const newProductId = Gun.SEA.pair().pub;
 
             const productData = {
                 name: productName,
@@ -362,40 +276,34 @@
                 images: imageUrls,
                 details: productDetails,
                 variants: variants,
-                createdAt: Date.now(),
-                // We don't store the delete button state here, as it's UI specific for the generator
+                createdAt: Date.now()
             };
 
             // Save the product data to GunDB
             productsDB.get(newProductId).put(productData);
 
-            alert(`Product "${productName}" generated! Link: product.html#${newProductId}`);
+            showMessage(`Product "${productName}" generated!`);
             productForm.reset();
             variantsContainer.innerHTML = ''; // Clear variants
             subcategorySelect.innerHTML = '<option value="">--Select Subcategory--</option>'; // Reset subcategory
-
-            // You might want to update the products list immediately, but Gun's .on() will handle it
         });
 
         // --- List Products and Delete Functionality ---
-        let firstLoad = true;
         productsDB.map().on((productData, productId) => {
-            // GunDB's .on(data, key) maps to productData and productId
             if (productData === null) { // Handle deletion
                 const itemToRemove = document.querySelector(`.product-item[data-id="${productId}"]`);
                 if (itemToRemove) {
                     itemToRemove.remove();
                 }
                 if (productsListDiv.children.length === 0) {
-                    productsListDiv.innerHTML = '<p>No products generated yet.</p>';
-                    generatedProductsHeading.textContent = 'No Products Generated';
+                    productsListDiv.innerHTML = '<p class="text-gray-500">No products generated yet.</p>';
+                    generatedProductsHeading.textContent = 'Generated Products'; // Reset heading
                 }
                 return;
             }
 
-            if (productData && productData.name) { // Ensure it's a valid product and not a deleted state
-                generatedProductsHeading.textContent = 'Generated Product Pages'; // Update heading if products exist
-                if (productsListDiv.querySelector('p')) { // Remove "No products" message
+            if (productData && productData.name) {
+                if (productsListDiv.querySelector('p')) {
                     productsListDiv.innerHTML = '';
                 }
 
@@ -403,35 +311,29 @@
 
                 if (!productItem) { // Create new item if it doesn't exist
                     productItem = document.createElement('div');
-                    productItem.className = 'product-item';
-                    productItem.dataset.id = productId; // Store the GunDB ID
+                    productItem.className = 'product-item flex items-center justify-between bg-gray-100 p-4 rounded-lg shadow-sm border border-gray-200';
+                    productItem.dataset.id = productId;
                     productsListDiv.appendChild(productItem);
                 }
 
-                // Update content (important for real-time updates if product data changes)
+                // Update content
                 productItem.innerHTML = `
-                    <span>
-                        <strong>${productData.name}</strong><br>
-                        <a href="product.html#${productId}" target="_blank">product.html#${productId}</a>
-                    </span>
-                    <button class="delete-link-page-btn" data-id="${productId}">Delete This Link Page</button>
+                    <div>
+                        <strong class="text-lg font-semibold">${productData.name}</strong><br>
+                        <a href="product.html#${productId}" target="_blank" class="text-yellow-600 hover:text-yellow-800 transition-colors duration-200 underline">View Product Page</a>
+                    </div>
+                    <button class="delete-link-page-btn text-white bg-red-500 hover:bg-red-600 px-4 py-2 rounded-lg shadow-md transition-colors duration-200" data-id="${productId}">Delete</button>
                 `;
 
-                // Re-attach event listener for delete button (important for new items and updates)
+                // Re-attach event listener for delete button
                 productItem.querySelector('.delete-link-page-btn').addEventListener('click', (e) => {
                     const idToDelete = e.target.dataset.id;
-                    if (confirm(`Are you sure you want to delete the product "${productData.name}"? This action cannot be undone.`)) {
-                        productsDB.get(idToDelete).put(null); // Delete the product from GunDB
-                        // The .on() listener will handle the UI removal when GunDB syncs the null value
-                    }
+                    // Directly delete without a blocking confirmation dialog
+                    productsDB.get(idToDelete).put(null);
+                    showMessage(`Product "${productData.name}" has been deleted.`, 'success');
                 });
             }
         });
-
-        // Initial check for existing products to show/hide the "No products" message
-        // This is a bit tricky with GunDB's async nature. The .map().on() will eventually populate.
-        // For a very first load, you might see "No products" briefly even if there are some.
-        // The header text update logic within the .on() handles the final state.
     </script>
 </body>
 </html>
