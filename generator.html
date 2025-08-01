@@ -3,75 +3,67 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Product Generator - imacx</title>
+  <title>Product Generator</title>
+
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pouchdb@7.3.1/dist/pouchdb.min.js"></script>
+  <script>
+    // Integrate Gun with PouchDB for local persistence
+    Gun.on('create', function (ctx) {
+      this.to.next(ctx);
+      const db = new PouchDB('gundb-cache');
+      ctx.on('put', function (msg) {
+        const soul = Gun.node.soul(msg.put);
+        db.put({ _id: soul, data: msg.put }).catch(() => {});
+        this.to.next(msg);
+      });
+    });
+  </script>
+
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f5f5f5;
-      padding: 20px;
-    }
-    input, button {
-      padding: 10px;
-      font-size: 16px;
-      margin: 5px 0;
-    }
-    .link {
-      margin: 10px 0;
-      background: #fff;
-      padding: 10px;
-      border: 1px solid #ccc;
-    }
-    .delete-btn {
-      color: red;
-      cursor: pointer;
-      font-weight: bold;
-    }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 20px; }
+    input, button { padding: 10px; font-size: 16px; margin: 5px 0; }
+    .link { margin: 10px 0; background: #fff; padding: 10px; border: 1px solid #ccc; }
+    .delete-btn { color: red; cursor: pointer; font-weight: bold; }
   </style>
 </head>
 <body>
 
-<h2>Create Cloud Product Page</h2>
+<h2>Generate Product Page</h2>
 <input id="productName" placeholder="Product Name" /><br>
-<input id="productPrice" placeholder="Product Price (INR)" /><br>
-<button onclick="createPage()">Generate Cloud Page</button>
+<input id="productPrice" placeholder="Price (INR)" /><br>
+<button onclick="generatePage()">Generate Page</button>
 
 <div id="linkList"></div>
 
 <script>
   const gun = Gun('https://gun-manhattan.herokuapp.com/gun');
+  const SEA = Gun.SEA;
   const linkList = document.getElementById("linkList");
 
-  function generateToken() {
+  function generateID() {
     return 'page_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
   }
 
-  function createPage() {
-    const name = document.getElementById("productName").value.trim();
-    const price = document.getElementById("productPrice").value.trim();
+  function generatePage() {
+    const name = document.getElementById('productName').value.trim();
+    const price = document.getElementById('productPrice').value.trim();
+    if (!name || !price) return alert("Enter name and price");
 
-    if (!name || !price) {
-      alert("Enter both name and price");
-      return;
-    }
-
-    const id = generateToken();
+    const id = generateID();
     const data = { id, name, price };
 
     gun.get('products').get(id).put(data, ack => {
-      if (ack.err) {
-        alert("Failed to save data.");
-      } else {
-        showLink(id, name, price);
-      }
+      if (ack.err) return alert("Error saving product");
+      displayLink(id, name, price);
     });
   }
 
-  function showLink(id, name, price) {
+  function displayLink(id, name, price) {
     const div = document.createElement("div");
     div.className = "link";
     div.innerHTML = `
-      <a href="page.html?id=${id}" target="_blank">Open Page</a> - ${name} - ₹${price} 
+      <a href="page.html?id=${id}" target="_blank">Open Page</a> - ${name} - ₹${price}
       <span class="delete-btn" onclick="deletePage('${id}', this)">[Delete]</span>
     `;
     linkList.appendChild(div);
@@ -85,7 +77,7 @@
   function loadExistingLinks() {
     gun.get('products').map().once((data, id) => {
       if (data && data.name && data.price) {
-        showLink(id, data.name, data.price);
+        displayLink(id, data.name, data.price);
       }
     });
   }
