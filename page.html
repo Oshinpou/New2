@@ -1,91 +1,88 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Digital Page Generator</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>imacx Digital Product Link Generator</title>
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
   <style>
     body {
-      font-family: sans-serif;
-      padding: 2rem;
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      padding: 0;
+      background: #f2f2f2;
+    }
+    .container {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      max-width: 600px;
+      margin: auto;
     }
     input, button {
-      padding: 0.5rem;
-      margin: 0.25rem 0;
+      padding: 10px;
+      margin: 10px 0;
       width: 100%;
-      max-width: 300px;
+      font-size: 16px;
     }
     .link-box {
-      margin-top: 1rem;
-      padding: 1rem;
+      background: #eee;
+      padding: 10px;
+      border-radius: 5px;
+      margin-top: 10px;
+      word-break: break-all;
+    }
+    .product-box {
+      padding: 15px;
       border: 1px solid #ccc;
-      max-width: 400px;
-      word-wrap: break-word;
+      border-radius: 6px;
+      margin-top: 20px;
+      background: #fff;
     }
   </style>
 </head>
 <body>
+<div class="container">
+  <h2>imacx Product Link Creator</h2>
+  <input type="text" id="productName" placeholder="Enter Product Name">
+  <input type="text" id="productPrice" placeholder="Enter Product Price">
+  <button onclick="generateTokenLink()">Create Token Link</button>
+  <div id="generatedLink" class="link-box"></div>
+  <div id="productDisplay"></div>
+</div><script>
+  const gun = Gun();
 
-  <h1>Digital Product Page Generator</h1>
+  function generateTokenLink() {
+    const name = document.getElementById('productName').value.trim();
+    const price = document.getElementById('productPrice').value.trim();
 
-  <div id="form">
-    <input type="text" id="name" placeholder="Enter product name" /><br/>
-    <input type="text" id="price" placeholder="Enter price" /><br/>
-    <button onclick="createPage()">Generate Link</button>
+    if (!name || !price) return alert("Fill all fields");
 
-    <div id="linkContainer"></div>
-  </div>
+    const token = 'token_' + Date.now();
+    gun.get(token).put({ name, price });
 
-  <div id="viewSection" style="display:none;">
-    <h2>Product Details</h2>
-    <p><strong>Name:</strong> <span id="viewName"></span></p>
-    <p><strong>Price:</strong> <span id="viewPrice"></span></p>
-  </div>
+    const link = location.origin + location.pathname + '?id=' + token;
+    document.getElementById('generatedLink').innerText = link;
+  }
 
-  <script>
-    const gun = Gun();
+  function loadTokenData() {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('id');
+    if (!token) return;
 
-    const pathname = window.location.pathname;
-    const linkContainer = document.getElementById("linkContainer");
-    const viewSection = document.getElementById("viewSection");
+    gun.get(token).once(data => {
+      if (!data) return;
+      const display = document.getElementById('productDisplay');
+      display.innerHTML = `
+        <div class="product-box">
+          <h3>Product: ${data.name}</h3>
+          <p>Price: ₹${data.price}</p>
+        </div>
+      `;
+    });
+  }
 
-    if (pathname.startsWith("/token_")) {
-      const token = pathname.replace("/token_", "");
-      document.getElementById("form").style.display = "none";
-      viewSection.style.display = "block";
-
-      gun.get(`token_${token}`).once(data => {
-        if (data) {
-          document.getElementById("viewName").textContent = data.name || "N/A";
-          document.getElementById("viewPrice").textContent = data.price || "N/A";
-        } else {
-          document.getElementById("viewName").textContent = "Not Found";
-          document.getElementById("viewPrice").textContent = "-";
-        }
-      });
-    }
-
-    function createPage() {
-      const name = document.getElementById("name").value.trim();
-      const price = document.getElementById("price").value.trim();
-      const token = Date.now();
-      const tokenId = `token_${token}`;
-
-      const data = { name, price };
-      gun.get(tokenId).put(data);
-
-      const url = `${window.location.origin}/${tokenId}`;
-      const box = document.createElement("div");
-      box.className = "link-box";
-      box.innerHTML = `<strong>Link:</strong><br><a href="${url}" target="_blank">${url}</a>`;
-      linkContainer.prepend(box);
-
-      // Clear input
-      document.getElementById("name").value = '';
-      document.getElementById("price").value = '';
-    }
-  </script>
-
-</body>
+  loadTokenData();
+</script></body>
 </html>
