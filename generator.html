@@ -1,454 +1,69 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Product Generator - imacx Admin</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
-            color: #333;
-        }
-        /* Custom message box for feedback */
-        .message-box {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background-color: #4CAF50;
-            color: white;
-            padding: 15px 25px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            z-index: 1000;
-            transform: translateX(120%);
-            opacity: 0;
-            transition: transform 0.5s ease-in-out, opacity 0.5s ease-in-out;
-        }
-        .message-box.show {
-            transform: translateX(0);
-            opacity: 1;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Page Generator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
 </head>
-<body class="bg-gray-50 text-gray-800">
+<body class="bg-gray-100 p-6 font-sans">
+  <div class="max-w-xl mx-auto bg-white p-6 rounded shadow">
+    <h1 class="text-2xl font-bold mb-4">Generate Digital Cloud Page</h1>
 
-    <div id="messageBox" class="message-box"></div>
+    <input id="name" placeholder="Product Name" class="w-full p-2 mb-2 border rounded" />
+    <input id="price" placeholder="Product Price" class="w-full p-2 mb-2 border rounded" />
+    <textarea id="description" placeholder="Description" class="w-full p-2 mb-4 border rounded"></textarea>
 
-    <nav class="bg-gray-100 p-4 flex items-center justify-between border-b border-gray-200 shadow-sm">
-        <div class="flex items-center space-x-3">
-            <span class="text-2xl font-bold text-yellow-600">imacx Admin</span>
-            <img src="https://placehold.co/40x40/d6a32d/ffffff?text=im" alt="imacx logo" class="h-10 w-10 rounded-full">
-        </div>
-        <div class="flex items-center space-x-4">
-            <a href="product.html" class="text-yellow-600 hover:text-yellow-800 font-semibold transition-colors duration-200">View Shop</a>
-            <a href="basket.html" class="text-yellow-600 hover:text-yellow-800 font-semibold transition-colors duration-200">Basket</a>
-        </div>
-    </nav>
+    <button onclick="createPage()" class="bg-blue-600 text-white px-4 py-2 rounded">Create Page</button>
 
-    <div class="container mx-auto p-4 md:p-8 max-w-4xl bg-white rounded-lg shadow-xl mt-6">
-        <h2 class="text-3xl font-bold text-yellow-600 border-b-2 border-yellow-600 pb-2 mb-6">Generate New Product</h2>
-        <form id="productForm">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="form-group">
-                    <label for="productName" class="block text-gray-700 font-semibold mb-2">Product Name:</label>
-                    <input type="text" id="productName" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-yellow-500 focus:border-yellow-500">
-                </div>
+    <h2 class="text-xl font-semibold mt-6 mb-2">Generated Links</h2>
+    <ul id="links" class="space-y-2"></ul>
+  </div>
 
-                <div class="form-group">
-                    <label for="imageUrls" class="block text-gray-700 font-semibold mb-2">Image URLs (comma-separated):</label>
-                    <input type="text" id="imageUrls" placeholder="e.g., img1.jpg, img2.png" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-yellow-500 focus:border-yellow-500">
-                </div>
+  <script>
+    const gun = Gun();
+    const linkList = document.getElementById('links');
 
-                <div class="form-group">
-                    <label for="basePrice" class="block text-gray-700 font-semibold mb-2">Base Price (₹):</label>
-                    <input type="number" id="basePrice" min="0" step="0.01" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-yellow-500 focus:border-yellow-500">
-                </div>
-                
-                <div class="form-group">
-                    <label for="discountedPrice" class="block text-gray-700 font-semibold mb-2">Discounted Price (₹, optional):</label>
-                    <input type="number" id="discountedPrice" min="0" step="0.01" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-yellow-500 focus:border-yellow-500">
-                </div>
+    function createPage() {
+      const name = document.getElementById('name').value.trim();
+      const price = document.getElementById('price').value.trim();
+      const description = document.getElementById('description').value.trim();
 
-                <div class="form-group">
-                    <label for="category" class="block text-gray-700 font-semibold mb-2">Category:</label>
-                    <select id="category" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-yellow-500 focus:border-yellow-500">
-                        <option value="">--Select Category--</option>
-                        <option value="food">Food</option>
-                        <option value="jewellery">Jewellery</option>
-                        <option value="digital">Digital</option>
-                        <option value="cosmetics">Cosmetics</option>
-                    </select>
-                </div>
+      if (!name || !price || !description) {
+        alert("Please fill in all fields.");
+        return;
+      }
 
-                <div class="form-group">
-                    <label for="subcategory" class="block text-gray-700 font-semibold mb-2">Subcategory:</label>
-                    <select id="subcategory" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-yellow-500 focus:border-yellow-500">
-                        <option value="">--Select Subcategory--</option>
-                    </select>
-                </div>
-            </div>
+      const id = 'page_' + Date.now();
+      const data = { name, price, description, id };
 
-            <div class="form-group mt-6">
-                <label for="productDetails" class="block text-gray-700 font-semibold mb-2">Product Details:</label>
-                <textarea id="productDetails" rows="6" placeholder="Enter detailed product description. You can use basic HTML tags." class="w-full p-3 border border-gray-300 rounded-lg focus:ring-yellow-500 focus:border-yellow-500"></textarea>
-            </div>
-
-            <div class="mt-6">
-                <h3 class="text-xl font-bold text-gray-700 mb-4">Product Variants</h3>
-                <div id="variantsContainer" class="space-y-4">
-                    </div>
-                <button type="button" id="addVariantBtn" class="mt-4 px-6 py-2 bg-yellow-600 text-white font-bold rounded-lg hover:bg-yellow-700 transition-colors duration-200">Add Variant Type</button>
-            </div>
-
-            <hr class="my-8 border-gray-300">
-
-            <button type="submit" class="w-full px-6 py-3 bg-yellow-600 text-white font-bold rounded-lg shadow-lg hover:bg-yellow-700 transition-colors duration-200">
-                Generate Product Page
-            </button>
-        </form>
-    </div>
-
-    <div class="container mx-auto p-4 md:p-8 max-w-4xl mt-6">
-        <h2 id="generatedProductsHeading" class="text-3xl font-bold text-yellow-600 border-b-2 border-yellow-600 pb-2 mb-6">Generated Products</h2>
-        <div id="productsList" class="space-y-4">
-            <p class="text-gray-500">No products generated yet.</p>
-        </div>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
-
-    <script>
-        // --- GunDB Initialization ---
-        // You can add peers here if you have a GunDB relay server for persistence.
-        // E.g., const gun = Gun(['https://your-gun-server.herokuapp.com/gun']);
-        const gun = Gun(); 
-
-        // --- DOM Elements ---
-        const productForm = document.getElementById('productForm');
-        const productNameInput = document.getElementById('productName');
-        const basePriceInput = document.getElementById('basePrice');
-        const discountedPriceInput = document.getElementById('discountedPrice');
-        const categorySelect = document.getElementById('category');
-        const subcategorySelect = document.getElementById('subcategory');
-        const imageUrlsInput = document.getElementById('imageUrls');
-        const productDetailsInput = document.getElementById('productDetails');
-        const variantsContainer = document.getElementById('variantsContainer');
-        const addVariantBtn = document.getElementById('addVariantBtn');
-        const productsListDiv = document.getElementById('productsList');
-        const generatedProductsHeading = document.getElementById('generatedProductsHeading');
-        const messageBox = document.getElementById('messageBox');
-
-        /**
-         * Shows a custom message box with a given message.
-         * @param {string} message The message to display.
-         * @param {string} type 'success' (default) or 'error'.
-         */
-        function showMessage(message, type = 'success') {
-            messageBox.textContent = message;
-            messageBox.style.backgroundColor = type === 'success' ? '#4CAF50' : '#f44336';
-            messageBox.classList.add('show');
-            setTimeout(() => {
-                messageBox.classList.remove('show');
-            }, 3000);
-        }
-
-        // --- Subcategory Logic ---
-        const subcategories = {
-            food: ["chocolate", "breakfast", "snacks", "dairy", "bakery"],
-            jewellery: ["rings", "necklaces", "earrings", "bracelets"],
-            digital: ["laptops", "phones", "accessories", "software"],
-            cosmetics: ["makeup", "skincare", "haircare", "fragrances"]
-        };
-
-        categorySelect.addEventListener('change', () => {
-            const selectedCategory = categorySelect.value;
-            subcategorySelect.innerHTML = '<option value="">--Select Subcategory--</option>';
-            if (selectedCategory && subcategories[selectedCategory]) {
-                subcategories[selectedCategory].forEach(sub => {
-                    const option = document.createElement('option');
-                    option.value = sub;
-                    option.textContent = sub.charAt(0).toUpperCase() + sub.slice(1);
-                    subcategorySelect.appendChild(option);
-                });
-            }
-        });
-
-        // --- Variant Logic ---
-        let variantCounter = 0;
-
-        addVariantBtn.addEventListener('click', () => {
-            variantCounter++;
-            const variantGroup = document.createElement('div');
-            variantGroup.className = 'variant-group p-4 border border-gray-200 rounded-lg bg-gray-50';
-            variantGroup.dataset.id = variantCounter;
-            variantGroup.innerHTML = `
-                <div class="flex items-center justify-between mb-4">
-                    <label class="font-medium text-gray-700">Variant Type Name (e.g., Color, Size):</label>
-                    <button type="button" class="delete-variant-btn text-white bg-red-500 hover:bg-red-600 px-3 py-1 rounded-lg transition-colors duration-200 text-sm">Delete</button>
-                </div>
-                <input type="text" class="variant-type-name w-full p-2 mb-3 border border-gray-300 rounded-lg focus:ring-yellow-500 focus:border-yellow-500" placeholder="e.g., Color" required>
-                <h4 class="text-sm font-semibold text-gray-600 mb-2">Options:</h4>
-                <div class="variant-options-list space-y-2"></div>
-                <button type="button" class="add-option-btn mt-3 px-4 py-2 text-sm bg-gray-300 text-gray-800 font-semibold rounded-lg hover:bg-gray-400 transition-colors duration-200">Add Option</button>
-            `;
-            variantsContainer.appendChild(variantGroup);
-            variantGroup.querySelector('.add-option-btn').addEventListener('click', () => addVariantOption(variantGroup));
-            variantGroup.querySelector('.delete-variant-btn').addEventListener('click', () => variantGroup.remove());
-        });
-
-        function addVariantOption(variantGroup) {
-            const optionsList = variantGroup.querySelector('.variant-options-list');
-            const optionDiv = document.createElement('div');
-            optionDiv.className = 'flex items-center space-x-2';
-            optionDiv.innerHTML = `
-                <input type="text" class="variant-option-input flex-grow p-2 border border-gray-300 rounded-lg focus:ring-yellow-500 focus:border-yellow-500" placeholder="Option Value (e.g., Red)" required>
-                <input type="number" class="variant-option-price-modifier w-24 p-2 border border-gray-300 rounded-lg focus:ring-yellow-500 focus:border-yellow-500" placeholder="Mod Price" step="0.01" value="0">
-                <input type="number" class="variant-option-discounted-price-modifier w-24 p-2 border border-gray-300 rounded-lg focus:ring-yellow-500 focus:border-yellow-500" placeholder="Mod Disc Price" step="0.01" value="0">
-                <button type="button" class="delete-option-btn text-white bg-red-500 hover:bg-red-600 px-3 py-1 rounded-lg transition-colors duration-200">x</button>
-            `;
-            optionsList.appendChild(optionDiv);
-            optionDiv.querySelector('.delete-option-btn').addEventListener('click', () => optionDiv.remove());
-        }
-
-        // --- Form Submission ---
-        productForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            // No authentication check needed for GunDB
-
-            try {
-                const productName = productNameInput.value.trim();
-                const basePrice = parseFloat(basePriceInput.value);
-                const discountedPrice = discountedPriceInput.value ? parseFloat(discountedPriceInput.value) : null;
-                const category = categorySelect.value;
-                const subcategory = subcategorySelect.value;
-                const imageUrls = imageUrlsInput.value.split(',').map(url => url.trim()).filter(url => url !== '');
-                const productDetails = productDetailsInput.value.trim();
-
-                if (!productName || isNaN(basePrice) || !category || !subcategory || imageUrls.length === 0) {
-                    showMessage('Please fill in all required product fields.', 'error');
-                    return;
-                }
-
-                const variants = [];
-                document.querySelectorAll('.variant-group').forEach(variantGroup => {
-                    const typeName = variantGroup.querySelector('.variant-type-name').value.trim();
-                    if (!typeName) return;
-
-                    const options = [];
-                    variantGroup.querySelectorAll('.variant-options-list > div').forEach(optionDiv => {
-                        const optionInput = optionDiv.querySelector('.variant-option-input');
-                        const value = optionInput.value.trim();
-                        const priceModifier = parseFloat(optionDiv.querySelector('.variant-option-price-modifier').value) || 0;
-                        const discountedPriceModifier = parseFloat(optionDiv.querySelector('.variant-option-discounted-price-modifier').value) || 0;
-                        if (value) {
-                            options.push({
-                                value: value,
-                                price_modifier: priceModifier,
-                                discounted_price_modifier: discountedPriceModifier
-                            });
-                        }
-                    });
-
-                    if (options.length > 0) {
-                        variants.push({
-                            name: typeName,
-                            options: options
-                        });
-                    }
-                });
-
-                const productData = {
-                    id: crypto.randomUUID(), // Generate a unique ID for the product
-                    name: productName,
-                    price: basePrice,
-                    discountedPrice: discountedPrice,
-                    category: category,
-                    subcategory: subcategory,
-                    images: imageUrls,
-                    details: productDetails,
-                    variants: variants,
-                    createdAt: Date.now()
-                };
-
-                // --- GunDB: Add the new product ---
-                // Add the product data to the 'products' graph, with its unique ID as a key.
-                gun.get('products').get(productData.id).put(productData, (ack) => {
-                    if (ack.err) {
-                        console.error("Error adding product to GunDB:", ack.err);
-                        showMessage("An error occurred while generating the product. Please try again.", 'error');
-                    } else {
-                        showMessage(`Product "${productName}" generated! ID: ${productData.id}`);
-                        productForm.reset();
-                        variantsContainer.innerHTML = '';
-                        subcategorySelect.innerHTML = '<option value="">--Select Subcategory--</option>';
-                    }
-                });
-
-            } catch (error) {
-                console.error("Error generating product (client-side):", error);
-                showMessage("An error occurred while processing product data. Please try again.", 'error');
-            }
-        });
-
-        // --- Real-time GunDB Listener ---
-        const productsDataRef = gun.get('products');
-        let productsCache = {}; // Cache to hold products for sorting and display
-
-        function updateProductsListUI() {
-            productsListDiv.innerHTML = '';
-            const productsArray = Object.values(productsCache); // Get products from cache
-
-            if (productsArray.length === 0) {
-                productsListDiv.innerHTML = '<p class="text-gray-500">No products generated yet.</p>';
-                return;
-            }
-
-            // Sort products by creation date descending
-            productsArray.sort((a, b) => b.createdAt - a.createdAt);
-
-            productsArray.forEach(product => {
-                const productItem = document.createElement('div');
-                productItem.className = 'product-item flex items-center justify-between bg-gray-100 p-4 rounded-lg shadow-sm border border-gray-200';
-                productItem.dataset.id = product.id;
-
-                productItem.innerHTML = `
-                    <div>
-                        <strong class="text-lg font-semibold">${product.name}</strong><br>
-                        <a href="product.html#${product.id}" target="_blank" class="text-yellow-600 hover:text-yellow-800 transition-colors duration-200 underline">View Product Page</a>
-                    </div>
-                    <button class="delete-product-btn text-white bg-red-500 hover:bg-red-600 px-4 py-2 rounded-lg shadow-md transition-colors duration-200" data-id="${product.id}">Delete</button>
-                `;
-                productsListDiv.appendChild(productItem);
-
-                // Attach a delete event listener to the button
-                productItem.querySelector('.delete-product-btn').addEventListener('click', async (e) => {
-                    const idToDelete = e.target.dataset.id;
-                    const productNameForConfirm = productsCache[idToDelete] ? productsCache[idToDelete].name : 'this product';
-                    if (confirm(`Are you sure you want to delete "${productNameForConfirm}"?`)) {
-                        try {
-                            // Delete the document from GunDB by setting its value to null
-                            productsDataRef.get(idToDelete).put(null, (ack) => {
-                                if (ack.err) {
-                                    console.error("Error deleting product from GunDB:", ack.err);
-                                    showMessage("Error deleting product. Please try again.", 'error');
-                                } else {
-                                    showMessage(`Product "${productNameForConfirm}" has been deleted.`, 'success');
-                                }
-                            });
-                        } catch (error) {
-                            console.error("Error initiating delete operation:", error);
-                            showMessage("An error occurred during delete initiation. Please try again.", 'error');
-                        }
-                    }
-                });
-            });
-        }
-
-        // Listen for changes in the 'products' graph
-        productsDataRef.map().on(function(data, key) {
-            // GunDB's map() returns null for deleted items, and also includes internal metadata.
-            // Filter for valid product data.
-            if (data && typeof data === 'object' && data.id && data.name) {
-                productsCache[data.id] = data; // Add or update product in cache
-            } else if (data === null) { // Item was deleted
-                delete productsCache[key]; // Remove from cache
-            }
-            updateProductsListUI(); // Update the UI whenever the cache changes
-        });
-
-        
-// Utility: Generate Unique ID
-function generateUniqueId() {
-  return 'product_' + Date.now() + Math.floor(Math.random() * 1000);
-}
-
-// Handle Product Generation
-document.getElementById("generate").addEventListener("click", () => {
-  const name = document.getElementById("productName").value.trim();
-  const price = document.getElementById("productPrice").value.trim();
-  const img1 = document.getElementById("productImage1").value.trim();
-  const img2 = document.getElementById("productImage2").value.trim();
-  const category = document.getElementById("productCategory").value.trim();
-  const subcategory = document.getElementById("productSubcategory").value.trim();
-  const variants = document.getElementById("productVariants").value.trim();
-
-  // Validate all required fields
-  if (!name || !price || !img1 || !category || !subcategory || !variants) {
-    showMessage("Please fill in all required fields.", "error");
-    return;
-  }
-
-  // Generate product ID & data
-  const id = generateUniqueId();
-  const productData = {
-    id,
-    name,
-    price,
-    images: [img1, img2],
-    category,
-    subcategory,
-    variants: variants.split(",").map(v => v.trim()),
-    created: new Date().toISOString()
-  };
-
-  // Store to GunDB
-  gun.get("products").get(id).put(productData, ack => {
-    if (ack.err) {
-      showMessage("Error occurred while saving product. Please try again.", "error");
-      console.error("GunDB Error:", ack.err);
-    } else {
-      showMessage("Product generated successfully!", "success");
-      addProductToList(productData); // Update UI
+      gun.get('pages').get(id).put(data);
+      renderLink(data);
     }
-  });
-});
 
-// Append to UI
-function addProductToList(product) {
-  const div = document.createElement("div");
-  div.className = "bg-white rounded-lg shadow p-4 flex justify-between items-center";
+    function renderLink(data) {
+      const li = document.createElement('li');
+      li.className = "bg-gray-200 p-2 rounded flex justify-between items-center";
+      li.innerHTML = `
+        <div>
+          <a href="page.html?id=${data.id}" target="_blank" class="text-blue-700 underline">${data.name}</a>
+          <div class="text-sm text-gray-600">₹${data.price}</div>
+        </div>
+        <button class="text-red-500" onclick="deletePage('${data.id}', this)">Delete</button>
+      `;
+      linkList.prepend(li);
+    }
 
-  const url = `product.html#${product.id}`;
-  div.innerHTML = `
-    <div class="flex flex-col">
-      <span class="text-sm text-gray-700"><b>Name:</b> ${product.name}</span>
-      <a href="${url}" target="_blank" class="text-blue-600 hover:underline">${url}</a>
-    </div>
-    <button onclick="deleteProduct('${product.id}', this)" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm">Delete</button>
-  `;
-  document.getElementById("productsList").prepend(div);
-}
-
-// Delete product
-function deleteProduct(id, btn) {
-  gun.get("products").get(id).put(null, ack => {
-    if (ack.err) {
-      showMessage("Error deleting product. Try again.", "error");
-    } else {
+    function deletePage(id, btn) {
+      gun.get('pages').get(id).put(null);
       btn.parentElement.remove();
-      showMessage("Product deleted.", "success");
     }
-  });
-}
 
-// Feedback messages
-function showMessage(msg, type = "success") {
-  const div = document.getElementById("message");
-  div.textContent = msg;
-  div.className = `text-${type === "success" ? "green" : "red"}-600 mb-2 text-sm`;
-  setTimeout(() => (div.textContent = ""), 4000);
-}
-
-// Load all products on page load
-gun.get("products").map().once(product => {
-  if (!product || !product.id) return;
-  addProductToList(product);
-});
-</script>
-
-
+    // Load existing
+    gun.get('pages').map().once((data, id) => {
+      if (data && data.name) renderLink(data);
+    });
+  </script>
 </body>
 </html>
