@@ -63,7 +63,9 @@
   </div>
 
   <script>
-    const gun = Gun();
+    const gun = Gun({
+  peers: ['https://gun-manhattan.herokuapp.com/gun']
+});
     const params = new URLSearchParams(window.location.search);
     const id = params.get('id');
 
