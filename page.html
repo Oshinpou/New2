@@ -47,16 +47,27 @@
   if (!id) {
     productBox.innerHTML = "<h2>Invalid page ID</h2>";
   } else {
-    gun.get('products').get(id).once(data => {
-      if (data && data.name && data.price) {
-        productBox.innerHTML = `
-          <h2>${data.name}</h2>
-          <p><strong>Price:</strong> ₹${data.price}</p>
-        `;
-      } else {
-        productBox.innerHTML = "<h2>Product not found</h2>";
-      }
-    });
+    let tries = 0;
+
+    function tryLoadData() {
+      gun.get('products').get(id).once(data => {
+        if (data && data.name && data.price) {
+          productBox.innerHTML = `
+            <h2>${data.name}</h2>
+            <p><strong>Price:</strong> ₹${data.price}</p>
+          `;
+        } else {
+          tries++;
+          if (tries < 10) {
+            setTimeout(tryLoadData, 500); // Try again in 500ms
+          } else {
+            productBox.innerHTML = "<h2>Product not found or expired</h2>";
+          }
+        }
+      });
+    }
+
+    tryLoadData();
   }
 </script>
 
