@@ -7,12 +7,11 @@
     <!-- Tailwind CSS CDN for modern styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Custom font and base styling */
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f3f4f6;
+            color: #333;
         }
-        /* Styles for the custom message box */
         .message-box {
             position: fixed;
             top: 20px;
@@ -33,7 +32,7 @@
         }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800">
+<body>
 
     <!-- Custom Message Box for alerts -->
     <div id="messageBox" class="message-box"></div>
@@ -41,7 +40,6 @@
     <nav class="bg-gray-100 p-4 flex items-center justify-between border-b border-gray-200 shadow-sm">
         <div class="flex items-center space-x-3">
             <span class="text-2xl font-bold text-yellow-600">imacx Admin</span>
-            <!-- Using a placeholder image for the logo -->
             <img src="https://placehold.co/40x40/d6a32d/ffffff?text=im" alt="imacx logo" class="h-10 w-10 rounded-full">
         </div>
         <div class="flex items-center space-x-4">
@@ -125,7 +123,7 @@
     <script>
         // --- GunDB Initialization ---
         const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
-        const productsDB = gun.get('imacx_products'); // Root node for all products
+        const productsDB = gun.get('imacx_products');
 
         // --- DOM Elements ---
         const productForm = document.getElementById('productForm');
@@ -199,7 +197,6 @@
             `;
             variantsContainer.appendChild(variantGroup);
 
-            // Add event listeners for the new variant group
             variantGroup.querySelector('.add-option-btn').addEventListener('click', () => addVariantOption(variantGroup));
             variantGroup.querySelector('.delete-variant-btn').addEventListener('click', () => variantGroup.remove());
         });
@@ -222,7 +219,6 @@
         productForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            // Get form data
             const productName = productNameInput.value.trim();
             const basePrice = parseFloat(basePriceInput.value);
             const discountedPrice = discountedPriceInput.value ? parseFloat(discountedPriceInput.value) : null;
@@ -264,9 +260,7 @@
                 }
             });
 
-            // Generate a unique ID for the product
             const newProductId = Gun.SEA.pair().pub;
-
             const productData = {
                 name: productName,
                 price: basePrice,
@@ -284,55 +278,54 @@
 
             showMessage(`Product "${productName}" generated!`);
             productForm.reset();
-            variantsContainer.innerHTML = ''; // Clear variants
-            subcategorySelect.innerHTML = '<option value="">--Select Subcategory--</option>'; // Reset subcategory
+            variantsContainer.innerHTML = '';
+            subcategorySelect.innerHTML = '<option value="">--Select Subcategory--</option>';
         });
 
-        // --- List Products and Delete Functionality ---
+        // --- List Products and Delete Functionality (Real-time updates) ---
         productsDB.map().on((productData, productId) => {
-            if (productData === null) { // Handle deletion
+            if (!productData || !productData.name) {
+                // If productData is null or invalid, handle deletion or invalid state.
                 const itemToRemove = document.querySelector(`.product-item[data-id="${productId}"]`);
                 if (itemToRemove) {
                     itemToRemove.remove();
                 }
                 if (productsListDiv.children.length === 0) {
                     productsListDiv.innerHTML = '<p class="text-gray-500">No products generated yet.</p>';
-                    generatedProductsHeading.textContent = 'Generated Products'; // Reset heading
                 }
                 return;
             }
-
-            if (productData && productData.name) {
-                if (productsListDiv.querySelector('p')) {
-                    productsListDiv.innerHTML = '';
-                }
-
-                let productItem = document.querySelector(`.product-item[data-id="${productId}"]`);
-
-                if (!productItem) { // Create new item if it doesn't exist
-                    productItem = document.createElement('div');
-                    productItem.className = 'product-item flex items-center justify-between bg-gray-100 p-4 rounded-lg shadow-sm border border-gray-200';
-                    productItem.dataset.id = productId;
-                    productsListDiv.appendChild(productItem);
-                }
-
-                // Update content
-                productItem.innerHTML = `
-                    <div>
-                        <strong class="text-lg font-semibold">${productData.name}</strong><br>
-                        <a href="product.html#${productId}" target="_blank" class="text-yellow-600 hover:text-yellow-800 transition-colors duration-200 underline">View Product Page</a>
-                    </div>
-                    <button class="delete-link-page-btn text-white bg-red-500 hover:bg-red-600 px-4 py-2 rounded-lg shadow-md transition-colors duration-200" data-id="${productId}">Delete</button>
-                `;
-
-                // Re-attach event listener for delete button
-                productItem.querySelector('.delete-link-page-btn').addEventListener('click', (e) => {
-                    const idToDelete = e.target.dataset.id;
-                    // Directly delete without a blocking confirmation dialog
-                    productsDB.get(idToDelete).put(null);
-                    showMessage(`Product "${productData.name}" has been deleted.`, 'success');
-                });
+            
+            // Remove the "No products generated yet." message if it exists
+            if (productsListDiv.querySelector('p.text-gray-500')) {
+                productsListDiv.innerHTML = '';
             }
+
+            let productItem = document.querySelector(`.product-item[data-id="${productId}"]`);
+
+            if (!productItem) { // Create new item if it doesn't exist
+                productItem = document.createElement('div');
+                productItem.className = 'product-item flex items-center justify-between bg-gray-100 p-4 rounded-lg shadow-sm border border-gray-200';
+                productItem.dataset.id = productId;
+                productsListDiv.appendChild(productItem);
+            }
+
+            // Update content for existing or new items
+            productItem.innerHTML = `
+                <div>
+                    <strong class="text-lg font-semibold">${productData.name}</strong><br>
+                    <a href="product.html#${productId}" target="_blank" class="text-yellow-600 hover:text-yellow-800 transition-colors duration-200 underline">View Product Page</a>
+                </div>
+                <button class="delete-link-page-btn text-white bg-red-500 hover:bg-red-600 px-4 py-2 rounded-lg shadow-md transition-colors duration-200" data-id="${productId}">Delete</button>
+            `;
+
+            // Re-attach event listener for the delete button
+            productItem.querySelector('.delete-link-page-btn').addEventListener('click', (e) => {
+                const idToDelete = e.target.dataset.id;
+                // Delete the product from GunDB without a confirmation dialog
+                productsDB.get(idToDelete).put(null);
+                showMessage(`Product "${productData.name}" has been deleted.`, 'success');
+            });
         });
     </script>
 </body>
