@@ -87,14 +87,17 @@
     <div id="product-view" class="container mt-8 bg-white p-8 rounded-xl shadow-lg hidden">
         <div class="text-center mb-8">
             <!-- Loading state message -->
-            <p id="loading-message" class="text-xl text-gray-500">Loading product details...</p>
-
-            <!-- Product details will be displayed here once fetched -->
-            <h1 id="product-name-display" class="text-5xl font-extrabold text-indigo-600 hidden"></h1>
-            <p id="product-price-display" class="text-3xl font-light text-gray-500 mt-2 hidden"></p>
-            <div id="product-static-content" class="mt-8 text-gray-600 hidden">
-                <p>This is a cloud web page generated with a unique token link. The data for this page is fetched from a distributed database.</p>
-                <p class="mt-2">You can add more static or dynamic content here as needed.</p>
+            <div id="product-display-area">
+                <p id="loading-message" class="text-xl text-gray-500">Loading product details. Please wait...</p>
+                <p id="sync-message" class="text-sm text-gray-400 mt-2">Data is synchronizing across the distributed network.</p>
+                
+                <!-- Product details will be displayed here once fetched -->
+                <h1 id="product-name-display" class="text-5xl font-extrabold text-indigo-600 hidden"></h1>
+                <p id="product-price-display" class="text-3xl font-light text-gray-500 mt-2 hidden"></p>
+                <div id="product-static-content" class="mt-8 text-gray-600 hidden">
+                    <p>This is a cloud web page generated with a unique token link. The data for this page is fetched from a distributed database.</p>
+                    <p class="mt-2">You can add more static or dynamic content here as needed.</p>
+                </div>
             </div>
         </div>
     </div>
@@ -114,6 +117,7 @@
             const pagesList = document.getElementById('pages-list');
 
             const loadingMessage = document.getElementById('loading-message');
+            const syncMessage = document.getElementById('sync-message');
             const productNameDisplay = document.getElementById('product-name-display');
             const productPriceDisplay = document.getElementById('product-price-display');
             const productStaticContent = document.getElementById('product-static-content');
@@ -211,45 +215,50 @@
             };
 
             /**
-             * Initializes the product page view, with a timeout for better user feedback on sync issues.
+             * Initializes the product page view by persistently listening for product data.
              * @param {string} token The unique token from the URL query parameter.
              */
             const initializeProductView = (token) => {
                 generatorView.classList.add('hidden');
                 productView.classList.remove('hidden');
-                
-                // Set a timeout to handle cases where data might not sync
-                const syncTimeout = setTimeout(() => {
-                    loadingMessage.classList.add('hidden');
-                    productNameDisplay.textContent = 'Product Not Found or still syncing...';
-                    productPriceDisplay.textContent = 'Please try refreshing the page in a few moments.';
-                    productNameDisplay.classList.remove('hidden');
-                    productPriceDisplay.classList.remove('hidden');
-                    productStaticContent.classList.add('hidden');
-                }, 5000); // 5-second timeout
 
-                gun.get('product_pages').get(token).once(data => {
-                    // Once data is received, clear the timeout
-                    clearTimeout(syncTimeout);
-                    loadingMessage.classList.add('hidden');
+                // This flag helps ensure we only update the UI once the data is valid
+                let dataFound = false;
 
-                    if (data && data.name && data.price) {
+                // Listen for data changes. This will continue to fire until data is received.
+                gun.get('product_pages').get(token).on(data => {
+                    if (data && data.name && data.price && !dataFound) {
+                        dataFound = true; // Mark data as found
+                        
+                        // Hide loading messages
+                        loadingMessage.classList.add('hidden');
+                        syncMessage.classList.add('hidden');
+
                         // Display the product details
                         productNameDisplay.textContent = data.name;
                         productPriceDisplay.textContent = `₹ ${data.price.toFixed(2)}`;
                         
+                        // Show the product-specific content
                         productNameDisplay.classList.remove('hidden');
                         productPriceDisplay.classList.remove('hidden');
                         productStaticContent.classList.remove('hidden');
 
-                    } else {
-                         // If data is null, it means it was deleted or never existed.
+                        // Stop listening after the data is found
+                        gun.get('product_pages').get(token).off();
+                    } else if (!data) {
+                        // If data is deleted, show the not found message
+                        loadingMessage.classList.add('hidden');
+                        syncMessage.classList.add('hidden');
+                        
                         productNameDisplay.textContent = 'Product Not Found';
                         productPriceDisplay.textContent = 'This page may have been deleted.';
                         
                         productNameDisplay.classList.remove('hidden');
                         productPriceDisplay.classList.remove('hidden');
                         productStaticContent.classList.add('hidden');
+
+                        // Stop listening
+                        gun.get('product_pages').get(token).off();
                     }
                 });
             };
