@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Product Generator - imacx Admin</title>
-    <!-- Tailwind CSS for modern styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
@@ -35,10 +34,8 @@
 </head>
 <body class="bg-gray-50 text-gray-800">
 
-    <!-- Custom Message Box for alerts -->
     <div id="messageBox" class="message-box"></div>
 
-    <!-- Navigation Bar -->
     <nav class="bg-gray-100 p-4 flex items-center justify-between border-b border-gray-200 shadow-sm">
         <div class="flex items-center space-x-3">
             <span class="text-2xl font-bold text-yellow-600">imacx Admin</span>
@@ -50,7 +47,6 @@
         </div>
     </nav>
 
-    <!-- Main Content Container -->
     <div class="container mx-auto p-4 md:p-8 max-w-4xl bg-white rounded-lg shadow-xl mt-6">
         <h2 class="text-3xl font-bold text-yellow-600 border-b-2 border-yellow-600 pb-2 mb-6">Generate New Product</h2>
         <form id="productForm">
@@ -102,8 +98,7 @@
             <div class="mt-6">
                 <h3 class="text-xl font-bold text-gray-700 mb-4">Product Variants</h3>
                 <div id="variantsContainer" class="space-y-4">
-                    <!-- Variant groups will be added here -->
-                </div>
+                    </div>
                 <button type="button" id="addVariantBtn" class="mt-4 px-6 py-2 bg-yellow-600 text-white font-bold rounded-lg hover:bg-yellow-700 transition-colors duration-200">Add Variant Type</button>
             </div>
 
@@ -115,7 +110,6 @@
         </form>
     </div>
 
-    <!-- Generated Products List -->
     <div class="container mx-auto p-4 md:p-8 max-w-4xl mt-6">
         <h2 id="generatedProductsHeading" class="text-3xl font-bold text-yellow-600 border-b-2 border-yellow-600 pb-2 mb-6">Generated Products</h2>
         <div id="productsList" class="space-y-4">
@@ -123,55 +117,14 @@
         </div>
     </div>
 
-    <!-- Firebase Scripts -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
 
-        // --- Firebase Initialization and Auth ---
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
-        let db, auth, userId;
-        let authReady = false;
-
-        async function initFirebase() {
-            try {
-                const app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                db = getFirestore(app);
-
-                onAuthStateChanged(auth, async (user) => {
-                    if (user) {
-                        userId = user.uid;
-                        authReady = true;
-                        console.log('User is authenticated. UID:', userId);
-                        // Once authenticated, start listening for product data
-                        setupRealtimeListener();
-                    } else {
-                        console.log('No user is signed in. Signing in anonymously...');
-                        try {
-                            if (initialAuthToken) {
-                                await signInWithCustomToken(auth, initialAuthToken);
-                            } else {
-                                await signInAnonymously(auth);
-                            }
-                        } catch (error) {
-                            console.error('Error during authentication:', error);
-                            // If anonymous sign-in fails, use a fallback
-                            userId = crypto.randomUUID();
-                            authReady = true;
-                            setupRealtimeListener();
-                        }
-                    }
-                });
-            } catch (error) {
-                console.error("Firebase initialization error:", error);
-            }
-        }
-        initFirebase();
+    <script>
+        // --- GunDB Initialization ---
+        // You can add peers here if you have a GunDB relay server for persistence.
+        // E.g., const gun = Gun(['https://your-gun-server.herokuapp.com/gun']);
+        const gun = Gun(); 
 
         // --- DOM Elements ---
         const productForm = document.getElementById('productForm');
@@ -263,10 +216,7 @@
         // --- Form Submission ---
         productForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            if (!authReady) {
-                showMessage('Authentication not ready. Please wait a moment.', 'error');
-                return;
-            }
+            // No authentication check needed for GunDB
 
             try {
                 const productName = productNameInput.value.trim();
@@ -311,6 +261,7 @@
                 });
 
                 const productData = {
+                    id: crypto.randomUUID(), // Generate a unique ID for the product
                     name: productName,
                     price: basePrice,
                     discountedPrice: discountedPrice,
@@ -322,74 +273,91 @@
                     createdAt: Date.now()
                 };
 
-                // Add the new product to a shared collection in Firestore
-                const docRef = await addDoc(collection(db, `artifacts/${appId}/public/data/products`), productData);
-                showMessage(`Product "${productName}" generated! ID: ${docRef.id}`);
+                // --- GunDB: Add the new product ---
+                // Add the product data to the 'products' graph, with its unique ID as a key.
+                gun.get('products').get(productData.id).put(productData, (ack) => {
+                    if (ack.err) {
+                        console.error("Error adding product to GunDB:", ack.err);
+                        showMessage("An error occurred while generating the product. Please try again.", 'error');
+                    } else {
+                        showMessage(`Product "${productName}" generated! ID: ${productData.id}`);
+                        productForm.reset();
+                        variantsContainer.innerHTML = '';
+                        subcategorySelect.innerHTML = '<option value="">--Select Subcategory--</option>';
+                    }
+                });
 
-                productForm.reset();
-                variantsContainer.innerHTML = '';
-                subcategorySelect.innerHTML = '<option value="">--Select Subcategory--</option>';
             } catch (error) {
-                console.error("Error generating product:", error);
-                showMessage("An error occurred while generating the product. Please try again.", 'error');
+                console.error("Error generating product (client-side):", error);
+                showMessage("An error occurred while processing product data. Please try again.", 'error');
             }
         });
 
-        // --- Real-time Firestore Listener ---
-        function setupRealtimeListener() {
-            if (!authReady) {
-                console.log("Waiting for authentication to be ready...");
+        // --- Real-time GunDB Listener ---
+        const productsDataRef = gun.get('products');
+        let productsCache = {}; // Cache to hold products for sorting and display
+
+        function updateProductsListUI() {
+            productsListDiv.innerHTML = '';
+            const productsArray = Object.values(productsCache); // Get products from cache
+
+            if (productsArray.length === 0) {
+                productsListDiv.innerHTML = '<p class="text-gray-500">No products generated yet.</p>';
                 return;
             }
-            
-            const q = collection(db, `artifacts/${appId}/public/data/products`);
-            onSnapshot(q, (snapshot) => {
-                // Clear the list before adding new items
-                productsListDiv.innerHTML = '';
-                const products = [];
-                snapshot.forEach((doc) => {
-                    products.push({ id: doc.id, ...doc.data() });
-                });
 
-                if (products.length === 0) {
-                    productsListDiv.innerHTML = '<p class="text-gray-500">No products generated yet.</p>';
-                    return;
-                }
+            // Sort products by creation date descending
+            productsArray.sort((a, b) => b.createdAt - a.createdAt);
 
-                // Sort products by creation date descending
-                products.sort((a, b) => b.createdAt - a.createdAt);
+            productsArray.forEach(product => {
+                const productItem = document.createElement('div');
+                productItem.className = 'product-item flex items-center justify-between bg-gray-100 p-4 rounded-lg shadow-sm border border-gray-200';
+                productItem.dataset.id = product.id;
 
-                products.forEach(product => {
-                    const productItem = document.createElement('div');
-                    productItem.className = 'product-item flex items-center justify-between bg-gray-100 p-4 rounded-lg shadow-sm border border-gray-200';
-                    productItem.dataset.id = product.id;
+                productItem.innerHTML = `
+                    <div>
+                        <strong class="text-lg font-semibold">${product.name}</strong><br>
+                        <a href="product.html#${product.id}" target="_blank" class="text-yellow-600 hover:text-yellow-800 transition-colors duration-200 underline">View Product Page</a>
+                    </div>
+                    <button class="delete-product-btn text-white bg-red-500 hover:bg-red-600 px-4 py-2 rounded-lg shadow-md transition-colors duration-200" data-id="${product.id}">Delete</button>
+                `;
+                productsListDiv.appendChild(productItem);
 
-                    productItem.innerHTML = `
-                        <div>
-                            <strong class="text-lg font-semibold">${product.name}</strong><br>
-                            <a href="product.html#${product.id}" target="_blank" class="text-yellow-600 hover:text-yellow-800 transition-colors duration-200 underline">View Product Page</a>
-                        </div>
-                        <button class="delete-link-page-btn text-white bg-red-500 hover:bg-red-600 px-4 py-2 rounded-lg shadow-md transition-colors duration-200" data-id="${product.id}">Delete</button>
-                    `;
-                    productsListDiv.appendChild(productItem);
-
-                    // Attach a delete event listener to the button
-                    productItem.querySelector('.delete-link-page-btn').addEventListener('click', async (e) => {
-                        const idToDelete = e.target.dataset.id;
+                // Attach a delete event listener to the button
+                productItem.querySelector('.delete-product-btn').addEventListener('click', async (e) => {
+                    const idToDelete = e.target.dataset.id;
+                    const productNameForConfirm = productsCache[idToDelete] ? productsCache[idToDelete].name : 'this product';
+                    if (confirm(`Are you sure you want to delete "${productNameForConfirm}"?`)) {
                         try {
-                            // Delete the document from Firestore
-                            await deleteDoc(doc(db, `artifacts/${appId}/public/data/products`, idToDelete));
-                            showMessage(`Product "${product.name}" has been deleted.`, 'success');
+                            // Delete the document from GunDB by setting its value to null
+                            productsDataRef.get(idToDelete).put(null, (ack) => {
+                                if (ack.err) {
+                                    console.error("Error deleting product from GunDB:", ack.err);
+                                    showMessage("Error deleting product. Please try again.", 'error');
+                                } else {
+                                    showMessage(`Product "${productNameForConfirm}" has been deleted.`, 'success');
+                                }
+                            });
                         } catch (error) {
-                            console.error("Error deleting document:", error);
-                            showMessage("Error deleting product. Please try again.", 'error');
+                            console.error("Error initiating delete operation:", error);
+                            showMessage("An error occurred during delete initiation. Please try again.", 'error');
                         }
-                    });
+                    }
                 });
-            }, (error) => {
-                console.error("Firestore onSnapshot error:", error);
             });
         }
+
+        // Listen for changes in the 'products' graph
+        productsDataRef.map().on(function(data, key) {
+            // GunDB's map() returns null for deleted items, and also includes internal metadata.
+            // Filter for valid product data.
+            if (data && typeof data === 'object' && data.id && data.name) {
+                productsCache[data.id] = data; // Add or update product in cache
+            } else if (data === null) { // Item was deleted
+                delete productsCache[key]; // Remove from cache
+            }
+            updateProductsListUI(); // Update the UI whenever the cache changes
+        });
     </script>
 </body>
 </html>
