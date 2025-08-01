@@ -4,7 +4,7 @@ const allProducts = [
     price: 1,
     category: "food",
     subcategory: "breakfast",
-    image: "soleme-cheese.jpg",
+    image: "soleme-cheese.png",
     description: "A soft breakfast cheese that melts in your mouth."
   },
   {
