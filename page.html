@@ -1,49 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
   <title>Product Page</title>
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
   <style>
-    body { font-family: sans-serif; background: #fafafa; padding: 20px; }
-    nav { background: #222; color: white; padding: 10px; }
-    nav a { color: white; margin-right: 10px; text-decoration: none; }
-    .product-box { background: white; padding: 20px; margin-top: 20px; box-shadow: 0 0 10px #ddd; }
+    body { font-family: sans-serif; padding: 20px; background: #f2f2f2; }
+    .box { background: white; padding: 20px; box-shadow: 0 0 10px #ccc; margin-top: 20px; }
   </style>
 </head>
 <body>
 
-<nav><a href="basket.html">🛒 Basket</a></nav>
-
-<div class="product-box" id="productBox"><h2>Loading...</h2></div>
+<div class="box" id="productBox">
+  <h2>Loading...</h2>
+</div>
 
 <script>
-  const gun = Gun('https://gun-manhattan.herokuapp.com/gun');
-  const id = new URLSearchParams(location.search).get("id");
+  const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
+  const id = new URLSearchParams(window.location.search).get("id");
   const productBox = document.getElementById("productBox");
 
-  function fetchProduct(retries = 10) {
+  function loadProduct(retry = 5) {
     if (!id) {
-      productBox.innerHTML = "<h2>Invalid page ID</h2>";
+      productBox.innerHTML = "<h2>Invalid Page ID</h2>";
       return;
     }
 
-    gun.get('products').get(id).once(data => {
-      if (data && data.name && data.price) {
+    gun.get("products").get(id).once(data => {
+      if (data && data.name) {
         productBox.innerHTML = `
           <h2>${data.name}</h2>
           <p><strong>Price:</strong> ₹${data.price}</p>
         `;
-      } else if (retries > 0) {
-        setTimeout(() => fetchProduct(retries - 1), 800);
+      } else if (retry > 0) {
+        setTimeout(() => loadProduct(retry - 1), 800);
       } else {
         productBox.innerHTML = "<h2>Product not found or expired</h2>";
       }
     });
   }
 
-  fetchProduct();
+  loadProduct();
 </script>
 
 </body>
