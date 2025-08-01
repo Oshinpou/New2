@@ -1,535 +1,437 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Digital Page Generator</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Generator - imacx Admin</title>
+    <style>
+        body {
+            font-family: 'Cursive', sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            margin: 0;
+            padding: 1rem;
+        }
+        nav {
+            background-color: goldenrod;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+            margin-bottom: 2rem;
+        }
+        nav h1 {
+            margin: 0;
+            color: white;
+        }
+        nav a {
+            color: white;
+            text-decoration: none;
+            margin-left: 15px;
+            font-weight: bold;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: goldenrod;
+            border-bottom: 2px solid goldenrod;
+            padding-bottom: 10px;
+            margin-bottom: 1.5rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="text"],
+        input[type="number"],
+        textarea,
+        select {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        button {
+            background-color: goldenrod;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-right: 10px;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #bfa046;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        .variant-group {
+            border: 1px dashed #ddd;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .variant-group label {
+            font-weight: normal;
+            margin-bottom: 5px;
+        }
+        .variant-option-input {
+            width: calc(100% - 80px); /* Adjust width for price and delete button */
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .variant-option-price-input {
+            width: 80px;
+            display: inline-block;
+            vertical-align: middle;
+            margin-left: 5px;
+        }
+        .delete-option-btn {
+            background-color: #dc3545;
+            padding: 5px 10px;
+            margin-left: 5px;
+        }
+        .delete-option-btn:hover {
+            background-color: #c82333;
+        }
 
-  <style>
-    :root {
-      --primary-color: #007bff;
-      --secondary-color: #6c757d;
-      --light-gray: #f8f9fa;
-      --dark-gray: #343a40;
-      --border-color: #dee2e6;
-    }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      margin: 0;
-      background-color: var(--light-gray);
-      color: var(--dark-gray);
-    }
-    .container {
-      max-width: 960px;
-      margin: 20px auto;
-      padding: 20px;
-      background-color: #fff;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-    nav {
-      display: flex;
-      align-items: center;
-      padding: 10px 20px;
-      background-color: var(--dark-gray);
-      color: white;
-      border-radius: 8px 8px 0 0;
-    }
-    nav img {
-      height: 40px;
-      margin-right: 15px;
-    }
-    nav span {
-      font-size: 1.5em;
-      font-weight: bold;
-    }
-    nav a {
-      color: white;
-      text-decoration: none;
-      margin-left: 20px;
-      font-size: 1.1em;
-    }
-    h1, h2 {
-      border-bottom: 2px solid var(--primary-color);
-      padding-bottom: 10px;
-      margin-top: 20px;
-    }
-    input, select, textarea, button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 5px;
-      margin-bottom: 15px;
-      border: 1px solid var(--border-color);
-      border-radius: 4px;
-      box-sizing: border-box;
-      font-size: 1em;
-    }
-    button {
-      background-color: var(--primary-color);
-      color: white;
-      border: none;
-      cursor: pointer;
-      font-weight: bold;
-    }
-    button:hover {
-      opacity: 0.9;
-    }
-    .delete-btn {
-      background-color: #dc3545;
-      margin-left: 15px;
-      width: auto;
-      padding: 5px 10px;
-      font-size: 0.9em;
-    }
-    .variant-block, .link-item {
-      padding: 15px;
-      border: 1px dashed var(--secondary-color);
-      border-radius: 5px;
-      margin-bottom: 15px;
-    }
-    #links-list a {
-      font-weight: bold;
-      color: var(--primary-color);
-    }
-    #image-slider {
-      width: 100%;
-      height: 300px;
-      background-color: #eee;
-      position: relative;
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 5px;
-    }
-    #image-slider img {
-      max-width: 100%;
-      max-height: 100%;
-    }
-    #add-to-basket {
-      background-color: #28a745;
-    }
-  </style>
-
-  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
+        #productsList {
+            margin-top: 2rem;
+            border-top: 1px solid #eee;
+            padding-top: 2rem;
+        }
+        .product-item {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .product-item a {
+            color: goldenrod;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .product-item button {
+            background-color: #dc3545;
+            padding: 8px 15px;
+        }
+        .product-item button:hover {
+            background-color: #c82333;
+        }
+        .category-subcategory-group {
+            display: flex;
+            gap: 15px;
+        }
+        .category-subcategory-group > div {
+            flex: 1;
+        }
+        .price-discount-group {
+            display: flex;
+            gap: 15px;
+        }
+        .price-discount-group > div {
+            flex: 1;
+        }
+    </style>
 </head>
 <body>
-  <div id="app-root"></div>
-
-  <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
-    const appRoot = document.getElementById('app-root');
-    const urlParams = new URLSearchParams(window.location.search);
-    const pageId = urlParams.get('id');
-
-    const productsData = {
-      categories: {
-        "Food": ["Breakfast", "Chocolate", "Snacks", "Spread", "Cheese"],
-        "Jewellery": ["Rings", "Necklaces", "Earrings"],
-        "Digital": ["Software", "Courses", "E-books"],
-        "Cosmetics": ["Skincare", "Makeup"]
-      }
-    };
-
-    if (pageId) {
-      renderProductPage(pageId);
-    } else {
-      renderGeneratorPage();
-    }
-
-    function renderGeneratorPage() {
-      appRoot.innerHTML = `
-        <div class="container">
-          <h1>📝 Digital Page Generator</h1>
-          <h2>Product Details</h2>
-          <input id="product-name" type="text" placeholder="Product Name">
-          <textarea id="product-details" placeholder="Full Product Description..."></textarea>
-          <textarea id="slider-images" placeholder="Enter image URLs, separated by commas"></textarea>
-
-          <h2>Category</h2>
-          <select id="category-select"></select>
-          <select id="subcategory-select"></select>
-
-          <h2>Variants</h2>
-          <div id="variants-container"></div>
-          <button id="add-variant-btn" type="button">Add Variant Type</button>
-
-          <h2>Pricing</h2>
-          <div id="pricing-container"></div>
-
-          <button id="generate-page-btn" type="button">🚀 Generate Link & Save Page</button>
-
-          <hr>
-          <h1>🔗 Generated Links</h1>
-          <div id="links-list"></div>
-          <button id="export-btn">📤 Export All Pages</button>
-          <input type="file" id="import-input" style="display:none;" />
-          <button id="import-btn">📥 Import Pages</button>
+    <nav>
+        <h1>imacx Product Generator</h1>
+        <div>
+            <a href="product.html">View Shop</a>
+            <a href="basket.html">Basket</a>
         </div>
-      `;
-      setupGeneratorEventListeners();
-      populateCategories();
-      displayLinks();
-    }
+    </nav>
 
-    function renderProductPage(id) {
-      appRoot.innerHTML = `
-        <div class="container">
-          <nav>
-            <img src="https://assets.stickpng.com/images/580b57fcd9996e24bc43c521.png" alt="imacx Logo"> <span>imacx</span>
-            <a href="app.html">Home (Generator)</a>
-            <a href="#">Account</a>
-            <a href="#">Basket</a>
-          </nav>
-          <div id="product-content">
-            <div id="image-slider"><p>Loading slider...</p></div>
-            <h1 id="product-name">Loading...</h1>
-            <p>Category: <span id="product-category"></span> | Subcategory: <span id="product-subcategory"></span></p>
-            <div id="variant-selectors"></div>
-            <h2>Price: ₹<span id="product-price">--</span></h2>
-            <div>
-              Quantity: <input id="quantity" type="number" value="1" min="1" style="width: 80px;">
+    <div class="container">
+        <h2>Generate New Product Page</h2>
+        <form id="productForm">
+            <div class="form-group">
+                <label for="productName">Product Name:</label>
+                <input type="text" id="productName" required>
             </div>
-            <button id="add-to-basket" type="button">🛒 Add to Basket</button>
-            <h2>Details</h2>
-            <div id="product-details"></div>
-            <h2>⭐ Ratings & Reviews</h2>
-            <div id="reviews-section"></div>
-          </div>
+
+            <div class="price-discount-group">
+                <div class="form-group">
+                    <label for="basePrice">Base Price (₹):</label>
+                    <input type="number" id="basePrice" min="0" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="discountedPrice">Discounted Price (₹, optional):</label>
+                    <input type="number" id="discountedPrice" min="0" step="0.01">
+                </div>
+            </div>
+
+            <div class="category-subcategory-group">
+                <div class="form-group">
+                    <label for="category">Category:</label>
+                    <select id="category" required>
+                        <option value="">--Select Category--</option>
+                        <option value="food">Food</option>
+                        <option value="jewellery">Jewellery</option>
+                        <option value="digital">Digital</option>
+                        <option value="cosmetics">Cosmetics</option>
+                        </select>
+                </div>
+                <div class="form-group">
+                    <label for="subcategory">Subcategory:</label>
+                    <select id="subcategory" required>
+                        <option value="">--Select Subcategory--</option>
+                        </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="imageUrls">Image URLs (comma-separated):</label>
+                <input type="text" id="imageUrls" placeholder="e.g., img1.jpg, img2.png, https://example.com/img3.webp" required>
+            </div>
+
+            <div class="form-group">
+                <label for="productDetails">Product Details (HTML allowed):</label>
+                <textarea id="productDetails" rows="8" placeholder="Enter detailed product description. You can use basic HTML tags like <p>, <strong>, <ul>, <li>."></textarea>
+            </div>
+
+            <h3>Product Variants</h3>
+            <div id="variantsContainer">
+                </div>
+            <button type="button" id="addVariantBtn">Add Variant Type</button>
+            <hr style="margin: 20px 0;">
+
+            <button type="submit">Generate Product Page</button>
+        </form>
+
+        <h2 id="generatedProductsHeading">Generated Product Pages</h2>
+        <div id="productsList">
+            <p>No products generated yet.</p>
         </div>
-      `;
-      loadProductData(id);
-    }
+    </div>
 
-    function setupGeneratorEventListeners() {
-      document.getElementById('category-select').addEventListener('change', populateSubcategories);
-      document.getElementById('add-variant-btn').addEventListener('click', addVariantBlock);
-      document.getElementById('generate-page-btn').addEventListener('click', saveProduct);
-      document.getElementById('variants-container').addEventListener('input', updatePricingTable);
-      document.getElementById('links-list').addEventListener('click', handleDeleteClick);
-      document.getElementById('export-btn').addEventListener('click', exportPages);
-      document.getElementById('import-btn').addEventListener('click', () => document.getElementById('import-input').click());
-      document.getElementById('import-input').addEventListener('change', importPages);
-    }
+    <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+    <script>
+        const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
+        const productsDB = gun.get('imacx_products'); // Root node for all products
 
-    function populateCategories() {
-      const catSelect = document.getElementById('category-select');
-      catSelect.innerHTML = '<option value="">-- Select Category --</option>';
-      for (const category in productsData.categories) {
-        catSelect.innerHTML += `<option value="${category}">${category}</option>`;
-      }
-    }
+        const productForm = document.getElementById('productForm');
+        const productNameInput = document.getElementById('productName');
+        const basePriceInput = document.getElementById('basePrice');
+        const discountedPriceInput = document.getElementById('discountedPrice');
+        const categorySelect = document.getElementById('category');
+        const subcategorySelect = document.getElementById('subcategory');
+        const imageUrlsInput = document.getElementById('imageUrls');
+        const productDetailsInput = document.getElementById('productDetails');
+        const variantsContainer = document.getElementById('variantsContainer');
+        const addVariantBtn = document.getElementById('addVariantBtn');
+        const productsListDiv = document.getElementById('productsList');
+        const generatedProductsHeading = document.getElementById('generatedProductsHeading');
 
-    function populateSubcategories() {
-      const catSelect = document.getElementById('category-select');
-      const subcatSelect = document.getElementById('subcategory-select');
-      const selectedCategory = catSelect.value;
-      const subcategories = productsData.categories[selectedCategory] || [];
-      subcatSelect.innerHTML = '<option value="">-- Select Subcategory --</option>';
-      subcategories.forEach(sub => {
-        subcatSelect.innerHTML += `<option value="${sub}">${sub}</option>`;
-      });
-    }
-
-    let variantCount = 0;
-    function addVariantBlock() {
-      variantCount++;
-      const div = document.createElement('div');
-      div.className = 'variant-block';
-      div.innerHTML = `
-        <h4>Variant Type ${variantCount}</h4>
-        <input type="text" class="variant-name" placeholder="e.g., Color, Size">
-        <input type="text" class="variant-options" placeholder="e.g., Red, Blue, Green (comma-separated)">
-      `;
-      document.getElementById('variants-container').appendChild(div);
-    }
-
-    function getVariantCombinations() {
-      const variantNodes = document.querySelectorAll('.variant-block');
-      if (variantNodes.length === 0) return [];
-
-      const variants = Array.from(variantNodes).map(node => {
-        const options = node.querySelector('.variant-options').value.split(',').map(o => o.trim()).filter(Boolean);
-        return options;
-      }).filter(v => v.length > 0);
-
-      if (variants.length === 0) return [];
-
-      return variants.reduce((a, b) => a.flatMap(x => b.map(y => `${x}-${y}`)));
-    }
-
-    function updatePricingTable() {
-      const combinations = getVariantCombinations();
-      const pricingContainer = document.getElementById('pricing-container');
-      pricingContainer.innerHTML = combinations.length > 0 ? '<h4>Set Price for Each Combination</h4>' : '';
-      combinations.forEach(combo => {
-        pricingContainer.innerHTML += `
-          <div>
-            <label for="price-${combo}">${combo}</label>
-            <input type="number" id="price-${combo}" data-combo="${combo}" class="price-input" placeholder="Price (₹)">
-            <input type="number" id="discount-${combo}" data-combo="${combo}" class="discount-input" placeholder="Discounted Price (Optional)">
-          </div>
-        `;
-      });
-    }
-
-    function saveProduct() {
-      const newPageId = Gun.SEA.random(16).toString('hex');
-      const productData = {
-        id: newPageId,
-        name: document.getElementById('product-name').value,
-        details: document.getElementById('product-details').value,
-        category: document.getElementById('category-select').value,
-        subcategory: document.getElementById('subcategory-select').value,
-        images: document.getElementById('slider-images').value.split(',').map(url => url.trim()).filter(Boolean)
-      };
-
-      const variants = [];
-      document.querySelectorAll('.variant-block').forEach(node => {
-        variants.push({
-          name: node.querySelector('.variant-name').value,
-          options: node.querySelector('.variant-options').value.split(',').map(o => o.trim()).filter(Boolean)
-        });
-      });
-
-      const pricing = {};
-      document.querySelectorAll('.price-input').forEach(input => {
-        const combo = input.dataset.combo;
-        const discountedInput = document.querySelector(`.discount-input[data-combo="${combo}"]`);
-        pricing[combo] = {
-          price: parseFloat(input.value) || 0,
-          discounted: parseFloat(discountedInput.value) || null
+        // --- Subcategory Logic ---
+        const subcategories = {
+            food: ["chocolate", "breakfast", "snacks", "dairy", "bakery"],
+            jewellery: ["rings", "necklaces", "earrings", "bracelets"],
+            digital: ["laptops", "phones", "accessories", "software"],
+            cosmetics: ["makeup", "skincare", "haircare", "fragrances"]
         };
-      });
 
-      gun.get(newPageId).put(productData);
-      gun.get(newPageId).get('variants').put(JSON.stringify(variants));
-      gun.get(newPageId).get('pricing').put(JSON.stringify(pricing));
-      gun.get('products_index').set(gun.get(newPageId));
-
-      alert(`Page created! ID: ${newPageId}`);
-      displayLinks();
-    }
-
-    function displayLinks() {
-      const listContainer = document.getElementById('links-list');
-      if (!listContainer) return;
-      listContainer.innerHTML = '';
-      gun.get('products_index').map().once((product, id) => {
-        if (product && product.name) {
-          const link = `app.html?id=${id}`;
-          const div = document.createElement('div');
-          div.className = 'link-item';
-          div.innerHTML = `
-            <span>${product.name}</span><br>
-            <a href="${link}" target="_blank">${link}</a>
-            <button class="delete-btn" data-id="${id}">Delete</button>
-          `;
-          listContainer.appendChild(div);
-        }
-      });
-    }
-
-    function handleDeleteClick(event) {
-      if (event.target.classList.contains('delete-btn')) {
-        const idToDelete = event.target.dataset.id;
-        if (confirm('Are you sure you want to delete this page? This cannot be undone.')) {
-          gun.get(idToDelete).put(null);
-          gun.get('products_index').get(idToDelete).put(null);
-          event.target.closest('.link-item').remove();
-        }
-      }
-    }
-
-    function loadProductData(id) {
-      gun.get(id).once(data => {
-        if (!data) {
-          appRoot.innerHTML = `<div class="container"><h1>Page not found or deleted.</h1></div>`;
-          return;
-        }
-        document.title = data.name;
-        document.getElementById('product-name').innerText = data.name;
-        document.getElementById('product-details').innerText = data.details;
-        document.getElementById('product-category').innerText = data.category;
-        document.getElementById('product-subcategory').innerText = data.subcategory;
-
-        const slider = document.getElementById('image-slider');
-        if (data.images && data.images.length > 0) {
-          slider.innerHTML = `<img src="${data.images[0]}" alt="${data.name}">`;
-        } else {
-          slider.innerHTML = '<p>No images available</p>';
-        }
-
-        gun.get(id).get('variants').once(variantsStr => {
-          gun.get(id).get('pricing').once(pricingStr => {
-            const variants = variantsStr ? JSON.parse(variantsStr) : [];
-            const pricing = pricingStr ? JSON.parse(pricingStr) : {};
-            renderVariantSelectors(variants, pricing);
-          });
+        categorySelect.addEventListener('change', () => {
+            const selectedCategory = categorySelect.value;
+            subcategorySelect.innerHTML = '<option value="">--Select Subcategory--</option>';
+            if (selectedCategory && subcategories[selectedCategory]) {
+                subcategories[selectedCategory].forEach(sub => {
+                    const option = document.createElement('option');
+                    option.value = sub;
+                    option.textContent = sub.charAt(0).toUpperCase() + sub.slice(1); // Capitalize
+                    subcategorySelect.appendChild(option);
+                });
+            }
         });
-      });
-    }
 
-    function renderVariantSelectors(variants, pricing) {
-      const container = document.getElementById('variant-selectors');
-      container.innerHTML = '';
-      if (!variants || variants.length === 0) {
-        const defaultPrice = pricing[''] || { price: 0, discounted: null };
-        updatePriceDisplay(defaultPrice.price, defaultPrice.discounted);
-        return;
-      }
+        // --- Variant Logic ---
+        let variantCounter = 0; // To give unique IDs to variant groups
 
-      variants.forEach((variant, index) => {
-        let optionsHtml = variant.options.map(opt => `<option value="${opt}">${opt}</option>`).join('');
-        container.innerHTML += `
-          <label>${variant.name}</label>
-          <select class="variant-select" data-index="${index}">
-            ${optionsHtml}
-          </select>
-        `;
-      });
+        addVariantBtn.addEventListener('click', () => {
+            variantCounter++;
+            const variantGroup = document.createElement('div');
+            variantGroup.className = 'variant-group';
+            variantGroup.dataset.id = variantCounter;
 
-      const updatePrice = () => {
-        const selectedOptions = Array.from(document.querySelectorAll('.variant-select')).map(sel => sel.value);
-        const comboKey = selectedOptions.join('-');
-        const priceInfo = pricing[comboKey] || { price: 'N/A', discounted: null };
-        updatePriceDisplay(priceInfo.price, priceInfo.discounted);
-      };
+            variantGroup.innerHTML = `
+                <label>Variant Type Name (e.g., Color, Size):</label>
+                <input type="text" class="variant-type-name" placeholder="e.g., Color" required>
+                <button type="button" class="add-option-btn" style="float: right;">Add Option</button>
+                <div class="variant-options-list">
+                    </div>
+                <button type="button" class="delete-variant-btn" style="background-color: #dc3545; margin-top: 10px;">Delete This Variant Type</button>
+            `;
+            variantsContainer.appendChild(variantGroup);
 
-      document.querySelectorAll('.variant-select').forEach(sel => sel.addEventListener('change', updatePrice));
-      updatePrice();
-    }
+            // Add event listeners for the new variant group
+            variantGroup.querySelector('.add-option-btn').addEventListener('click', () => addVariantOption(variantGroup));
+            variantGroup.querySelector('.delete-variant-btn').addEventListener('click', () => variantGroup.remove());
+        });
 
-    function updatePriceDisplay(price, discounted) {
-      const priceEl = document.getElementById('product-price');
-      if (discounted && discounted < price) {
-        priceEl.innerHTML = `<del>₹${price}</del> <strong>₹${discounted}</strong>`;
-      } else {
-        priceEl.innerHTML = `<strong>₹${price}</strong>`;
-      }
-    }
+        function addVariantOption(variantGroup) {
+            const optionsList = variantGroup.querySelector('.variant-options-list');
+            const optionDiv = document.createElement('div');
+            optionDiv.style.marginBottom = '8px';
+            optionDiv.innerHTML = `
+                <input type="text" class="variant-option-input" placeholder="Option Value (e.g., Red)" required>
+                <input type="number" class="variant-option-price-modifier" placeholder="Price Mod (+/-)" step="0.01" value="0">
+                <input type="number" class="variant-option-discounted-price-modifier" placeholder="Disc Price Mod (+/-)" step="0.01" value="0">
+                <button type="button" class="delete-option-btn">Delete Option</button>
+            `;
+            optionsList.appendChild(optionDiv);
+            optionDiv.querySelector('.delete-option-btn').addEventListener('click', () => optionDiv.remove());
+        }
 
-    function exportPages() {
-      const allData = {};
-      gun.get('products_index').map().once((product, id) => {
-        if (!product || !id) return;
-        gun.get(id).once(data => {
-          gun.get(id).get('variants').once(variants => {
-            gun.get(id).get('pricing').once(pricing => {
-              allData[id] = {
-                ...data,
-                variants,
-                pricing
-              };
-              if (Object.keys(allData).length > 0) {
-                const blob = new Blob([JSON.stringify(allData, null, 2)], { type: 'application/json' });
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(blob);
-                a.download = 'pages_backup.json';
-                a.click();
-              }
+        // --- Form Submission ---
+        productForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const productName = productNameInput.value.trim();
+            const basePrice = parseFloat(basePriceInput.value);
+            const discountedPrice = discountedPriceInput.value ? parseFloat(discountedPriceInput.value) : null;
+            const category = categorySelect.value;
+            const subcategory = subcategorySelect.value;
+            const imageUrls = imageUrlsInput.value.split(',').map(url => url.trim()).filter(url => url !== '');
+            const productDetails = productDetailsInput.value.trim();
+
+            if (!productName || isNaN(basePrice) || !category || !subcategory || imageUrls.length === 0) {
+                alert('Please fill in all required product fields.');
+                return;
+            }
+
+            const variants = [];
+            document.querySelectorAll('.variant-group').forEach(variantGroup => {
+                const typeName = variantGroup.querySelector('.variant-type-name').value.trim();
+                if (!typeName) return; // Skip if variant type name is empty
+
+                const options = [];
+                variantGroup.querySelectorAll('.variant-option-input').forEach(optionInput => {
+                    const value = optionInput.value.trim();
+                    const priceModifier = parseFloat(optionInput.nextElementSibling.value) || 0;
+                    const discountedPriceModifier = parseFloat(optionInput.nextElementSibling.nextElementSibling.value) || 0;
+                    if (value) {
+                        options.push({
+                            value: value,
+                            price_modifier: priceModifier,
+                            discounted_price_modifier: discountedPriceModifier
+                        });
+                    }
+                });
+
+                if (options.length > 0) {
+                    variants.push({
+                        name: typeName,
+                        options: options
+                    });
+                }
             });
-          });
+
+            // Generate a unique ID for the product
+            const newProductId = Gun.SEA.pair().pub; // Using Gun.SEA for a more unique key
+
+            const productData = {
+                name: productName,
+                price: basePrice,
+                discountedPrice: discountedPrice,
+                category: category,
+                subcategory: subcategory,
+                images: imageUrls,
+                details: productDetails,
+                variants: variants,
+                createdAt: Date.now(),
+                // We don't store the delete button state here, as it's UI specific for the generator
+            };
+
+            // Save the product data to GunDB
+            productsDB.get(newProductId).put(productData);
+
+            alert(`Product "${productName}" generated! Link: product.html#${newProductId}`);
+            productForm.reset();
+            variantsContainer.innerHTML = ''; // Clear variants
+            subcategorySelect.innerHTML = '<option value="">--Select Subcategory--</option>'; // Reset subcategory
+
+            // You might want to update the products list immediately, but Gun's .on() will handle it
         });
-      });
-    }
 
-    function importPages(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const data = JSON.parse(e.target.result);
-        for (const id in data) {
-          const entry = data[id];
-          gun.get(id).put({
-            id,
-            name: entry.name,
-            details: entry.details,
-            category: entry.category,
-            subcategory: entry.subcategory,
-            images: entry.images
-          });
-          gun.get(id).get('variants').put(entry.variants);
-          gun.get(id).get('pricing').put(entry.pricing);
-          gun.get('products_index').set(gun.get(id));
-        }
-        alert('Pages imported successfully!');
-        displayLinks();
-      };
-      reader.readAsText(file);
-    }
+        // --- List Products and Delete Functionality ---
+        let firstLoad = true;
+        productsDB.map().on((productData, productId) => {
+            // GunDB's .on(data, key) maps to productData and productId
+            if (productData === null) { // Handle deletion
+                const itemToRemove = document.querySelector(`.product-item[data-id="${productId}"]`);
+                if (itemToRemove) {
+                    itemToRemove.remove();
+                }
+                if (productsListDiv.children.length === 0) {
+                    productsListDiv.innerHTML = '<p>No products generated yet.</p>';
+                    generatedProductsHeading.textContent = 'No Products Generated';
+                }
+                return;
+            }
 
-  });
- 
-  // --- 🔒 ENSURE DATA SAVING FOR DYNAMIC PAGES ---
-    function saveFullPageDataWithIntegrity() {
-      const newPageId = Gun.SEA.random(16).toString('hex');
-      const product = {
-        id: newPageId,
-        name: document.getElementById('product-name').value,
-        details: document.getElementById('product-details').value,
-        category: document.getElementById('category-select').value,
-        subcategory: document.getElementById('subcategory-select').value,
-        images: document.getElementById('slider-images').value.split(',').map(s => s.trim()).filter(Boolean)
-      };
+            if (productData && productData.name) { // Ensure it's a valid product and not a deleted state
+                generatedProductsHeading.textContent = 'Generated Product Pages'; // Update heading if products exist
+                if (productsListDiv.querySelector('p')) { // Remove "No products" message
+                    productsListDiv.innerHTML = '';
+                }
 
-      if (!product.name || !product.details) {
-        alert("Please fill in all product details.");
-        return;
-      }
+                let productItem = document.querySelector(`.product-item[data-id="${productId}"]`);
 
-      const variants = [];
-      document.querySelectorAll('.variant-block').forEach((block) => {
-        const name = block.querySelector('.variant-name').value;
-        const options = block.querySelector('.variant-options').value
-          .split(',')
-          .map(o => o.trim())
-          .filter(Boolean);
-        if (name && options.length) {
-          variants.push({ name, options });
-        }
-      });
+                if (!productItem) { // Create new item if it doesn't exist
+                    productItem = document.createElement('div');
+                    productItem.className = 'product-item';
+                    productItem.dataset.id = productId; // Store the GunDB ID
+                    productsListDiv.appendChild(productItem);
+                }
 
-      const pricing = {};
-      document.querySelectorAll('.price-input').forEach((priceInput) => {
-        const combo = priceInput.dataset.combo;
-        const discountedInput = document.querySelector(`.discount-input[data-combo="${combo}"]`);
-        pricing[combo] = {
-          price: parseFloat(priceInput.value) || 0,
-          discounted: parseFloat(discountedInput?.value || '') || null
-        };
-      });
+                // Update content (important for real-time updates if product data changes)
+                productItem.innerHTML = `
+                    <span>
+                        <strong>${productData.name}</strong><br>
+                        <a href="product.html#${productId}" target="_blank">product.html#${productId}</a>
+                    </span>
+                    <button class="delete-link-page-btn" data-id="${productId}">Delete This Link Page</button>
+                `;
 
-      // Put main product data
-      gun.get(newPageId).put(product);
+                // Re-attach event listener for delete button (important for new items and updates)
+                productItem.querySelector('.delete-link-page-btn').addEventListener('click', (e) => {
+                    const idToDelete = e.target.dataset.id;
+                    if (confirm(`Are you sure you want to delete the product "${productData.name}"? This action cannot be undone.`)) {
+                        productsDB.get(idToDelete).put(null); // Delete the product from GunDB
+                        // The .on() listener will handle the UI removal when GunDB syncs the null value
+                    }
+                });
+            }
+        });
 
-      // Store variants & pricing as structured JSON
-      gun.get(newPageId).get('variants').put(JSON.stringify(variants));
-      gun.get(newPageId).get('pricing').put(JSON.stringify(pricing));
-
-      // Store a timestamp & hash for validation/debugging
-      const timestamp = Date.now();
-      gun.get(newPageId).get('timestamp').put(timestamp);
-      Gun.SEA.work(JSON.stringify(product), null, null, (hash) => {
-        gun.get(newPageId).get('hash').put(hash);
-      });
-
-      // Index for listing
-      gun.get('products_index').set(gun.get(newPageId));
-
-      alert(`✔️ Page saved: ${newPageId}`);
-      displayLinks();
-    }
-
-    // Optional override old generate button with secure version
-    const generateBtn = document.getElementById('generate-page-btn');
-    if (generateBtn) {
-      generateBtn.removeEventListener('click', saveProduct); // remove if exists
-      generateBtn.addEventListener('click', saveFullPageDataWithIntegrity);
-        }
-                </script>
+        // Initial check for existing products to show/hide the "No products" message
+        // This is a bit tricky with GunDB's async nature. The .map().on() will eventually populate.
+        // For a very first load, you might see "No products" briefly even if there are some.
+        // The header text update logic within the .on() handles the final state.
+    </script>
 </body>
 </html>
