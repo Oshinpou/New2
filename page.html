@@ -40,7 +40,9 @@
   <div id="links"></div>
 
   <script>
-    const gun = Gun();
+    const gun = Gun({
+  peers: ['https://gun-manhattan.herokuapp.com/gun']
+});
     const linksRef = gun.get('imacx-products');
 
     function generateLink() {
