@@ -1,207 +1,90 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cloud Web Pages Generator</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
-            color: #1f2937;
-        }
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
-        .btn {
-            @apply px-6 py-3 font-semibold text-white rounded-lg transition-colors duration-200 shadow-md;
-        }
-        .btn-primary {
-            @apply bg-indigo-600 hover:bg-indigo-700;
-        }
-        .btn-danger {
-            @apply bg-red-600 hover:bg-red-700;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cloud Page Generator</title>
+  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f2f2f2;
+    }
+    input, button {
+      margin: 5px;
+      padding: 8px;
+      font-size: 16px;
+    }
+    .link-box {
+      margin-top: 10px;
+      padding: 10px;
+      background: #fff;
+      border: 1px solid #ccc;
+    }
+    .delete-btn {
+      color: red;
+      cursor: pointer;
+      font-weight: bold;
+    }
+  </style>
 </head>
 <body>
 
-    <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+<h2>Generate Product Cloud Page</h2>
+<input id="pname" placeholder="Product Name" />
+<input id="price" placeholder="Product Price (INR)" />
+<button onclick="generatePage()">Generate Link</button>
 
-    <nav class="bg-white shadow-sm sticky top-0 z-50">
-        <div class="container flex justify-between items-center py-4">
-            <a href="generator.html" class="text-2xl font-bold text-indigo-600">Page Generator</a>
-            <a href="post.html" class="btn btn-primary" id="postLink">Post Data</a>
-        </div>
-    </nav>
+<div id="linksContainer"></div>
 
-    <!-- Page Generator UI (visible by default) -->
-    <div id="generator-view" class="container mt-8 bg-white p-8 rounded-xl shadow-lg">
-        <h1 class="text-4xl font-bold text-center mb-6">Cloud Web Page Generator</h1>
-        <p class="text-center text-gray-500 mb-8">Create unique cloud pages. Use the "Post Data" link to add content to them.</p>
+<script>
+  const gun = Gun('https://gun-manhattan.herokuapp.com/gun');
+  const linksContainer = document.getElementById("linksContainer");
 
-        <!-- Button to generate the new page link -->
-        <div class="text-center">
-            <button id="generateBtn" class="btn btn-primary w-full md:w-auto">Generate New Page Link</button>
-        </div>
+  function generateID() {
+    return 'page_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+  }
 
-        <!-- Section to display the generated links -->
-        <div id="links-container" class="mt-12">
-            <h2 class="text-2xl font-bold mb-4">Generated Pages</h2>
-            <ul id="pages-list" class="space-y-4">
-                <!-- Links will be dynamically added here by JavaScript -->
-            </ul>
-        </div>
-    </div>
+  function generatePage() {
+    const name = document.getElementById("pname").value.trim();
+    const price = document.getElementById("price").value.trim();
 
-    <!-- Product Page UI (hidden by default) -->
-    <div id="product-view" class="container mt-8 bg-white p-8 rounded-xl shadow-lg hidden">
-        <div class="text-center mb-8">
-            <div id="product-display-area">
-                <p id="loading-message" class="text-xl text-gray-500">Loading page content. Please wait...</p>
-                <p id="sync-message" class="text-sm text-gray-400 mt-2">Data is synchronizing across the distributed network.</p>
+    if (!name || !price) return alert("Enter name and price");
 
-                <!-- Static content for every generated page -->
-                <h1 class="text-5xl font-extrabold text-indigo-600 mt-8">Your Cloud Page</h1>
-                <p class="text-xl font-light text-gray-500 mt-2">Data posted to this page will appear below.</p>
-                
-                <!-- Dynamic content area for posts -->
-                <div id="posts-container" class="mt-8 text-left space-y-4">
-                    <!-- Posted data will be dynamically added here -->
-                </div>
-            </div>
-        </div>
-    </div>
+    const id = generateID();
+    const data = { id, name, price };
 
-    <script>
-        (function() {
-            const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
-            
-            const generatorView = document.getElementById('generator-view');
-            const productView = document.getElementById('product-view');
-            const generateBtn = document.getElementById('generateBtn');
-            const pagesList = document.getElementById('pages-list');
+    gun.get('products').get(id).put(data);
+    displayLink(id, data);
+  }
 
-            const loadingMessage = document.getElementById('loading-message');
-            const syncMessage = document.getElementById('sync-message');
-            const postsContainer = document.getElementById('posts-container');
-            
-            const generateToken = () => crypto.randomUUID();
+  function displayLink(id, data) {
+    const div = document.createElement("div");
+    div.className = "link-box";
+    div.innerHTML = `
+      <a href="page.html?id=${id}" target="_blank">🌐 Open Page (${data.name})</a><br/>
+      ₹${data.price}
+      <span class="delete-btn" onclick="deletePage('${id}', this)">[Delete]</span>
+    `;
+    linksContainer.appendChild(div);
+  }
 
-            const handleGenerate = () => {
-                const token = generateToken();
-                const baseUrl = window.location.origin + window.location.pathname;
-                const pageUrl = `${baseUrl}?token=${token}`;
+  function deletePage(id, elem) {
+    gun.get('products').get(id).put(null);
+    elem.parentElement.remove();
+  }
 
-                // Store a new token link in the list of all tokens
-                gun.get('all_tokens').set(token);
-                // Initialize an empty posts object for this new page
-                gun.get('cloud_pages').get(token).put({});
-            };
+  function loadAllLinks() {
+    gun.get('products').map().once((data, id) => {
+      if (data && data.name) {
+        displayLink(id, data);
+      }
+    });
+  }
 
-            const handleDelete = (token) => {
-                gun.get('cloud_pages').get(token).put(null);
-                gun.get('all_tokens').unset(token);
-            };
-
-            const createPageLinkElement = (token) => {
-                const li = document.createElement('li');
-                li.className = 'flex justify-between items-center bg-gray-100 p-4 rounded-lg shadow-sm';
-                li.dataset.token = token;
-
-                const baseUrl = window.location.origin + window.location.pathname;
-                const link = document.createElement('a');
-                link.href = `${baseUrl}?token=${token}`;
-                link.className = 'text-indigo-600 hover:underline font-medium break-all';
-                link.textContent = `Token Link: ${token}`;
-
-                const deleteBtn = document.createElement('button');
-                deleteBtn.textContent = 'Delete';
-                deleteBtn.className = 'btn btn-danger ml-4';
-                deleteBtn.onclick = () => handleDelete(token);
-
-                li.appendChild(link);
-                li.appendChild(deleteBtn);
-                pagesList.appendChild(li);
-            };
-
-            const initializeGeneratorView = () => {
-                generatorView.classList.remove('hidden');
-                productView.classList.add('hidden');
-                
-                gun.get('all_tokens').map().on((token, key) => {
-                    if (token) {
-                        if (!document.querySelector(`li[data-token="${token}"]`)) {
-                             createPageLinkElement(token);
-                        }
-                    } else {
-                        const deletedElement = document.querySelector(`li[data-token="${key}"]`);
-                        if (deletedElement) {
-                            deletedElement.remove();
-                        }
-                    }
-                });
-
-                generateBtn.onclick = handleGenerate;
-            };
-
-            const initializeProductView = (token) => {
-                generatorView.classList.add('hidden');
-                productView.classList.remove('hidden');
-
-                // Clear previous posts
-                postsContainer.innerHTML = '';
-                
-                let postsFound = false;
-
-                gun.get('cloud_pages').get(token).on(data => {
-                    if (data) {
-                        // Iterate through the data object and display posts
-                        let hasContent = false;
-                        for (const key in data) {
-                            if (Object.hasOwnProperty.call(data, key) && key !== '_') {
-                                const postData = data[key];
-                                if (postData) {
-                                    hasContent = true;
-                                    const postElement = document.createElement('div');
-                                    postElement.className = 'bg-gray-100 p-4 rounded-lg shadow-sm';
-                                    postElement.textContent = postData;
-                                    postsContainer.appendChild(postElement);
-                                }
-                            }
-                        }
-
-                        // Update UI based on whether content was found or not
-                        if (hasContent) {
-                            loadingMessage.classList.add('hidden');
-                            syncMessage.classList.add('hidden');
-                            postsFound = true;
-                        } else if (!postsFound) {
-                             loadingMessage.textContent = 'No content has been posted to this page yet.';
-                             syncMessage.classList.add('hidden');
-                        }
-                    }
-                });
-            };
-
-            const renderPage = () => {
-                const urlParams = new URLSearchParams(window.location.search);
-                const token = urlParams.get('token');
-
-                if (token) {
-                    initializeProductView(token);
-                } else {
-                    initializeGeneratorView();
-                }
-            };
-
-            renderPage();
-        })();
-    </script>
+  loadAllLinks();
+</script>
 
 </body>
 </html>
