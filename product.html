@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="pageTitle">Product Page - imacx Shop</title>
+    <style>
+        body {
+            font-family: 'Cursive', sans-serif;
+            background-color: #fff;
+            color: goldenrod;
+            margin: 0;
+            padding: 0;
+        }
+        nav {
+            background-color: #f8f8f8;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #eee;
+        }
+        nav .imacx-brand {
+            display: flex;
+            align-items: center;
+        }
+        nav .imacx-brand span {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: goldenrod;
+            margin-right: 10px;
+        }
+        nav img {
+            height: 40px; /* Adjust as needed */
+            vertical-align: middle;
+        }
+        nav a {
+            margin-left: 15px;
+            text-decoration: none;
+            color: goldenrod;
+            font-weight: bold;
+        }
+        .container {
+            padding: 20px;
+            max-width: 1200px;
+            margin: 20px auto;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 40px;
+        }
+        .product-media {
+            flex: 1;
+            min-width: 350px;
+            max-width: 550px;
+            border: 1px solid #ddd;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .slider-content {
+            width: 100%;
+            height: 400px; /* Fixed height for consistency */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            background-color: #fff;
+            margin-bottom: 10px;
+            position: relative;
+        }
+        .slider-content img, .slider-content video {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain; /* or 'cover' */
+            display: block;
+        }
+        .slider-controls {
+            text-align: center;
+            margin-top: 10px;
+        }
+        .slider-controls button {
+            background-color: goldenrod;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            margin: 0 5px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .product-info {
+            flex: 1;
+            min-width: 350px;
+        }
+        .product-info h1 {
+            color: goldenrod;
+            margin-top: 0;
+            font-size: 2.5rem;
+        }
+        .category-info {
+            font-size: 0.9em;
+            color: #777;
+            margin-bottom: 15px;
+        }
+        .price-display {
+            font-size: 2rem;
+            color: goldenrod;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .discounted-price-display {
+            font-size: 1.5rem;
+            color: red;
+            text-decoration: line-through;
+            margin-left: 10px;
+        }
+        .variants-section select {
+            padding: 8px;
+            margin-right: 15px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: white;
+            color: #333;
+        }
+        .quantity-control {
+            display: flex;
+            align-items: center;
+            margin-top: 15px;
+            margin-bottom: 20px;
+        }
+        .quantity-control button {
+            background-color: goldenrod;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 1.2rem;
+        }
+        .quantity-control input {
+            width: 60px;
+            text-align: center;
+            margin: 0 10px;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        .add-to-basket-btn {
+            background-color: goldenrod;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 1.1rem;
+            transition: background-color 0.3s ease;
+        }
+        .add-to-basket-btn:hover {
+            background-color: #bfa046;
+        }
+        .product-description-section {
+            margin-top: 30px;
+            color: #555;
+            line-height: 1.6;
+        }
+        .product-description-section h2 {
+            color: goldenrod;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        /* Reviews Section */
+        .reviews-section {
+            margin-top: 40px;
+            border-top: 1px solid #eee;
+            padding-top: 30px;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .reviews-section h2 {
+            color: goldenrod;
+            border-bottom: 1px solid goldenrod;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .star-rating span {
+            cursor: pointer;
+            font-size: 1.8rem;
+            color: #ddd; /* Unfilled star color */
+        }
+        .star-rating span.filled {
+            color: goldenrod; /* Filled star color */
+        }
+        .review-form label, .review-form textarea, .review-form input[type="text"] {
+            display: block;
+            margin-bottom: 10px;
+            width: 100%;
+            max-width: 500px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .review-form button {
+            background-color: #5cb85c;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .review-item {
+            border: 1px solid #eee;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            background-color: #fcfcfc;
+        }
+        .review-item strong {
+            color: #333;
+        }
+        .review-item .review-date {
+            font-size: 0.8em;
+            color: #888;
+            margin-left: 10px;
+        }
+        .review-item .review-stars {
+            margin-top: 5px;
+        }
+        .review-item .review-comment {
+            margin-top: 10px;
+            color: #555;
+        }
+
+        /* Search Section */
+        .search-section {
+            margin-top: 40px;
+            border-top: 1px solid #eee;
+            padding-top: 30px;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .search-section h2 {
+            color: goldenrod;
+            border-bottom: 1px solid goldenrod;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .search-section input[type="text"] {
+            width: 100%;
+            max-width: 400px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1rem;
+            margin-bottom: 20px;
+        }
+        .search-results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        .product-card {
+            border: 1px solid #ddd;
+            padding: 15px;
+            text-align: center;
+            background-color: #fdfdfd;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            transition: transform 0.2s ease;
+        }
+        .product-card:hover {
+            transform: translateY(-5px);
+        }
+        .product-card img {
+            width: 120px;
+            height: 120px;
+            object-fit: cover;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+        .product-card h3 {
+            margin-top: 0;
+            margin-bottom: 5px;
+            color: goldenrod;
+            font-size: 1.2rem;
+        }
+        .product-card p {
+            margin-bottom: 10px;
+            color: #555;
+            font-weight: bold;
+        }
+        .product-card a {
+            background-color: goldenrod;
+            color: white;
+            padding: 8px 15px;
+            text-decoration: none;
+            border-radius: 5px;
+            display: inline-block;
+            transition: background-color 0.3s ease;
+        }
+        .product-card a:hover {
+            background-color: #bfa046;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="imacx-brand">
+            <span>imacx</span>
+            <img src="imacxstarone.png" alt="imacx logo">
+        </div>
+        <div>
+            <a href="home.html">Home</a>
+            <a href="account.html">Account</a>
+            <a href="basket.html">Basket</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="product-media">
+            <div class="slider-content" id="slider-content">
+                <p>Loading images...</p>
+            </div>
+            <div class="slider-controls">
+                <button onclick="moveSlider(-1)">Left</button>
+                <button onclick="moveSlider(1)">Right</button>
+            </div>
+        </div>
+
+        <div class="product-info">
+            <h1 id="productName">Loading Product...</h1>
+            <p class="category-info">Category: <span id="productCategory"></span>, Subcategory: <span id="productSubcategory"></span></p>
+
+            <p class="price-display">
+                ₹<span id="productPrice">0.00</span>
+                <span id="discountedPrice" class="discounted-price-display"></span>
+            </p>
+
+            <div id="productVariants" class="variants-section">
+                </div>
+
+            <div class="quantity-control">
+                <button id="decreaseQty">-</button>
+                <input type="number" id="quantityInput" value="1" min="1">
+                <button id="increaseQty">+</button>
+            </div>
+            <button class="add-to-basket-btn" id="addToBasketBtn">Add to Basket</button>
+        </div>
+    </div>
+
+    <div class="container product-description-section">
+        <h2>Product Details</h2>
+        <div id="productDescription">
+            <p>Loading description...</p>
+        </div>
+    </div>
+
+    <div class="reviews-section">
+        <h2>Customer Reviews</h2>
+        <div id="reviewsList">
+            <p>No reviews yet.</p>
+        </div>
+
+        <h3>Write a Review</h3>
+        <form id="reviewForm">
+            <label for="reviewerName">Your Name:</label>
+            <input type="text" id="reviewerName" required>
+
+            <label>Rating:</label>
+            <div class="star-rating" id="reviewRating">
+                <span data-value="1">&#9733;</span><span data-value="2">&#9733;</span><span data-value="3">&#9733;</span><span data-value="4">&#9733;</span><span data-value="5">&#9733;</span>
+            </div>
+            <input type="hidden" id="selectedRating" value="0">
+
+            <label for="reviewComment">Your Review:</label>
+            <textarea id="reviewComment" rows="5" required></textarea>
+
+            <button type="submit">Submit Review</button>
+        </form>
+    </div>
+
+    <div class="search-section">
+        <h2>Search Other Products</h2>
+        <input type="text" id="productSearch" placeholder="Search by product name, category...">
+        <div id="searchResults" class="search-results-grid">
+            <p>Start typing to search products...</p>
+        </div>
+    </div>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+    <script src="products-data.js"></script>
+    <script>
+        const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
+        const productsDB = gun.get('imacx_products'); // Root node for all products
+
+        let currentProduct = null;
+        let selectedVariantOptions = {};
+        let currentQuantity = 1;
+        let currentImageIndex = 0; // For image slider
+        let currentMedia = []; // Stores URLs for images/videos
+
+        // --- Basket Functions (from your basket.html logic) ---
+        function getBasket() {
+            return JSON.parse(localStorage.getItem('basket')) || [];
+        }
+
+        function updateBasket(basket) {
+            localStorage.setItem('basket', JSON.stringify(basket));
+        }
+
+        // --- Price Calculation based on Variants ---
+        function calculateCurrentPrice() {
+            if (!currentProduct) return 0;
+
+            let price = currentProduct.price || 0;
+            let discountedPrice = currentProduct.discountedPrice !== null ? currentProduct.discountedPrice : null;
+
+            if (currentProduct.variants && currentProduct.variants.length > 0) {
+                currentProduct.variants.forEach(variant => {
+                    const selectedOptionValue = selectedVariantOptions[variant.name];
+                    if (selectedOptionValue) {
+                        const selectedOption = variant.options.find(opt => opt.value === selectedOptionValue);
+                        if (selectedOption) {
+                            price += selectedOption.price_modifier || 0;
+                            if (discountedPrice !== null) {
+                                discountedPrice += selectedOption.discounted_price_modifier || 0;
+                            }
+                        }
+                    }
+                });
+            }
+
+            document.getElementById('productPrice').textContent = price.toFixed(2);
+            if (discountedPrice !== null && discountedPrice < price) {
+                 document.getElementById('discountedPrice').textContent = `(MRP ₹${discountedPrice.toFixed(2)})`; // Show discounted price if applicable
+            } else {
+                 document.getElementById('discountedPrice').textContent = '';
+            }
+            // Return the effective price (discounted if applicable, else base)
+            return discountedPrice !== null && discountedPrice < price ? discountedPrice : price;
+        }
+
+        // --- Product Rendering Function ---
+        function renderProduct(product) {
+            currentProduct = product;
+            document.getElementById('pageTitle').textContent = product.name + ' - imacx Shop';
+            document.getElementById('productName').textContent = product.name;
+            document.getElementById('productCategory').textContent = product.category || 'N/A';
+            document.getElementById('productSubcategory').textContent = product.subcategory || 'N/A';
+            document.getElementById('productDescription').innerHTML = product.details || '<p>No detailed description available.</p>';
+
+            // Render Image/Video Slider
+            currentMedia = product.images || []; // Assuming 'images' can hold video URLs too
+            if (currentMedia.length > 0) {
+                updateSliderMedia();
+            } else {
+                 document.getElementById('slider-content').innerHTML = '<p>No media to display.</p>';
+            }
+
+            // Render Variants
+            const productVariantsDiv = document.getElementById('productVariants');
+            productVariantsDiv.innerHTML = ''; // Clear previous variants
+            selectedVariantOptions = {}; // Reset selected options
+
+            if (product.variants && product.variants.length > 0) {
+                product.variants.forEach(variant => {
+                    const variantDiv = document.createElement('div');
+                    variantDiv.innerHTML = `<label>${variant.name}: </label>`;
+                    const select = document.createElement('select');
+                    select.id = `variant-${variant.name.replace(/\s/g, '_')}`; // Sanitize ID
+                    select.setAttribute('aria-label', `${variant.name} selection`);
+                    select.onchange = (event) => {
+                        selectedVariantOptions[variant.name] = event.target.value;
+                        calculateCurrentPrice();
+                    };
+
+                    variant.options.forEach(option => {
+                        const opt = document.createElement('option');
+                        opt.value = option.value;
+                        opt.textContent = option.value;
+                        select.appendChild(opt);
+                    });
+                    variantDiv.appendChild(select);
+                    productVariantsDiv.appendChild(variantDiv);
+
+                    // Set initial selected option
+                    if (variant.options.length > 0) {
+                        selectedVariantOptions[variant.name] = variant.options[0].value;
+                    }
+                });
+            } else {
+                productVariantsDiv.innerHTML = '<p>No configurable variants.</p>';
+            }
+
+            calculateCurrentPrice(); // Calculate initial price after rendering variants
+        }
+
+        // --- Image/Video Slider Functions ---
+        function updateSliderMedia() {
+            const sliderContent = document.getElementById('slider-content');
+            sliderContent.innerHTML = ''; // Clear existing content
+
+            if (currentMedia.length > 0) {
+                const mediaUrl = currentMedia[currentImageIndex];
+                if (mediaUrl.match(/\.(jpeg|jpg|gif|png|webp)$/i)) {
+                    const img = document.createElement('img');
+                    img.src = mediaUrl;
+                    img.alt = `Product image ${currentImageIndex + 1}`;
+                    sliderContent.appendChild(img);
+                } else if (mediaUrl.match(/\.(mp4|webm|ogg)$/i)) {
+                    const video = document.createElement('video');
+                    video.src = mediaUrl;
+                    video.controls = true;
+                    video.loop = true; // Optional: loop videos
+                    video.muted = true; // Optional: start muted
+                    sliderContent.appendChild(video);
+                } else {
+                    sliderContent.innerHTML = `<p>Unsupported media type: ${mediaUrl}</p>`;
+                }
+            } else {
+                sliderContent.innerHTML = '<p>No media available.</p>';
+            }
+        }
+
+        function moveSlider(direction) {
+            currentImageIndex += direction;
+            if (currentImageIndex >= currentMedia.length) {
+                currentImageIndex = 0;
+            } else if (currentImageIndex < 0) {
+                currentImageIndex = currentMedia.length - 1;
+            }
+            updateSliderMedia();
+        }
+
+        // --- Quantity Control ---
+        document.getElementById('decreaseQty').addEventListener('click', () => {
+            currentQuantity = Math.max(1, currentQuantity - 1);
+            document.getElementById('quantityInput').value = currentQuantity;
+        });
+
+        document.getElementById('increaseQty').addEventListener('click', () => {
+            currentQuantity++;
+            document.getElementById('quantityInput').value = currentQuantity;
+        });
+
+        document.getElementById('quantityInput').addEventListener('change', (event) => {
+            let value = parseInt(event.target.value);
+            if (isNaN(value) || value < 1) {
+                value = 1;
+            }
+            currentQuantity = value;
+            event.target.value = currentQuantity;
+        });
+
+        // --- Add to Basket ---
+        document.getElementById('addToBasketBtn').addEventListener('click', () => {
+            if (!currentProduct) {
+                alert('Product data not loaded yet. Please wait.');
+                return;
+            }
+
+            const basket = getBasket();
+            const effectivePrice = calculateCurrentPrice(); // Get the final calculated price
+
+            const itemToAdd = {
+                id: currentProduct._.pub, // GunDB's unique ID for the node
+                name: currentProduct.name,
+                image: currentMedia.length > 0 ? currentMedia[0] : 'placeholder.png', // Use first image as thumbnail
+                category: currentProduct.category,
+                subcategory: currentProduct.subcategory,
+                variants: { ...selectedVariantOptions }, // Clone to avoid mutation issues
+                price: effectivePrice,
+                quantity: currentQuantity
+            };
+
+            // Check if item with same ID and variants already exists in basket
+            const existingItemIndex = basket.findIndex(item =>
+                item.id === itemToAdd.id &&
+                JSON.stringify(item.variants) === JSON.stringify(itemToAdd.variants)
+            );
+
+            if (existingItemIndex > -1) {
+                basket[existingItemIndex].quantity += itemToAdd.quantity;
+            } else {
+                basket.push(itemToAdd);
+            }
+
+            updateBasket(basket);
+            alert(`${itemToAdd.quantity} x ${itemToAdd.name} added to basket!`);
+        });
+
+        // --- Review System ---
+        let currentRating = 0; // To store the selected star rating for submission
+        document.querySelectorAll('.star-rating span').forEach(star => {
+            star.addEventListener('click', function() {
+                currentRating = parseInt(this.dataset.value);
+                document.getElementById('selectedRating').value = currentRating;
+                // Update star visuals
+                document.querySelectorAll('.star-rating span').forEach((s, i) => {
+                    s.classList.toggle('filled', i < currentRating);
+                });
+            });
+        });
+
+        document.getElementById('reviewForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (!currentProduct) {
+                alert('Cannot submit review: Product data not loaded. Please wait.');
+                return;
+            }
+
+            const reviewerName = document.getElementById('reviewerName').value.trim();
+            const reviewComment = document.getElementById('reviewComment').value.trim();
+            const rating = parseInt(document.getElementById('selectedRating').value);
+
+            if (rating === 0) {
+                alert('Please select a star rating (1-5 stars).');
+                return;
+            }
+            if (!reviewerName || !reviewComment) {
+                alert('Please fill in your name and review comment.');
+                return;
+            }
+
+            const review = {
+                reviewer: reviewerName,
+                rating: rating,
+                comment: reviewComment,
+                timestamp: Date.now()
+            };
+
+            // Store review in GunDB under the product's review node
+            // Ensure the product node exists before trying to add a review to its 'reviews' sub-node
+            productsDB.get(currentProduct._.pub).get('reviews').set(review);
+
+            alert('Review submitted successfully!');
+            this.reset(); // Clear the form
+            document.querySelectorAll('.star-rating span').forEach(s => s.classList.remove('filled')); // Clear stars
+            currentRating = 0; // Reset selected rating
+            // Reviews should automatically re-render due to GunDB's .map().on()
+        });
+
+        // Render reviews
+        function renderReviews(productId) {
+            const reviewsListDiv = document.getElementById('reviewsList');
+            reviewsListDiv.innerHTML = '<p>Loading reviews...</p>'; // Show loading state
+
+            let hasReviews = false;
+            // Clear existing listener to prevent duplicates if function is called multiple times
+            // This requires storing references to listeners if you truly need to remove them.
+            // For simplicity here, we'll re-render the whole section.
+            reviewsListDiv.innerHTML = ''; // Clear it before re-populating
+
+            productsDB.get(productId).get('reviews').map().on(review => {
+                // GunDB might return null for deleted items, or initial empty state
+                if (review && review.reviewer && review.comment && review.rating) {
+                    hasReviews = true;
+                    const reviewDiv = document.createElement('div');
+                    reviewDiv.className = 'review-item';
+                    let starsHtml = '';
+                    for (let i = 0; i < 5; i++) {
+                        starsHtml += `<span class="${i < review.rating ? 'filled' : ''}">&#9733;</span>`;
+                    }
+                    reviewDiv.innerHTML = `
+                        <strong>${review.reviewer}</strong> <span class="review-date">${new Date(review.timestamp).toLocaleDateString()}</span><br>
+                        <div class="review-stars">${starsHtml}</div>
+                        <p class="review-comment">${review.comment}</p>
+                    `;
+                    reviewsListDiv.prepend(reviewDiv); // Add new reviews to the top
+                }
+            });
+
+            // If no reviews are added after a short delay (for GunDB to sync), show 'no reviews' message
+            setTimeout(() => {
+                if (!hasReviews && reviewsListDiv.children.length === 0) {
+                    reviewsListDiv.innerHTML = '<p>No reviews yet.</p>';
+                }
+            }, 500); // Give GunDB a moment to load
+        }
+
+        // --- Product Search from products-data.js (for demonstration) ---
+        const productSearchInput = document.getElementById('productSearch');
+        const searchResultsDiv = document.getElementById('searchResults');
+
+        function renderProductCard(product) {
+            // Adjust link to use the product.html#ID structure
+            const productLink = product.link ? product.link : `product.html#${product.id}`; // Fallback if no specific link
+            return `
+                <div class="product-card">
+                    <img src="${product.image}" alt="${product.name}" onerror="this.onerror=null;this.src='placeholder.png';">
+                    <h3>${product.name}</h3>
+                    <p>₹${product.price}</p>
+                    <a href="${productLink}">View Product</a>
+                </div>
+            `;
+        }
+
+        productSearchInput.addEventListener('input', () => {
+            const searchTerm = productSearchInput.value.toLowerCase().trim();
+            searchResultsDiv.innerHTML = ''; // Clear previous results
+
+            if (searchTerm.length < 2) {
+                searchResultsDiv.innerHTML = '<p>Start typing to search products...</p>';
+                return;
+            }
+
+            const filteredProducts = allProducts.filter(product =>
+                product.name.toLowerCase().includes(searchTerm) ||
+                (product.category && product.category.toLowerCase().includes(searchTerm)) ||
+                (product.subcategory && product.subcategory.toLowerCase().includes(searchTerm))
+            );
+
+            if (filteredProducts.length > 0) {
+                filteredProducts.forEach(product => {
+                    searchResultsDiv.innerHTML += renderProductCard(product);
+                });
+            } else {
+                searchResultsDiv.innerHTML = '<p>No products found matching your search.</p>';
+            }
+        });
+
+
+        // --- Initialize Page ---
+        window.onload = () => {
+            const productId = window.location.hash.substring(1); // Get ID from #hash
+            if (productId) {
+                // Use .on() to get real-time updates and initial load
+                productsDB.get(productId).on(data => {
+                    if (data && data.name) { // Check if data exists and is a valid product
+                        renderProduct(data);
+                        renderReviews(productId); // Render reviews once product data is loaded
+                    } else if (data === null) {
+                        // Product was deleted from GunDB
+                        document.getElementById('productName').textContent = 'Product Not Found (Deleted).';
+                        document.getElementById('productDescription').innerHTML = '<p>This product may have been removed.</p>';
+                        document.getElementById('reviewsList').innerHTML = '<p>No reviews available.</p>';
+                        document.getElementById('slider-content').innerHTML = '<p>No media available.</p>';
+                        document.getElementById('addToBasketBtn').disabled = true;
+                    }
+                    // If data is just undefined/empty object, it might be an initial load before sync
+                    // We keep loading messages until a valid product or explicit null is received.
+                });
+            } else {
+                document.getElementById('productName').textContent = 'Welcome! Please navigate to a product using a specific URL (e.g., product.html#yourProductId).';
+                document.getElementById('productDescription').innerHTML = '<p>Use the generator page to create products, or search below.</p>';
+                document.getElementById('reviewsList').innerHTML = '<p>No product selected.</p>';
+                document.getElementById('slider-content').innerHTML = '<p>Select a product to view media.</p>';
+                document.getElementById('addToBasketBtn').disabled = true; // Disable if no product selected
+            }
+
+            // Initial render of search results (optional, to show all products by default)
+            // productSearchInput.dispatchEvent(new Event('input')); // Commented out to start with 'type to search'
+        };
+    </script>
+</body>
+</html>
