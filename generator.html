@@ -1,68 +1,92 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Page Generator</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+  <title>Cloud Web Page Generator</title>
+  <style>
+    body { font-family: Arial, sans-serif; }
+    .container { width: 80%; margin: auto; padding: 20px; }
+    .input-group { margin-bottom: 10px; }
+    .input-group label { display: block; }
+    .button { padding: 10px; background-color: #4CAF50; color: white; border: none; cursor: pointer; }
+    .button:hover { background-color: #45a049; }
+    .link-list { margin-top: 20px; }
+    .link-item { margin-bottom: 10px; }
+    .delete-btn { margin-left: 10px; padding: 5px; background-color: #f44336; color: white; border: none; cursor: pointer; }
+  </style>
 </head>
-<body class="bg-gray-100 p-6 font-sans">
-  <div class="max-w-xl mx-auto bg-white p-6 rounded shadow">
-    <h1 class="text-2xl font-bold mb-4">Generate Digital Cloud Page</h1>
+<body>
+  <div class="container">
+    <h1>Cloud Web Page Generator</h1>
+    <div class="input-group">
+      <label for="productName">Product Name:</label>
+      <input type="text" id="productName" placeholder="Enter product name">
+    </div>
+    <div class="input-group">
+      <label for="productPrice">Product Price (INR):</label>
+      <input type="number" id="productPrice" placeholder="Enter product price">
+    </div>
+    <button class="button" onclick="generatePage()">Generate Page</button>
 
-    <input id="name" placeholder="Product Name" class="w-full p-2 mb-2 border rounded" />
-    <input id="price" placeholder="Product Price" class="w-full p-2 mb-2 border rounded" />
-    <textarea id="description" placeholder="Description" class="w-full p-2 mb-4 border rounded"></textarea>
-
-    <button onclick="createPage()" class="bg-blue-600 text-white px-4 py-2 rounded">Create Page</button>
-
-    <h2 class="text-xl font-semibold mt-6 mb-2">Generated Links</h2>
-    <ul id="links" class="space-y-2"></ul>
+    <div class="link-list" id="linkList">
+      <h2>Generated Links</h2>
+      <!-- Links will be populated here -->
+    </div>
   </div>
 
+  <!-- Script to handle page generation and storage -->
+  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
   <script>
     const gun = Gun();
-    const linkList = document.getElementById('links');
+    const linkList = document.getElementById('linkList');
 
-    function createPage() {
-      const name = document.getElementById('name').value.trim();
-      const price = document.getElementById('price').value.trim();
-      const description = document.getElementById('description').value.trim();
+    function generateToken() {
+      return Math.random().toString(36).substr(2, 9);
+    }
 
-      if (!name || !price || !description) {
-        alert("Please fill in all fields.");
-        return;
+    function generatePage() {
+      const productName = document.getElementById('productName').value;
+      const productPrice = document.getElementById('productPrice').value;
+
+      if (productName && productPrice) {
+        const token = generateToken();
+        const productData = {
+          name: productName,
+          price: productPrice
+        };
+
+        // Store the product data in GunDB
+        gun.get('products').get(token).put(productData);
+
+        // Display the link
+        displayLink(token, productData);
+      } else {
+        alert('Please enter both product name and price.');
       }
-
-      const id = 'page_' + Date.now();
-      const data = { name, price, description, id };
-
-      gun.get('pages').get(id).put(data);
-      renderLink(data);
     }
 
-    function renderLink(data) {
-      const li = document.createElement('li');
-      li.className = "bg-gray-200 p-2 rounded flex justify-between items-center";
-      li.innerHTML = `
-        <div>
-          <a href="page.html?id=${data.id}" target="_blank" class="text-blue-700 underline">${data.name}</a>
-          <div class="text-sm text-gray-600">₹${data.price}</div>
-        </div>
-        <button class="text-red-500" onclick="deletePage('${data.id}', this)">Delete</button>
+    function displayLink(token, productData) {
+      const linkItem = document.createElement('div');
+      linkItem.className = 'link-item';
+      linkItem.innerHTML = `
+        <a href="cloud.html#${token}" target="_blank">View ${productData.name} - INR ${productData.price}</a>
+        <button class="delete-btn" onclick="deleteLink('${token}', this)">Delete</button>
       `;
-      linkList.prepend(li);
+      linkList.appendChild(linkItem);
     }
 
-    function deletePage(id, btn) {
-      gun.get('pages').get(id).put(null);
-      btn.parentElement.remove();
+    function deleteLink(token, buttonElement) {
+      // Delete the product data from GunDB
+      gun.get('products').get(token).put(null);
+
+      // Remove the link from the display
+      buttonElement.parentElement.remove();
     }
 
-    // Load existing
-    gun.get('pages').map().once((data, id) => {
-      if (data && data.name) renderLink(data);
+    // Load existing links from GunDB
+    gun.get('products').map().on((productData, token) => {
+      if (productData) {
+        displayLink(token, productData);
+      }
     });
   </script>
 </body>
