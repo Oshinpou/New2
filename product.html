@@ -1,0 +1,105 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product View - imacx</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #fff8f0;
+      color: #333;
+    }
+  </style>
+</head>
+<body class="p-6">
+  <div id="productContainer" class="max-w-5xl mx-auto bg-white p-6 rounded-lg shadow-lg">
+    <div id="productDetails"></div>
+    <div class="mt-6">
+      <label class="block font-semibold mb-1">Quantity:</label>
+      <input type="number" id="quantityInput" value="1" min="1" class="border p-2 w-24">
+      <button onclick="addToBasket()" class="ml-4 bg-yellow-600 hover:bg-yellow-700 text-white px-6 py-2 rounded">Add to Basket</button>
+    </div>
+  </div>  <script>
+    const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
+    const products = gun.get('products');
+    const productId = window.location.hash.substring(1);
+    const productDetailsDiv = document.getElementById('productDetails');
+    const quantityInput = document.getElementById('quantityInput');
+
+    let currentProduct = null;
+
+    function renderProduct(product) {
+      currentProduct = product;
+      if (!product) {
+        productDetailsDiv.innerHTML = '<p class="text-red-600">Product not found.</p>';
+        return;
+      }
+
+      let imagesHTML = '';
+      if (Array.isArray(product.images)) {
+        imagesHTML = product.images.map(img => `<img src="${img}" class="w-32 h-32 object-cover rounded mr-2">`).join('');
+      }
+
+      let variantsHTML = '';
+      if (Array.isArray(product.variants) && product.variants.length > 0) {
+        variantsHTML = '<h3 class="mt-4 font-semibold">Variants:</h3>';
+        product.variants.forEach(v => {
+          variantsHTML += `<p class="mt-2"><strong>${v.name}:</strong> ${v.options.map(opt => opt.value).join(', ')}</p>`;
+        });
+      }
+
+      productDetailsDiv.innerHTML = `
+        <div class="flex flex-col md:flex-row md:items-start gap-6">
+          <div class="flex-shrink-0 flex flex-wrap">${imagesHTML}</div>
+          <div>
+            <h1 class="text-3xl font-bold text-yellow-600 mb-2">${product.name}</h1>
+            <p class="text-lg text-gray-700 mb-2">₹${product.discountedPrice || product.price}</p>
+            <p class="text-sm text-gray-500">Category: ${product.category} | Subcategory: ${product.subcategory}</p>
+            <div class="mt-4">${product.details || ''}</div>
+            ${variantsHTML}
+          </div>
+        </div>
+      `;
+    }
+
+    products.get(productId).once((data) => {
+      if (!data || !data.id) {
+        renderProduct(null);
+        return;
+      }
+      renderProduct(data);
+    });
+
+    function addToBasket() {
+      const quantity = parseInt(quantityInput.value);
+      if (!currentProduct || isNaN(quantity) || quantity < 1) {
+        alert("Invalid quantity or product not loaded.");
+        return;
+      }
+
+      const basket = JSON.parse(localStorage.getItem('basket') || '[]');
+      const item = {
+        id: currentProduct.id,
+        name: currentProduct.name,
+        price: currentProduct.discountedPrice || currentProduct.price,
+        quantity,
+        image: currentProduct.images?.[0] || '',
+        category: currentProduct.category,
+        subcategory: currentProduct.subcategory
+      };
+
+      // Check if product already in basket
+      const existing = basket.find(p => p.id === item.id);
+      if (existing) {
+        existing.quantity += quantity;
+      } else {
+        basket.push(item);
+      }
+
+      localStorage.setItem('basket', JSON.stringify(basket));
+      alert("✅ Product added to basket!");
+    }
+  </script></body>
+</html>
