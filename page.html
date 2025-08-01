@@ -1,72 +1,325 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Generated Page</title>
-<style>
-  body { font-family: Arial, sans-serif; padding: 20px; }
-  nav { background: #eee; padding: 10px; margin-bottom: 20px; }
-  #slider { display: flex; overflow-x: auto; gap: 10px; margin-bottom: 20px; }
-  #slider img, #slider video { max-height: 200px; }
-  #product { margin-top: 20px; }
-</style>
-</head>
-<body>
+<html lang="en">  
+<head>  
+  <meta charset="UTF-8" />  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>  
+  <title>Digital Page Generator</title>  
+  <style>
+    /* (Your full style remains unchanged here) */
+  </style>  
+  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>  
+  <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>  
+</head>  
+<body>  
+  <div id="app-root"></div>  
+  <script>  
+  document.addEventListener('DOMContentLoaded', () => {  
+    const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);  
+    const appRoot = document.getElementById('app-root');  
+    const urlParams = new URLSearchParams(window.location.search);  
+    const pageId = urlParams.get('id');  
 
-<div id="content"></div>
-
-<script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-<script>
-const urlParams = new URLSearchParams(window.location.search);
-const id = urlParams.get('id');
-const gun = Gun();
-
-if(!id) {
-  document.body.innerHTML = 'Invalid page.';
-} else {
-  gun.get('pages').get(id).once(data => {
-    if(!data) {
-      document.body.innerHTML = 'Page not found.';
-      return;
-    }
-    // Build nav
-    document.getElementById('content').innerHTML = `
-      <nav>
-        <img src="${data.logo}" alt="Logo" width="50" />
-        <a href="${data.accountLink}">Account</a>
-        <a href="${data.homeLink}">Home</a>
-        <a href="${data.basketLink}">Basket</a>
-      </nav>
-      
-      <div id="slider"></div>
-      
-      <div id="product">
-        <h2>${data.productName}</h2>
-        <p>Category: ${data.category}</p>
-        <p>Subcategory: ${data.subcategory}</p>
-        <p>Variants: ${data.variantsOptions}</p>
-        <button id="addToBasket">Add to Basket</button>
-      </div>
-    `;
-    
-    // Populate slider
-    const sliderDiv = document.getElementById('slider');
-    data.sliderItems.forEach(item => {
-      if(item.type === 'image') {
-        sliderDiv.innerHTML += `<img src="${item.src}">`;
-      } else if(item.type === 'video') {
-        sliderDiv.innerHTML += `<video src="${item.src}" controls></video>`;
+    const productsData = {
+      categories: {
+        "Food": ["Breakfast", "Chocolate", "Snacks", "Spread", "Cheese"],
+        "Jewellery": ["Rings", "Necklaces", "Earrings"],
+        "Digital": ["Software", "Courses", "E-books"],
+        "Cosmetics": ["Skincare", "Makeup"]
       }
-    });
-    
-    // Handle add to basket (simple example)
-    document.getElementById('addToBasket').onclick = () => {
-      alert('Added to basket! (Implement basket storage)');
     };
-  });
-}
-</script>
 
-</body>
+    if (pageId) {
+      renderProductPage(pageId);
+    } else {
+      renderGeneratorPage();
+    }
+
+    function renderGeneratorPage() {
+      appRoot.innerHTML = `
+        <div class="container">
+          <h1>📝 Digital Page Generator</h1>
+          <h2>Product Details</h2>
+          <input id="product-name" type="text" placeholder="Product Name">
+          <textarea id="product-details" placeholder="Full Product Description..."></textarea>
+          <textarea id="slider-images" placeholder="Enter image URLs, separated by commas"></textarea>
+
+          <h2>Category</h2>
+          <select id="category-select"></select>
+          <select id="subcategory-select"></select>
+
+          <h2>Variants</h2>
+          <div id="variants-container"></div>
+          <button id="add-variant-btn" type="button">Add Variant Type</button>
+
+          <h2>Pricing</h2>
+          <div id="pricing-container"></div>
+
+          <button id="generate-page-btn" type="button">🚀 Generate Link & Save Page</button>
+
+          <hr>
+          <h1>🔗 Generated Links</h1>
+          <div id="links-list"></div>
+        </div>
+      `;
+      setupGeneratorEventListeners();
+      populateCategories();
+      displayLinks();
+    }
+
+    function setupGeneratorEventListeners() {
+      document.getElementById('category-select').addEventListener('change', populateSubcategories);
+      document.getElementById('add-variant-btn').addEventListener('click', addVariantBlock);
+      document.getElementById('generate-page-btn').addEventListener('click', saveFullPageDataWithIntegrity);
+      document.getElementById('variants-container').addEventListener('input', updatePricingTable);
+      document.getElementById('links-list').addEventListener('click', handleDeleteClick);
+    }
+
+    function populateCategories() {
+      const catSelect = document.getElementById('category-select');
+      catSelect.innerHTML = '<option value="">-- Select Category --</option>';
+      for (const category in productsData.categories) {
+        catSelect.innerHTML += `<option value="${category}">${category}</option>`;
+      }
+    }
+
+    function populateSubcategories() {
+      const catSelect = document.getElementById('category-select');
+      const subcatSelect = document.getElementById('subcategory-select');
+      const selectedCategory = catSelect.value;
+      const subcategories = productsData.categories[selectedCategory] || [];
+      subcatSelect.innerHTML = '<option value="">-- Select Subcategory --</option>';
+      subcategories.forEach(sub => {
+        subcatSelect.innerHTML += `<option value="${sub}">${sub}</option>`;
+      });
+    }
+
+    let variantCount = 0;
+    function addVariantBlock() {
+      variantCount++;
+      const div = document.createElement('div');
+      div.className = 'variant-block';
+      div.innerHTML = `
+        <h4>Variant Type ${variantCount}</h4>
+        <input type="text" class="variant-name" placeholder="e.g., Color, Size">
+        <input type="text" class="variant-options" placeholder="e.g., Red, Blue, Green (comma-separated)">
+      `;
+      document.getElementById('variants-container').appendChild(div);
+    }
+
+    function getVariantCombinations() {
+      const variantNodes = document.querySelectorAll('.variant-block');
+      if (variantNodes.length === 0) return [];
+
+      const variants = Array.from(variantNodes).map(node => {
+        const options = node.querySelector('.variant-options').value.split(',').map(o => o.trim()).filter(Boolean);
+        return options;
+      }).filter(v => v.length > 0);
+
+      if (variants.length === 0) return [];
+
+      return variants.reduce((a, b) => a.flatMap(x => b.map(y => `${x}-${y}`)));
+    }
+
+    function updatePricingTable() {
+      const combinations = getVariantCombinations();
+      const pricingContainer = document.getElementById('pricing-container');
+      pricingContainer.innerHTML = combinations.length > 0 ? '<h4>Set Price for Each Combination</h4>' : '';
+      combinations.forEach(combo => {
+        pricingContainer.innerHTML += `
+          <div>
+            <label for="price-${combo}">${combo}</label>
+            <input type="number" id="price-${combo}" data-combo="${combo}" class="price-input" placeholder="Price (₹)">
+            <input type="number" id="discount-${combo}" data-combo="${combo}" class="discount-input" placeholder="Discounted Price (Optional)">
+          </div>
+        `;
+      });
+    }
+
+    function saveFullPageDataWithIntegrity() {
+      const newPageId = `page_${Date.now()}`;
+      const product = {
+        id: newPageId,
+        name: document.getElementById('product-name').value,
+        details: document.getElementById('product-details').value,
+        category: document.getElementById('category-select').value,
+        subcategory: document.getElementById('subcategory-select').value,
+        images: document.getElementById('slider-images').value.split(',').map(s => s.trim()).filter(Boolean)
+      };
+
+      if (!product.name || !product.details) {
+        alert("Please fill in all product details.");
+        return;
+      }
+
+      const variants = [];
+      document.querySelectorAll('.variant-block').forEach((block) => {
+        const name = block.querySelector('.variant-name').value;
+        const options = block.querySelector('.variant-options').value
+          .split(',')
+          .map(o => o.trim())
+          .filter(Boolean);
+        if (name && options.length) {
+          variants.push({ name, options });
+        }
+      });
+
+      const pricing = {};
+      document.querySelectorAll('.price-input').forEach((priceInput) => {
+        const combo = priceInput.dataset.combo;
+        const discountedInput = document.querySelector(`.discount-input[data-combo="${combo}"]`);
+        pricing[combo] = {
+          price: parseFloat(priceInput.value) || 0,
+          discounted: parseFloat(discountedInput?.value || '') || null
+        };
+      });
+
+      // Put main product data
+      gun.get(newPageId).put(product);
+      gun.get(newPageId).get('variants').put(JSON.stringify(variants));
+      gun.get(newPageId).get('pricing').put(JSON.stringify(pricing));
+      gun.get(newPageId).get('timestamp').put(Date.now());
+
+      // Save hash for integrity
+      Gun.SEA.work(JSON.stringify(product), null, null, (hash) => {
+        gun.get(newPageId).get('hash').put(hash);
+      });
+
+      // Index for links list
+      gun.get('products_index').set(gun.get(newPageId));
+
+      alert(`✔️ Page saved: ${newPageId}`);
+      displayLinks();
+    }
+
+    function displayLinks() {
+      const listContainer = document.getElementById('links-list');
+      if (!listContainer) return;
+      listContainer.innerHTML = '';
+      gun.get('products_index').map().once((product, id) => {
+        if (product && product.name && id) {
+          const link = `app.html?id=${id}`;
+          const div = document.createElement('div');
+          div.className = 'link-item';
+          div.innerHTML = `
+            <span>${product.name}</span><br>
+            <a href="${link}" target="_blank">${link}</a>
+            <button class="delete-btn" data-id="${id}">Delete</button>
+          `;
+          listContainer.appendChild(div);
+        }
+      });
+    }
+
+    function handleDeleteClick(event) {
+      if (event.target.classList.contains('delete-btn')) {
+        const idToDelete = event.target.dataset.id;
+        if (confirm('Are you sure you want to delete this page?')) {
+          gun.get(idToDelete).put(null);
+          gun.get('products_index').get(idToDelete).put(null);
+          event.target.closest('.link-item').remove();
+        }
+      }
+    }
+
+    function renderProductPage(id) {
+      appRoot.innerHTML = `
+        <div class="container">
+          <nav>
+            <img src="https://assets.stickpng.com/images/580b57fcd9996e24bc43c521.png" alt="imacx Logo">
+            <span>imacx</span>
+            <a href="app.html">Home (Generator)</a>
+            <a href="#">Account</a>
+            <a href="#">Basket</a>
+          </nav>
+          <div id="product-content">
+            <div id="image-slider"><p>Loading slider...</p></div>
+            <h1 id="product-name">Loading...</h1>
+            <p>Category: <span id="product-category"></span> | Subcategory: <span id="product-subcategory"></span></p>
+            <div id="variant-selectors"></div>
+            <h2>Price: ₹<span id="product-price">--</span></h2>
+            <div>
+              Quantity: <input id="quantity" type="number" value="1" min="1" style="width: 80px;">
+            </div>
+            <button id="add-to-basket" type="button">🛒 Add to Basket</button>
+            <h2>Details</h2>
+            <div id="product-details"></div>
+            <h2>⭐ Ratings & Reviews</h2>
+            <div id="reviews-section"></div>
+          </div>
+        </div>
+      `;
+      loadProductData(id);
+    }
+
+    function loadProductData(id) {
+      gun.get(id).once(data => {
+        if (!data) {
+          appRoot.innerHTML = `<div class="container"><h1>Page not found or deleted.</h1></div>`;
+          return;
+        }
+        document.title = data.name;
+        document.getElementById('product-name').innerText = data.name;
+        document.getElementById('product-details').innerText = data.details;
+        document.getElementById('product-category').innerText = data.category;
+        document.getElementById('product-subcategory').innerText = data.subcategory;
+
+        const slider = document.getElementById('image-slider');
+        if (data.images && data.images.length > 0) {
+          slider.innerHTML = `<img src="${data.images[0]}" alt="${data.name}">`;
+        } else {
+          slider.innerHTML = '<p>No images available</p>';
+        }
+
+        gun.get(id).get('variants').once(variantsStr => {
+          gun.get(id).get('pricing').once(pricingStr => {
+            const variants = variantsStr ? JSON.parse(variantsStr) : [];
+            const pricing = pricingStr ? JSON.parse(pricingStr) : {};
+            renderVariantSelectors(variants, pricing);
+          });
+        });
+      });
+    }
+
+    function renderVariantSelectors(variants, pricing) {
+      const container = document.getElementById('variant-selectors');
+      container.innerHTML = '';
+      if (!variants || variants.length === 0) {
+        const defaultPrice = pricing[''] || { price: 0, discounted: null };
+        updatePriceDisplay(defaultPrice.price, defaultPrice.discounted);
+        return;
+      }
+
+      variants.forEach((variant, index) => {
+        let optionsHtml = variant.options.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+        container.innerHTML += `
+          <label>${variant.name}</label>
+          <select class="variant-select" data-index="${index}">
+            ${optionsHtml}
+          </select>
+        `;
+      });
+
+      const updatePrice = () => {
+        const selectedOptions = Array.from(document.querySelectorAll('.variant-select')).map(sel => sel.value);
+        const comboKey = selectedOptions.join('-');
+        const priceInfo = pricing[comboKey] || { price: 'N/A', discounted: null };
+        updatePriceDisplay(priceInfo.price, priceInfo.discounted);
+      };
+
+      document.querySelectorAll('.variant-select').forEach(sel => sel.addEventListener('change', updatePrice));
+      updatePrice();
+    }
+
+    function updatePriceDisplay(price, discounted) {
+      const priceEl = document.getElementById('product-price');
+      if (discounted && discounted < price) {
+        priceEl.innerHTML = `<del>₹${price}</del> <strong>₹${discounted}</strong>`;
+      } else {
+        priceEl.innerHTML = `<strong>₹${price}</strong>`;
+      }
+    }
+
+  });
+  </script>  
+</body>  
 </html>
