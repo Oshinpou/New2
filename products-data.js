@@ -5,7 +5,7 @@ const allProducts = [
     category: "food",
     subcategory: "breakfast",
     image: "soleme-cheese.jpg",
-    link: "product-soleme-cheese.html"
+    description: "A soft breakfast cheese that melts in your mouth."
   },
   {
     name: "Iconic Blue Chocolate",
@@ -13,7 +13,7 @@ const allProducts = [
     category: "food",
     subcategory: "chocolate",
     image: "iconic-blue-chocolate.jpg",
-    link: "product-iconic-blue-chocolate.html"
+    description: "Rare artisan chocolate with rich blue cocoa notes."
   },
   {
     name: "Grow Magic Jam",
@@ -21,7 +21,7 @@ const allProducts = [
     category: "food",
     subcategory: "breakfast",
     image: "magic-jam.jpg",
-    link: "product-magic-jam.html"
+    description: "Floral jam spread that elevates morning mood."
   },
   {
     name: "Need Crunchy Nuts",
@@ -29,7 +29,6 @@ const allProducts = [
     category: "food",
     subcategory: "snacks",
     image: "crunchy-nuts.jpg",
-    link: "product-crunchy-nuts.html"
+    description: "Nut blend with extra crunch for power snacks."
   }
-  // Later more products from other pages can be added here
 ];
