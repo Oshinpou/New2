@@ -1,88 +1,78 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>imacx Digital Product Link Generator</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Digital Product Generator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-      padding: 0;
-      background: #f2f2f2;
-    }
-    .container {
-      background: #fff;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      max-width: 600px;
-      margin: auto;
-    }
-    input, button {
-      padding: 10px;
-      margin: 10px 0;
-      width: 100%;
-      font-size: 16px;
-    }
-    .link-box {
-      background: #eee;
-      padding: 10px;
-      border-radius: 5px;
-      margin-top: 10px;
-      word-break: break-all;
-    }
-    .product-box {
-      padding: 15px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      margin-top: 20px;
-      background: #fff;
-    }
-  </style>
 </head>
-<body>
-<div class="container">
-  <h2>imacx Product Link Creator</h2>
-  <input type="text" id="productName" placeholder="Enter Product Name">
-  <input type="text" id="productPrice" placeholder="Enter Product Price">
-  <button onclick="generateTokenLink()">Create Token Link</button>
-  <div id="generatedLink" class="link-box"></div>
-  <div id="productDisplay"></div>
-</div><script>
-  const gun = Gun();
+<body class="bg-gray-100 font-sans min-h-screen flex items-center justify-center p-4">
+  <div class="w-full max-w-xl bg-white p-6 rounded-2xl shadow-xl">
+    <h1 class="text-3xl font-bold text-center mb-4 text-indigo-700">Digital Product Generator</h1>
 
-  function generateTokenLink() {
-    const name = document.getElementById('productName').value.trim();
-    const price = document.getElementById('productPrice').value.trim();
+    <!-- Form for creating product -->
+    <div id="form-section">
+      <input id="name" type="text" placeholder="Product Name" class="w-full mb-3 p-2 border rounded" />
+      <input id="price" type="text" placeholder="Price" class="w-full mb-3 p-2 border rounded" />
+      <textarea id="desc" rows="3" placeholder="Description (optional)" class="w-full mb-3 p-2 border rounded"></textarea>
+      <button onclick="createProduct()" class="w-full bg-indigo-600 text-white p-2 rounded hover:bg-indigo-700">Generate Link</button>
+    </div>
 
-    if (!name || !price) return alert("Fill all fields");
+    <!-- Link Output -->
+    <div id="link-section" class="mt-6 hidden">
+      <p class="text-green-600 font-semibold mb-2">Product link:</p>
+      <input id="product-link" readonly class="w-full p-2 border rounded text-blue-600" />
+    </div>
 
-    const token = 'token_' + Date.now();
-    gun.get(token).put({ name, price });
+    <!-- Product View -->
+    <div id="product-view" class="hidden mt-6 border-t pt-6">
+      <h2 class="text-xl font-bold mb-2 text-indigo-800" id="view-name"></h2>
+      <p class="text-gray-800 mb-1">Price: ₹<span id="view-price"></span></p>
+      <p class="text-gray-600" id="view-desc"></p>
+    </div>
+  </div>
 
-    const link = location.origin + location.pathname + '?id=' + token;
-    document.getElementById('generatedLink').innerText = link;
-  }
+  <script>
+    const db = Gun();
 
-  function loadTokenData() {
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get('id');
-    if (!token) return;
+    function createProduct() {
+      const name = document.getElementById("name").value.trim();
+      const price = document.getElementById("price").value.trim();
+      const desc = document.getElementById("desc").value.trim();
 
-    gun.get(token).once(data => {
-      if (!data) return;
-      const display = document.getElementById('productDisplay');
-      display.innerHTML = `
-        <div class="product-box">
-          <h3>Product: ${data.name}</h3>
-          <p>Price: ₹${data.price}</p>
-        </div>
-      `;
-    });
-  }
+      if (!name || !price) {
+        alert("Please fill in product name and price.");
+        return;
+      }
 
-  loadTokenData();
-</script></body>
+      const token = "product_" + Date.now();
+      db.get(token).put({ name, price, desc });
+
+      const link = `${window.location.origin}${window.location.pathname}?id=${token}`;
+      document.getElementById("product-link").value = link;
+      document.getElementById("link-section").classList.remove("hidden");
+    }
+
+    function loadProduct(token) {
+      db.get(token).once(data => {
+        if (!data || !data.name) {
+          alert("Product not found or may have expired.");
+          return;
+        }
+        document.getElementById("form-section").classList.add("hidden");
+        document.getElementById("link-section").classList.add("hidden");
+        document.getElementById("product-view").classList.remove("hidden");
+        document.getElementById("view-name").textContent = data.name;
+        document.getElementById("view-price").textContent = data.price;
+        document.getElementById("view-desc").textContent = data.desc || "No description.";
+      });
+    }
+
+    // Check if page opened with ?id=...
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get("id");
+    if (token) loadProduct(token);
+  </script>
+</body>
 </html>
