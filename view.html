@@ -1,52 +1,207 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Product View</title>
-  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>imacx Product Popup</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+  <style>
+    body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #fff; color: #111; }
+    nav { display: flex; justify-content: space-between; padding: 1rem; background: #111; color: #fff; }
+    nav a { color: white; margin: 0 10px; text-decoration: none; font-weight: bold; }
+    .logo-title { display: flex; align-items: center; }
+    .logo-title img { height: 30px; margin-right: 10px; }
+    .popup { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; overflow-y: scroll; padding: 1rem; z-index: 9999; }
+    .close-btn { position: fixed; top: 10px; right: 10px; background: red; color: white; border: none; font-size: 20px; padding: 5px 10px; z-index: 10000; }
+    .swiper-container { width: 100%; height: 250px; }
+    .swiper-slide img { width: 100%; height: auto; }
+    .product-details { max-width: 800px; margin: auto; }
+    .variants select, .quantity input { margin-right: 10px; padding: 5px; }
+    .star { font-size: 24px; cursor: pointer; color: gray; }
+    .star.active { color: gold; }
+    .review-slider { margin-top: 20px; }
+    .review-card { background: #f3f3f3; padding: 10px; margin: 10px; border-radius: 8px; }
+    .suggested-products { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 30px; }
+    .product-card { border: 1px solid #ccc; padding: 10px; width: calc(50% - 10px); }
+    footer { margin-top: 40px; padding: 1rem; text-align: center; background: #f0f0f0; }
+  </style>
 </head>
 <body>
-  <h2>Product Details</h2>
-  <p><strong>Name:</strong> <span id="name">Loading...</span></p>
-  <p><strong>Price:</strong> <span id="price">Loading...</span></p>
-  <p><strong>Page Link:</strong> <span id="pageLink">Saving...</span></p>
+  <nav>
+    <div class="logo-title">
+      <img src="logo.png" alt="imacx logo">
+      <span>imacx</span>
+    </div>
+    <div>
+      <a href="home.html">Home</a>
+      <a href="account.html">Account</a>
+      <a href="basket.html">Basket</a>
+      <a href="favorites.html">Favorites</a>
+    </div>
+  </nav>  <div class="popup" id="popup">
+    <button class="close-btn" onclick="closePopup()">×</button><div class="swiper-container">
+  <div class="swiper-wrapper" id="imageSlider">
+    <!-- Slides dynamically injected -->
+  </div>
+  <div class="swiper-pagination"></div>
+</div>
 
-  <script>
-    const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
-    const db = gun.get("imacx-products");
-    const views = gun.get("imacx-product-links");
+<div class="product-details">
+  <h1 id="productName">Product Name</h1>
+  <p id="availability">Available</p>
+  <p>Category: <span id="category"></span> / <span id="subcategory"></span></p>
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const id = urlParams.get("id");
+  <div class="variants">
+    <label>Color:
+      <select id="variantColor"></select>
+    </label>
+    <label>Size:
+      <select id="variantSize"></select>
+    </label>
+  </div>
 
-    if (id) {
-      const fullLink = window.location.href;
-      document.getElementById("pageLink").textContent = fullLink;
+  <p>Price: ₹<span id="price">0</span></p>
 
-      db.get(id).once(data => {
-        if (data) {
-          const { name, price } = data;
+  <div>
+    <label>Quantity:
+      <input type="number" id="quantity" value="1" min="1" max="99">
+    </label>
+    <button onclick="addToBasket()">Add to Basket</button>
+    <button onclick="saveToFavorites()">♡ Save</button>
+  </div>
 
-          document.getElementById("name").textContent = name || "Not found";
-          document.getElementById("price").textContent = price || "Not found";
+  <h3>Description</h3>
+  <p id="description"></p>
 
-          // ✅ Store the link + data for future list
-          views.get(id).put({
-            name,
-            price,
-            link: fullLink
-          });
-        } else {
-          document.getElementById("name").textContent = "No data";
-          document.getElementById("price").textContent = "No data";
-          document.getElementById("pageLink").textContent = "Invalid ID";
-        }
+  <h3>Rate this Product</h3>
+  <div id="ratingStars">
+    <span class="star" onclick="rate(1)">★</span>
+    <span class="star" onclick="rate(2)">★</span>
+    <span class="star" onclick="rate(3)">★</span>
+    <span class="star" onclick="rate(4)">★</span>
+    <span class="star" onclick="rate(5)">★</span>
+  </div>
+  <input type="text" id="reviewName" placeholder="Your Name">
+  <textarea id="reviewText" placeholder="Write a review..."></textarea>
+  <button onclick="submitReview()">Submit Review</button>
+
+  <h3>Customer Reviews</h3>
+  <div class="review-slider" id="reviewSlider">
+    <!-- Reviews injected here -->
+  </div>
+
+  <h3>Suggested Products</h3>
+  <div class="suggested-products" id="suggested">
+    <!-- Inject from products-data.js -->
+  </div>
+
+  <!-- Placeholder for ads -->
+  <div id="adsArea">
+    <!-- Google/Monetag ads go here -->
+  </div>
+</div>
+
+  </div>  <footer>
+    &copy; 2025 imacx. All rights reserved.
+  </footer>  <script>
+    const data = {
+      name: "Luxury Face Cream",
+      category: "Skin",
+      subcategory: "Creams",
+      description: "An elite face cream with strong peptides.",
+      available: true,
+      images: ["1.jpg", "2.jpg"],
+      variants: {
+        color: ["Red", "Blue"],
+        size: ["50g", "100g"]
+      },
+      prices: {
+        "Red|50g": 1800,
+        "Red|100g": 3200,
+        "Blue|50g": 1850,
+        "Blue|100g": 3300
+      },
+      reviews: [
+        { name: "Oshin", rating: 5, text: "Excellent quality!" },
+        { name: "Ravi", rating: 4, text: "Very nice and soft." }
+      ]
+    };
+
+    function loadPopupData() {
+      document.getElementById('productName').innerText = data.name;
+      document.getElementById('category').innerText = data.category;
+      document.getElementById('subcategory').innerText = data.subcategory;
+      document.getElementById('description').innerText = data.description;
+      document.getElementById('availability').innerText = data.available ? 'Available' : 'Unavailable';
+
+      const imageSlider = document.getElementById('imageSlider');
+      data.images.forEach(img => {
+        imageSlider.innerHTML += `<div class="swiper-slide"><img src="${img}" alt="Product"></div>`;
       });
-    } else {
-      document.getElementById("name").textContent = "No ID";
-      document.getElementById("price").textContent = "No ID";
-      document.getElementById("pageLink").textContent = "Missing ?id=";
+      new Swiper('.swiper-container', { pagination: { el: '.swiper-pagination' }, loop: true });
+
+      const colorSelect = document.getElementById('variantColor');
+      const sizeSelect = document.getElementById('variantSize');
+      data.variants.color.forEach(opt => colorSelect.innerHTML += `<option>${opt}</option>`);
+      data.variants.size.forEach(opt => sizeSelect.innerHTML += `<option>${opt}</option>`);
+
+      colorSelect.onchange = sizeSelect.onchange = () => {
+        const price = data.prices[`${colorSelect.value}|${sizeSelect.value}`] || 0;
+        document.getElementById('price').innerText = price;
+      };
+      colorSelect.dispatchEvent(new Event('change'));
+
+      const reviewSlider = document.getElementById('reviewSlider');
+      data.reviews.forEach(r => {
+        reviewSlider.innerHTML += `<div class='review-card'><b>${r.name}</b>: ${'★'.repeat(r.rating)}<br>${r.text}</div>`;
+      });
     }
-  </script>
-</body>
+
+    function closePopup() {
+      document.getElementById('popup').style.display = 'none';
+    }
+
+    function rate(starCount) {
+      document.querySelectorAll('.star').forEach((s, i) => {
+        s.classList.toggle('active', i < starCount);
+      });
+    }
+
+    function submitReview() {
+      const name = document.getElementById('reviewName').value;
+      const text = document.getElementById('reviewText').value;
+      const stars = [...document.querySelectorAll('.star.active')].length;
+      document.getElementById('reviewSlider').innerHTML += `<div class='review-card'><b>${name}</b>: ${'★'.repeat(stars)}<br>${text}</div>`;
+    }
+
+    function addToBasket() {
+      const qty = parseInt(document.getElementById('quantity').value);
+      const color = document.getElementById('variantColor').value;
+      const size = document.getElementById('variantSize').value;
+      const price = parseInt(document.getElementById('price').innerText);
+      const item = {
+        name: data.name,
+        image: data.images[0],
+        qty,
+        price,
+        total: qty * price,
+        category: data.category,
+        subcategory: data.subcategory,
+        variant: `${color}|${size}`
+      };
+      let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+      cart.push(item);
+      localStorage.setItem('cart', JSON.stringify(cart));
+      alert('Added to Basket');
+    }
+
+    function saveToFavorites() {
+      let fav = JSON.parse(localStorage.getItem('favorites') || '[]');
+      fav.push(data);
+      localStorage.setItem('favorites', JSON.stringify(fav));
+      alert('Saved to Favorites');
+    }
+
+    loadPopupData();
+  </script></body>
 </html>
