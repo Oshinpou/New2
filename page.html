@@ -1,673 +1,629 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Digital Page Generator</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Digital Page Generator</title>
 
-    <style>
-        :root {
-            --primary-color: #007bff;
-            --secondary-color: #6c757d;
-            --light-gray: #f8f9fa;
-            --dark-gray: #343a40;
-            --border-color: #dee2e6;
-        }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            margin: 0;
-            background-color: var(--light-gray);
-            color: var(--dark-gray);
-        }
-        .container {
-            max-width: 960px;
-            margin: 20px auto;
-            padding: 20px;
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        nav {
-            display: flex;
-            align-items: center;
-            padding: 10px 20px;
-            background-color: var(--dark-gray);
-            color: white;
-            border-radius: 8px 8px 0 0;
-        }
-        nav img {
-            height: 40px;
-            margin-right: 15px;
-        }
-        nav span {
-            font-size: 1.5em;
-            font-weight: bold;
-        }
-        nav a {
-            color: white;
-            text-decoration: none;
-            margin-left: 20px;
-            font-size: 1.1em;
-        }
-        h1, h2 {
-            border-bottom: 2px solid var(--primary-color);
-            padding-bottom: 10px;
-            margin-top: 20px;
-        }
-        input, select, textarea, button {
-            width: 100%;
-            padding: 10px;
-            margin-top: 5px;
-            margin-bottom: 15px;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            box-sizing: border-box;
-            font-size: 1em;
-        }
-        button {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        button:hover {
-            opacity: 0.9;
-        }
-        .delete-btn {
-            background-color: #dc3545;
-            margin-left: 15px;
-            width: auto;
-            padding: 5px 10px;
-            font-size: 0.9em;
-        }
-        .variant-block, .link-item {
-            padding: 15px;
-            border: 1px dashed var(--secondary-color);
-            border-radius: 5px;
-            margin-bottom: 15px;
-        }
-        #links-list a {
-            font-weight: bold;
-            color: var(--primary-color);
-        }
-        #image-slider {
-            width: 100%;
-            height: 300px;
-            background-color: #eee;
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 5px;
-        }
-        #image-slider img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-        }
-        #add-to-basket {
-            background-color: #28a745;
-        }
-    </style>
+  <style>
+    :root {
+      --primary-color: #007bff;
+      --secondary-color: #6c757d;
+      --light-gray: #f8f9fa;
+      --dark-gray: #343a40;
+      --border-color: #dee2e6;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      margin: 0;
+      background-color: var(--light-gray);
+      color: var(--dark-gray);
+    }
+    .container {
+      max-width: 960px;
+      margin: 20px auto;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    nav {
+      display: flex;
+      align-items: center;
+      padding: 10px 20px;
+      background-color: var(--dark-gray);
+      color: white;
+      border-radius: 8px 8px 0 0;
+    }
+    nav img {
+      height: 40px;
+      margin-right: 15px;
+    }
+    nav span {
+      font-size: 1.5em;
+      font-weight: bold;
+    }
+    nav a {
+      color: white;
+      text-decoration: none;
+      margin-left: 20px;
+      font-size: 1.1em;
+    }
+    h1, h2 {
+      border-bottom: 2px solid var(--primary-color);
+      padding-bottom: 10px;
+      margin-top: 20px;
+    }
+    input, select, textarea, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      margin-bottom: 15px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      box-sizing: border-box;
+      font-size: 1em;
+    }
+    button {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button:hover {
+      opacity: 0.9;
+    }
+    .delete-btn {
+      background-color: #dc3545;
+      margin-left: 15px;
+      width: auto;
+      padding: 5px 10px;
+      font-size: 0.9em;
+    }
+    .variant-block, .link-item {
+      padding: 15px;
+      border: 1px dashed var(--secondary-color);
+      border-radius: 5px;
+      margin-bottom: 15px;
+    }
+    #links-list a {
+      font-weight: bold;
+      color: var(--primary-color);
+    }
+    #image-slider {
+      width: 100%;
+      height: 300px;
+      background-color: #eee;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 5px;
+    }
+    #image-slider img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain; /* Added for better image scaling */
+    }
+    #add-to-basket {
+      background-color: #28a745;
+    }
+  </style>
 
-    <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
 </head>
 <body>
-    <div id="app-root"></div>
+  <div id="app-root"></div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']); // Connect to a public Gun.js peer
-            const appRoot = document.getElementById('app-root');
-            const urlParams = new URLSearchParams(window.location.search);
-            const pageId = urlParams.get('id');
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
+    const appRoot = document.getElementById('app-root');
+    const urlParams = new URLSearchParams(window.location.search);
+    const pageId = urlParams.get('id');
 
-            // --- Constants and Utility Functions ---
-            const PRODUCTS_DATA = {
-                categories: {
-                    "Food": ["Breakfast", "Chocolate", "Snacks", "Spread", "Cheese"],
-                    "Jewellery": ["Rings", "Necklaces", "Earrings"],
-                    "Digital": ["Software", "Courses", "E-books"],
-                    "Cosmetics": ["Skincare", "Makeup"]
-                }
-            };
+    // Helper functions for DOM manipulation
+    const getEl = id => document.getElementById(id);
+    const getAll = selector => document.querySelectorAll(selector);
+    const createEl = tag => document.createElement(tag);
 
-            const getEl = id => document.getElementById(id);
-            const getAll = selector => document.querySelectorAll(selector);
-            const createEl = tag => document.createElement(tag);
+    const productsData = {
+      categories: {
+        "Food": ["Breakfast", "Chocolate", "Snacks", "Spread", "Cheese"],
+        "Jewellery": ["Rings", "Necklaces", "Earrings"],
+        "Digital": ["Software", "Courses", "E-books"],
+        "Cosmetics": ["Skincare", "Makeup"]
+      }
+    };
 
-            let variantCount = 0; // Global counter for variant blocks
+    let variantCount = 0; // Global counter for variant blocks
 
-            // --- Page Rendering ---
-            const renderGeneratorPage = () => {
-                appRoot.innerHTML = `
-                    <div class="container">
-                        <nav>
-                            <img src="https://assets.stickpng.com/images/580b57fcd9996e24bc43c521.png" alt="imacx Logo"> <span>imacx</span>
-                            <a href="app.html">Home (Generator)</a>
-                            <a href="#">Account</a>
-                            <a href="#">Basket</a>
-                        </nav>
-                        <h1>📝 Digital Page Generator</h1>
-                        <h2>Product Details</h2>
-                        <input id="product-name" type="text" placeholder="Product Name">
-                        <textarea id="product-details" placeholder="Full Product Description..."></textarea>
-                        <textarea id="slider-images" placeholder="Enter image URLs, separated by commas"></textarea>
+    // Determine which page to render based on URL parameters
+    if (pageId) {
+      renderProductPage(pageId);
+    } else {
+      renderGeneratorPage();
+    }
 
-                        <h2>Category</h2>
-                        <select id="category-select"></select>
-                        <select id="subcategory-select"></select>
+    // --- Generator Page Functions ---
+    function renderGeneratorPage() {
+      appRoot.innerHTML = `
+        <div class="container">
+          <nav>
+            <img src="https://assets.stickpng.com/images/580b57fcd9996e24bc43c521.png" alt="imacx Logo"> <span>imacx</span>
+            <a href="app.html">Home (Generator)</a>
+            <a href="#">Account</a>
+            <a href="#">Basket</a>
+          </nav>
+          <h1>📝 Digital Page Generator</h1>
+          <h2>Product Details</h2>
+          <input id="product-name" type="text" placeholder="Product Name">
+          <textarea id="product-details" placeholder="Full Product Description..."></textarea>
+          <textarea id="slider-images" placeholder="Enter image URLs, separated by commas"></textarea>
 
-                        <h2>Variants</h2>
-                        <div id="variants-container"></div>
-                        <button id="add-variant-btn" type="button">Add Variant Type</button>
+          <h2>Category</h2>
+          <select id="category-select"></select>
+          <select id="subcategory-select"></select>
 
-                        <h2>Pricing</h2>
-                        <div id="pricing-container"></div>
+          <h2>Variants</h2>
+          <div id="variants-container"></div>
+          <button id="add-variant-btn" type="button">Add Variant Type</button>
 
-                        <button id="generate-page-btn" type="button">🚀 Generate Link & Save Page</button>
+          <h2>Pricing</h2>
+          <div id="pricing-container"></div>
 
-                        <hr>
-                        <h1>🔗 Generated Links</h1>
-                        <div id="links-list"></div>
-                        <button id="export-btn">📤 Export All Pages</button>
-                        <input type="file" id="import-input" style="display:none;" />
-                        <button id="import-btn">📥 Import Pages</button>
-                    </div>
-                `;
-                setupGeneratorEventListeners();
-                populateCategories();
-                displayLinks();
-                updatePricingTable(); // Ensure pricing table is initialized on load
-            };
+          <button id="generate-page-btn" type="button">🚀 Generate Link & Save Page</button>
 
-            const renderProductPage = (id) => {
-                appRoot.innerHTML = `
-                    <div class="container">
-                        <nav>
-                            <img src="https://assets.stickpng.com/images/580b57fcd9996e24bc43c521.png" alt="imacx Logo"> <span>imacx</span>
-                            <a href="app.html">Home (Generator)</a>
-                            <a href="#">Account</a>
-                            <a href="#">Basket</a>
-                        </nav>
-                        <div id="product-content">
-                            <div id="image-slider"><p>Loading slider...</p></div>
-                            <h1 id="product-name">Loading...</h1>
-                            <p>Category: <span id="product-category"></span> | Subcategory: <span id="product-subcategory"></span></p>
-                            <div id="variant-selectors"></div>
-                            <h2>Price: ₹<span id="product-price">--</span></h2>
-                            <div>
-                                Quantity: <input id="quantity" type="number" value="1" min="1" style="width: 80px;">
-                            </div>
-                            <button id="add-to-basket" type="button">🛒 Add to Basket</button>
-                            <h2>Details</h2>
-                            <div id="product-details"></div>
-                            <h2>⭐ Ratings & Reviews</h2>
-                            <div id="reviews-section"></div>
-                        </div>
-                    </div>
-                `;
-                loadProductData(id);
-            };
+          <hr>
+          <h1>🔗 Generated Links</h1>
+          <div id="links-list"></div>
+          <button id="export-btn">📤 Export All Pages</button>
+          <input type="file" id="import-input" style="display:none;" />
+          <button id="import-btn">📥 Import Pages</button>
+        </div>
+      `;
+      setupGeneratorEventListeners();
+      populateCategories();
+      displayLinks();
+      updatePricingTable(); // Initialize pricing table on load
+    }
 
-            // Initial page load logic
-            pageId ? renderProductPage(pageId) : renderGeneratorPage();
+    // --- Product Page Functions ---
+    function renderProductPage(id) {
+      appRoot.innerHTML = `
+        <div class="container">
+          <nav>
+            <img src="https://assets.stickpng.com/images/580b57fcd9996e24bc43c521.png" alt="imacx Logo"> <span>imacx</span>
+            <a href="app.html">Home (Generator)</a>
+            <a href="#">Account</a>
+            <a href="#">Basket</a>
+          </nav>
+          <div id="product-content">
+            <div id="image-slider"><p>Loading slider...</p></div>
+            <h1 id="product-name">Loading...</h1>
+            <p>Category: <span id="product-category"></span> | Subcategory: <span id="product-subcategory"></span></p>
+            <div id="variant-selectors"></div>
+            <h2>Price: ₹<span id="product-price">--</span></h2>
+            <div>
+              Quantity: <input id="quantity" type="number" value="1" min="1" style="width: 80px;">
+            </div>
+            <button id="add-to-basket" type="button">🛒 Add to Basket</button>
+            <h2>Details</h2>
+            <div id="product-details"></div>
+            <h2>⭐ Ratings & Reviews</h2>
+            <div id="reviews-section"></div>
+          </div>
+        </div>
+      `;
+      loadProductData(id);
+    }
 
-            // --- Generator Page Logic ---
+    // --- Event Listeners and Core Logic ---
+    function setupGeneratorEventListeners() {
+      getEl('category-select').addEventListener('change', populateSubcategories);
+      getEl('add-variant-btn').addEventListener('click', addVariantBlock);
+      getEl('generate-page-btn').addEventListener('click', saveFullPageDataWithIntegrity); // Use the more complete save function
+      getEl('variants-container').addEventListener('input', updatePricingTable); // Listen for input changes in variants container
+      getEl('links-list').addEventListener('click', handleDeleteClick);
+      getEl('export-btn').addEventListener('click', exportPages);
+      getEl('import-btn').addEventListener('click', () => getEl('import-input').click());
+      getEl('import-input').addEventListener('change', importPages);
+    }
 
-            const setupGeneratorEventListeners = () => {
-                getEl('category-select').addEventListener('change', populateSubcategories);
-                getEl('add-variant-btn').addEventListener('click', addVariantBlock);
-                getEl('generate-page-btn').addEventListener('click', saveFullPageDataWithIntegrity);
-                getEl('variants-container').addEventListener('input', updatePricingTable); // Listen for input changes in variants container
-                getEl('links-list').addEventListener('click', handleDeleteClick);
-                getEl('export-btn').addEventListener('click', exportPages);
-                getEl('import-btn').addEventListener('click', () => getEl('import-input').click());
-                getEl('import-input').addEventListener('change', importPages);
-            };
+    function populateCategories() {
+      const catSelect = getEl('category-select');
+      catSelect.innerHTML = '<option value="">-- Select Category --</option>';
+      for (const category in productsData.categories) {
+        catSelect.innerHTML += `<option value="${category}">${category}</option>`;
+      }
+    }
 
-            const populateCategories = () => {
-                const catSelect = getEl('category-select');
-                catSelect.innerHTML = '<option value="">-- Select Category --</option>';
-                Object.keys(PRODUCTS_DATA.categories).forEach(category => {
-                    catSelect.innerHTML += `<option value="${category}">${category}</option>`;
-                });
-            };
+    function populateSubcategories() {
+      const catSelect = getEl('category-select');
+      const subcatSelect = getEl('subcategory-select');
+      const selectedCategory = catSelect.value;
+      const subcategories = productsData.categories[selectedCategory] || [];
+      subcatSelect.innerHTML = '<option value="">-- Select Subcategory --</option>';
+      subcategories.forEach(sub => {
+        subcatSelect.innerHTML += `<option value="${sub}">${sub}</option>`;
+      });
+    }
 
-            const populateSubcategories = () => {
-                const catSelect = getEl('category-select');
-                const subcatSelect = getEl('subcategory-select');
-                const selectedCategory = catSelect.value; // Get selected category value
-                const subcategories = PRODUCTS_DATA.categories[selectedCategory] || [];
-                subcatSelect.innerHTML = '<option value="">-- Select Subcategory --</option>';
-                subcategories.forEach(sub => {
-                    subcatSelect.innerHTML += `<option value="${sub}">${sub}</option>`;
-                });
-            };
+    function addVariantBlock() {
+      variantCount++;
+      const div = createEl('div');
+      div.className = 'variant-block';
+      div.innerHTML = `
+        <h4>Variant Type ${variantCount}</h4>
+        <input type="text" class="variant-name" placeholder="e.g., Color, Size">
+        <input type="text" class="variant-options" placeholder="e.g., Red, Blue, Green (comma-separated)">
+      `;
+      getEl('variants-container').appendChild(div);
+      updatePricingTable(); // Update pricing table when a new variant is added
+    }
 
-            const addVariantBlock = () => {
-                variantCount++;
-                const div = createEl('div');
-                div.className = 'variant-block';
-                div.innerHTML = `
-                    <h4>Variant Type ${variantCount}</h4>
-                    <input type="text" class="variant-name" placeholder="e.g., Color, Size">
-                    <input type="text" class="variant-options" placeholder="e.g., Red, Blue, Green (comma-separated)">
-                `;
-                getEl('variants-container').appendChild(div);
-                updatePricingTable(); // Re-generate pricing table after adding a variant block
-            };
+    function getVariantCombinations() {
+        const variantNodes = getAll('.variant-block');
+        if (variantNodes.length === 0) return [];
 
-            const getVariantCombinations = () => {
-                const variantNodes = getAll('.variant-block');
-                if (variantNodes.length === 0) return [];
+        const variants = Array.from(variantNodes)
+            .map(node => ({
+                name: node.querySelector('.variant-name').value.trim(),
+                options: node.querySelector('.variant-options').value.split(',').map(o => o.trim()).filter(Boolean)
+            }))
+            .filter(v => v.name && v.options.length > 0);
 
-                const variants = Array.from(variantNodes)
-                    .map(node => ({
-                        name: node.querySelector('.variant-name').value.trim(),
-                        options: node.querySelector('.variant-options').value.split(',').map(o => o.trim()).filter(Boolean)
-                    }))
-                    .filter(v => v.name && v.options.length > 0); // Ensure variant has a name and options
+        if (variants.length === 0) return [];
 
-                if (variants.length === 0) return [];
-
-                // Use reduce to generate all combinations
-                // Start with an array containing an empty array to handle the first variant type correctly
-                return variants.reduce((acc, currentVariant) => {
-                    if (acc.length === 0) { // First variant type
-                        return currentVariant.options.map(option => [currentVariant.name, option]);
-                    } else {
-                        const newCombinations = [];
-                        acc.forEach(prevCombo => {
-                            currentVariant.options.forEach(currentOption => {
-                                // Join previous combo parts with current option
-                                newCombinations.push([...prevCombo, currentVariant.name, currentOption]);
-                            });
-                        });
-                        return newCombinations;
-                    }
-                }, [])
-                .map(comboArr => {
-                    // Flatten the array into a string, ensuring the format "VariantName1-Option1-VariantName2-Option2"
-                    // Or simplify to just "Option1-Option2" if that's the preferred key format.
-                    // For price lookup, we usually just need the option combination.
-                    // Let's stick to Option1-Option2-Option3... for simpler lookup keys.
-                    let optionsOnly = [];
-                    for(let i = 1; i < comboArr.length; i += 2) { // Skip variant names
-                        optionsOnly.push(comboArr[i]);
-                    }
-                    return optionsOnly.join('-');
-                });
-            };
-
-
-            const updatePricingTable = () => {
-                const combinations = getVariantCombinations();
-                const pricingContainer = getEl('pricing-container');
-                pricingContainer.innerHTML = ''; // Clear existing inputs
-
-                if (combinations.length === 0) {
-                    pricingContainer.innerHTML = `
-                        <h4>Default Pricing (No Variants)</h4>
-                        <div>
-                            <label for="price-default">Default Price (₹)</label>
-                            <input type="number" id="price-default" data-combo="" class="price-input" placeholder="Price (₹)" step="0.01">
-                            <input type="number" id="discount-default" data-combo="" class="discount-input" placeholder="Discounted Price (Optional)" step="0.01">
-                        </div>
-                    `;
-                } else {
-                    pricingContainer.innerHTML = '<h4>Set Price for Each Combination</h4>';
-                    combinations.forEach(combo => {
-                        pricingContainer.innerHTML += `
-                            <div>
-                                <label for="price-${combo}">${combo}</label>
-                                <input type="number" id="price-${combo}" data-combo="${combo}" class="price-input" placeholder="Price (₹)" step="0.01">
-                                <input type="number" id="discount-${combo}" data-combo="${combo}" class="discount-input" placeholder="Discounted Price (Optional)" step="0.01">
-                            </div>
-                        `;
-                    });
-                }
-            };
-
-            const saveFullPageDataWithIntegrity = async () => {
-                const newPageId = Gun.SEA.random(16).toString('hex'); // Generate a unique ID using SEA
-                const product = {
-                    id: newPageId,
-                    name: getEl('product-name').value.trim(),
-                    details: getEl('product-details').value.trim(),
-                    category: getEl('category-select').value,
-                    subcategory: getEl('subcategory-select').value,
-                    images: getEl('slider-images').value.split(',').map(s => s.trim()).filter(Boolean)
-                };
-
-                // Basic validation for required fields
-                if (!product.name || !product.details || !product.category || !product.subcategory) {
-                    alert("Please fill in all product details (Product Name, Description, Category, Subcategory).");
-                    return;
-                }
-
-                const variants = Array.from(getAll('.variant-block')).map(block => ({
-                    name: block.querySelector('.variant-name').value.trim(),
-                    options: block.querySelector('.variant-options').value.split(',').map(o => o.trim()).filter(Boolean)
-                })).filter(v => v.name && v.options.length); // Filter out empty or incomplete variant blocks
-
-                const pricing = {};
-                const combinationsToSave = getVariantCombinations();
-
-                if (combinationsToSave.length === 0) {
-                    const defaultPriceInput = getEl('price-default');
-                    const defaultDiscountInput = getEl('discount-default');
-                    if (defaultPriceInput) {
-                        pricing[''] = { // Use an empty string as key for default pricing when no variants
-                            price: parseFloat(defaultPriceInput.value) || 0,
-                            discounted: parseFloat(defaultDiscountInput?.value || '') || null
-                        };
-                    }
-                } else {
-                    combinationsToSave.forEach(combo => {
-                        const priceInput = document.querySelector(`.price-input[data-combo="${combo}"]`);
-                        const discountedInput = document.querySelector(`.discount-input[data-combo="${combo}"]`);
-                        if (priceInput) {
-                            pricing[combo] = {
-                                price: parseFloat(priceInput.value) || 0,
-                                discounted: parseFloat(discountedInput?.value || '') || null
-                            };
-                        }
-                    });
-                }
-
-                // Save data to Gun.js
-                // Gun.js stores flat objects directly, for nested or complex structures
-                // it's best to stringify them.
-                gun.get(newPageId).put(product);
-                gun.get(newPageId).get('variants').put(JSON.stringify(variants)); // Store variants as string
-                gun.get(newPageId).get('pricing').put(JSON.stringify(pricing));   // Store pricing as string
-
-                // Optional: Timestamp and hash for integrity/debugging (async SEA.work)
-                gun.get(newPageId).get('timestamp').put(Date.now());
-                Gun.SEA.work(JSON.stringify(product), null, null, (hash) => {
-                    gun.get(newPageId).get('hash').put(hash);
-                });
-
-                // Add to products_index for easy lookup on the generator page
-                gun.get('products_index').set(gun.get(newPageId));
-
-                alert(`✔️ Page saved successfully! Product ID: ${newPageId.substring(0, 8)}...`);
-                displayLinks(); // Refresh the list of links
-
-                // Clear form inputs after successful save
-                getEl('product-name').value = '';
-                getEl('product-details').value = '';
-                getEl('slider-images').value = '';
-                getEl('category-select').value = '';
-                getEl('subcategory-select').innerHTML = '<option value="">-- Select Subcategory --</option>'; // Clear subcategory options
-                getEl('variants-container').innerHTML = ''; // Clear variant blocks
-                variantCount = 0; // Reset variant counter
-                updatePricingTable(); // Reset pricing table display
-            };
-
-            const displayLinks = () => {
-                const listContainer = getEl('links-list');
-                if (!listContainer) return;
-
-                listContainer.innerHTML = 'Loading generated links...';
-                let linksFound = false;
-                const existingLinkIds = new Set(); // To prevent duplicates from .on updates
-
-                // Clear previous listeners to avoid multiple attachments on re-render
-                // (Though .map().on usually handles this by being smarter)
-                // For safety, if displayLinks is called multiple times without full page refresh:
-                // Consider having a global listener or ensuring it's only called once,
-                // or detach previous listeners. For this simple app, current approach is fine.
-
-                gun.get('products_index').map().on((product, id) => {
-                    if (product && product.name) {
-                        linksFound = true;
-                        if (!existingLinkIds.has(id)) { // Check if we've already added this ID
-                            existingLinkIds.add(id);
-                            const link = `app.html?id=${id}`;
-                            const div = createEl('div');
-                            div.className = 'link-item';
-                            div.setAttribute('data-id', id); // Store ID on the element for deletion
-                            div.innerHTML = `
-                                <span>${product.name} (ID: ${id.substring(0, 8)}...)</span><br>
-                                <a href="${link}" target="_blank">${link}</a>
-                                <button class="delete-btn" data-id="${id}">Delete</button>
-                            `;
-                            listContainer.appendChild(div);
-                        }
-                    } else if (product === null) {
-                        // If product is null, it means it was deleted; remove from DOM and set
-                        const deletedElement = document.querySelector(`.link-item[data-id="${id}"]`);
-                        if (deletedElement) {
-                            deletedElement.remove();
-                            existingLinkIds.delete(id); // Remove from our set as well
-                        }
-                    }
-                    // Initial "Loading" message cleanup after first results (or timeout below)
-                    if (listContainer.innerHTML === 'Loading generated links...' && linksFound) {
-                        listContainer.innerHTML = ''; // Clear loading message if items found
-                    }
-                });
-
-                // Fallback for "No generated links yet." if no data arrives after a delay
-                setTimeout(() => {
-                    if (!linksFound && listContainer.innerHTML === 'Loading generated links...') {
-                        listContainer.innerHTML = 'No generated links yet.';
-                    }
-                }, 2000); // Increased delay slightly for network latency
-            };
-
-            const handleDeleteClick = (event) => {
-                if (event.target.classList.contains('delete-btn')) {
-                    const idToDelete = event.target.dataset.id;
-                    if (confirm(`Are you sure you want to delete the page with ID: ${idToDelete.substring(0,8)}...? This cannot be undone.`)) {
-                        // Set the product node and its reference in products_index to null to effectively delete it from Gun.js
-                        gun.get(idToDelete).put(null);
-                        gun.get('products_index').get(idToDelete).put(null);
-                        // The `displayLinks`'s .on listener will handle removal from the UI
-                    }
-                }
-            };
-
-            // --- Product Page Logic ---
-
-            const loadProductData = (id) => {
-                gun.get(id).on(data => { // Use .on for live updates on the product page
-                    if (!data || !data.name) {
-                        appRoot.innerHTML = `<div class="container"><h1>Page not found or deleted.</h1><p>The product with ID "${id}" could not be found or has been removed. Please go back to the <a href="app.html">generator page</a>.</p></div>`;
-                        document.title = "Page Not Found"; // Update title for clarity
-                        return;
-                    }
-                    document.title = data.name;
-                    getEl('product-name').innerText = data.name;
-                    getEl('product-details').innerText = data.details;
-                    getEl('product-category').innerText = data.category;
-                    getEl('product-subcategory').innerText = data.subcategory;
-
-                    const slider = getEl('image-slider');
-                    if (data.images && data.images.length > 0) {
-                        slider.innerHTML = `<img src="${data.images[0]}" alt="${data.name}">`;
-                    } else {
-                        slider.innerHTML = '<p>No images available</p>';
-                    }
-
-                    // Fetch variants and pricing, parsing them from stringified JSON
-                    gun.get(id).get('variants').once(variantsStr => {
-                        gun.get(id).get('pricing').once(pricingStr => {
-                            // Ensure parsing is done correctly
-                            const variants = variantsStr ? JSON.parse(variantsStr) : [];
-                            const pricing = pricingStr ? JSON.parse(pricingStr) : {};
-                            renderVariantSelectors(variants, pricing);
-                        });
+        // Reduce function to generate all combinations of options
+        return variants.reduce((acc, currentVariant) => {
+            if (acc.length === 0) {
+                // For the first variant, just return its options
+                return currentVariant.options;
+            } else {
+                // For subsequent variants, combine with existing combinations
+                const newCombinations = [];
+                acc.forEach(prevCombo => {
+                    currentVariant.options.forEach(currentOption => {
+                        newCombinations.push(`${prevCombo}-${currentOption}`);
                     });
                 });
-            };
-
-            const renderVariantSelectors = (variants, pricing) => {
-                const container = getEl('variant-selectors');
-                container.innerHTML = '';
-
-                if (!variants || variants.length === 0) {
-                    const defaultPrice = pricing[''] || { price: 'N/A', discounted: null };
-                    updatePriceDisplay(defaultPrice.price, defaultPrice.discounted);
-                    return;
-                }
-
-                variants.forEach((variant, index) => {
-                    const optionsHtml = variant.options.map(opt => `<option value="${opt}">${opt}</option>`).join('');
-                    container.innerHTML += `
-                        <label>${variant.name}</label>
-                        <select class="variant-select" data-index="${index}">
-                            ${optionsHtml}
-                        </select>
-                    `;
-                });
-
-                const updatePrice = () => {
-                    // This creates the combination key based on selected options only
-                    const selectedOptions = Array.from(getAll('.variant-select')).map(sel => sel.value);
-                    const comboKey = selectedOptions.join('-');
-                    const priceInfo = pricing[comboKey] || pricing[''] || { price: 'N/A', discounted: null }; // Fallback to default if specific combo not found
-                    updatePriceDisplay(priceInfo.price, priceInfo.discounted);
-                };
-
-                getAll('.variant-select').forEach(sel => sel.addEventListener('change', updatePrice));
-                updatePrice(); // Initial price update based on default selected options
-            };
-
-            const updatePriceDisplay = (price, discounted) => {
-                const priceEl = getEl('product-price');
-                if (priceEl) {
-                    // Check if discounted price is a valid number and less than original price
-                    if (typeof discounted === 'number' && !isNaN(discounted) && discounted < price) {
-                        priceEl.innerHTML = `<del>₹${price}</del> <strong>₹${discounted}</strong>`;
-                    } else {
-                        priceEl.innerHTML = `<strong>₹${price}</strong>`;
-                    }
-                }
-            };
-
-            // --- Import/Export ---
-
-            const exportPages = async () => {
-                const allData = {};
-                const productIds = [];
-                let gunMapFinished = false; // Flag to indicate when gun.map has processed all *initial* items
-
-                // Use a Promise to properly wait for all IDs from products_index
-                await new Promise(resolve => {
-                    const gunMap = gun.get('products_index').map();
-                    let counter = 0;
-                    let processedCount = 0;
-
-                    // This part needs careful handling: map().on gives updates, not necessarily a final list.
-                    // To get a 'snapshot' for export, we often need to fetch all top-level IDs first.
-                    // A common pattern is to use `.once` on the top level or observe a finite list.
-                    // Given your current map().on for displayLinks, let's adjust for export.
-
-                    // A more reliable way to get all IDs for export is to fetch the full 'products_index' object
-                    // and then iterate its properties.
-                    gun.get('products_index').once(indexData => {
-                        if (indexData) {
-                            for (const key in indexData) {
-                                // Exclude Gun.js internal properties like '_'
-                                if (key !== '_' && indexData[key] && typeof indexData[key] === 'object') {
-                                    // Gun.js stores references. The actual ID is the key here.
-                                    productIds.push(key);
-                                }
-                            }
-                        }
-                        resolve(); // Resolve once all initial IDs are collected
-                    });
-                });
+                return newCombinations;
+            }
+        }, []);
+    }
 
 
-                if (productIds.length === 0) {
-                    alert('No pages to export.');
-                    return;
-                }
+    function updatePricingTable() {
+      const combinations = getVariantCombinations();
+      const pricingContainer = getEl('pricing-container');
+      pricingContainer.innerHTML = ''; // Clear existing inputs
 
-                // Fetch data for each product ID using Promises
-                const fetchPromises = productIds.map(id => new Promise(resolve => {
-                    gun.get(id).once(data => { // Use .once for export to get current state
-                        gun.get(id).get('variants').once(variants => {
-                            gun.get(id).get('pricing').once(pricing => {
-                                allData[id] = {
-                                    ...data,
-                                    variants: variants, // This will be the stringified JSON
-                                    pricing: pricing   // This will be the stringified JSON
-                                };
-                                resolve();
-                            });
-                        });
-                    });
-                }));
+      if (combinations.length === 0) {
+          // If no variants, display a single default price input
+          pricingContainer.innerHTML = `
+              <h4>Default Pricing (No Variants)</h4>
+              <div>
+                  <label for="price-default">Default Price (₹)</label>
+                  <input type="number" id="price-default" data-combo="" class="price-input" placeholder="Price (₹)" step="0.01">
+                  <input type="number" id="discount-default" data-combo="" class="discount-input" placeholder="Discounted Price (Optional)" step="0.01">
+              </div>
+          `;
+      } else {
+          pricingContainer.innerHTML = '<h4>Set Price for Each Combination</h4>';
+          combinations.forEach(combo => {
+            pricingContainer.innerHTML += `
+              <div>
+                <label for="price-${combo}">${combo}</label>
+                <input type="number" id="price-${combo}" data-combo="${combo}" class="price-input" placeholder="Price (₹)" step="0.01">
+                <input type="number" id="discount-${combo}" data-combo="${combo}" class="discount-input" placeholder="Discounted Price (Optional)" step="0.01">
+              </div>
+            `;
+          });
+      }
+    }
 
-                // Wait for all data fetching promises to complete
-                await Promise.all(fetchPromises);
+    async function saveFullPageDataWithIntegrity() {
+      const newPageId = Gun.SEA.random(16).toString('hex');
+      const product = {
+        id: newPageId,
+        name: getEl('product-name').value.trim(),
+        details: getEl('product-details').value.trim(),
+        category: getEl('category-select').value,
+        subcategory: getEl('subcategory-select').value,
+        images: getEl('slider-images').value.split(',').map(s => s.trim()).filter(Boolean)
+      };
 
-                if (Object.keys(allData).length > 0) {
-                    const blob = new Blob([JSON.stringify(allData, null, 2)], { type: 'application/json' });
-                    const a = createEl('a');
-                    a.href = URL.createObjectURL(blob);
-                    a.download = 'imacx_pages_backup.json';
-                    document.body.appendChild(a); // Temporarily append to body to make it clickable
-                    a.click();
-                    document.body.removeChild(a); // Clean up
-                    URL.revokeObjectURL(a.href); // Release the object URL
-                    alert('📤 Pages exported successfully!');
-                } else {
-                    alert('No data collected for export.');
-                }
-            };
+      // Basic validation
+      if (!product.name || !product.details || !product.category || !product.subcategory) {
+        alert("Please fill in all product details (Product Name, Description, Category, Subcategory).");
+        return;
+      }
 
-            const importPages = (event) => {
-                const file = event.target.files[0];
-                if (!file) return;
+      const variants = Array.from(getAll('.variant-block')).map(block => ({
+        name: block.querySelector('.variant-name').value.trim(),
+        options: block.querySelector('.variant-options').value.split(',').map(o => o.trim()).filter(Boolean)
+      })).filter(v => v.name && v.options.length);
 
-                const reader = new FileReader();
-                reader.onload = async (e) => {
-                    try {
-                        const data = JSON.parse(e.target.result);
-                        let importedCount = 0;
-                        for (const id in data) {
-                            const entry = data[id];
-                            // Basic validation: Check if 'id' in entry matches the key
-                            if (entry.id && entry.id === id && typeof entry === 'object' && entry !== null) {
-                                // Re-put main product data
-                                gun.get(id).put({
-                                    id: entry.id,
-                                    name: entry.name,
-                                    details: entry.details,
-                                    category: entry.category,
-                                    subcategory: entry.subcategory,
-                                    images: entry.images
-                                });
-                                // Re-put stringified variants and pricing data.
-                                // It's crucial they are imported as the format they were exported (stringified JSON).
-                                gun.get(id).get('variants').put(entry.variants);
-                                gun.get(id).get('pricing').put(entry.pricing);
-                                // Re-index the product
-                                gun.get('products_index').set(gun.get(id));
-                                importedCount++;
-                            } else {
-                                console.warn(`Skipping import for invalid entry or ID mismatch for key: ${id}`, entry);
-                            }
-                        }
-                        alert(`📥 Pages imported successfully! Imported ${importedCount} pages.`);
-                        displayLinks(); // Refresh the displayed links after import
-                    } catch (error) {
-                        console.error("Error importing pages:", error);
-                        alert("Failed to import pages. Please check the file format or console for details.");
-                    }
-                };
-                reader.readAsText(file);
-            };
+      const pricing = {};
+      const combinationsToSave = getVariantCombinations();
+
+      if (combinationsToSave.length === 0) {
+          const defaultPriceInput = getEl('price-default');
+          const defaultDiscountInput = getEl('discount-default');
+          if (defaultPriceInput) {
+              pricing[''] = {
+                  price: parseFloat(defaultPriceInput.value) || 0,
+                  discounted: parseFloat(defaultDiscountInput?.value || '') || null
+              };
+          }
+      } else {
+          combinationsToSave.forEach(combo => {
+              const priceInput = document.querySelector(`.price-input[data-combo="${combo}"]`);
+              const discountedInput = document.querySelector(`.discount-input[data-combo="${combo}"]`);
+              if (priceInput) {
+                  pricing[combo] = {
+                      price: parseFloat(priceInput.value) || 0,
+                      discounted: parseFloat(discountedInput?.value || '') || null
+                  };
+              }
+          });
+      }
+
+      gun.get(newPageId).put(product);
+      gun.get(newPageId).get('variants').put(JSON.stringify(variants));
+      gun.get(newPageId).get('pricing').put(JSON.stringify(pricing));
+      gun.get(newPageId).get('timestamp').put(Date.now());
+      Gun.SEA.work(JSON.stringify(product), null, null, (hash) => {
+        gun.get(newPageId).get('hash').put(hash);
+      });
+      gun.get('products_index').set(gun.get(newPageId));
+
+      alert(`✔️ Page saved successfully! Product ID: ${newPageId.substring(0, 8)}...`);
+      displayLinks();
+
+      // Clear form inputs after successful save
+      getEl('product-name').value = '';
+      getEl('product-details').value = '';
+      getEl('slider-images').value = '';
+      getEl('category-select').value = '';
+      getEl('subcategory-select').innerHTML = '<option value="">-- Select Subcategory --</option>';
+      getEl('variants-container').innerHTML = '';
+      variantCount = 0;
+      updatePricingTable(); // Reset pricing table display
+    }
+
+    function displayLinks() {
+      const listContainer = getEl('links-list');
+      if (!listContainer) return;
+
+      listContainer.innerHTML = 'Loading generated links...';
+      let linksFound = false;
+      const existingLinkIds = new Set(); // To prevent duplicates from .on updates
+
+      // Use .on for real-time updates to the list
+      gun.get('products_index').map().on((product, id) => {
+          if (product && product.name) {
+              linksFound = true;
+              if (!existingLinkIds.has(id)) {
+                  existingLinkIds.add(id);
+                  const link = `app.html?id=${id}`;
+                  const div = createEl('div');
+                  div.className = 'link-item';
+                  div.setAttribute('data-id', id);
+                  div.innerHTML = `
+                      <span>${product.name} (ID: ${id.substring(0, 8)}...)</span><br>
+                      <a href="${link}" target="_blank">${link}</a>
+                      <button class="delete-btn" data-id="${id}">Delete</button>
+                  `;
+                  listContainer.appendChild(div);
+              }
+          } else if (product === null) {
+              // If product is null, it means it was deleted; remove from DOM and set
+              const deletedElement = document.querySelector(`.link-item[data-id="${id}"]`);
+              if (deletedElement) {
+                  deletedElement.remove();
+                  existingLinkIds.delete(id);
+              }
+          }
+          // Initial "Loading" message cleanup after first results (or timeout below)
+          if (listContainer.innerHTML === 'Loading generated links...' && linksFound) {
+              listContainer.innerHTML = ''; // Clear loading message if items found
+          }
+      });
+
+      // Fallback for "No generated links yet." if no data arrives after a delay
+      setTimeout(() => {
+          if (!linksFound && listContainer.innerHTML === 'Loading generated links...') {
+              listContainer.innerHTML = 'No generated links yet.';
+          }
+      }, 2000); // Increased delay slightly for network latency
+    }
+
+    function handleDeleteClick(event) {
+      if (event.target.classList.contains('delete-btn')) {
+        const idToDelete = event.target.dataset.id;
+        if (confirm(`Are you sure you want to delete the page with ID: ${idToDelete.substring(0,8)}...? This cannot be undone.`)) {
+          gun.get(idToDelete).put(null); // Delete the product data
+          gun.get('products_index').get(idToDelete).put(null); // Remove from the index
+          // The displayLinks .on listener will handle removal from the UI
+        }
+      }
+    }
+
+    function loadProductData(id) {
+      gun.get(id).on(data => { // Use .on for live updates on the product page
+        if (!data || !data.name) {
+          appRoot.innerHTML = `<div class="container"><h1>Page not found or deleted.</h1><p>The product with ID "${id}" could not be found or has been removed. Please go back to the <a href="app.html">generator page</a>.</p></div>`;
+          document.title = "Page Not Found";
+          return;
+        }
+        document.title = data.name;
+        getEl('product-name').innerText = data.name;
+        getEl('product-details').innerText = data.details;
+        getEl('product-category').innerText = data.category;
+        getEl('product-subcategory').innerText = data.subcategory;
+
+        const slider = getEl('image-slider');
+        if (data.images && data.images.length > 0) {
+          slider.innerHTML = `<img src="${data.images[0]}" alt="${data.name}">`;
+        } else {
+          slider.innerHTML = '<p>No images available</p>';
+        }
+
+        gun.get(id).get('variants').once(variantsStr => {
+          gun.get(id).get('pricing').once(pricingStr => {
+            const variants = variantsStr ? JSON.parse(variantsStr) : [];
+            const pricing = pricingStr ? JSON.parse(pricingStr) : {};
+            renderVariantSelectors(variants, pricing);
+          });
         });
-    </script>
+      });
+    }
+
+    function renderVariantSelectors(variants, pricing) {
+      const container = getEl('variant-selectors');
+      container.innerHTML = '';
+      if (!variants || variants.length === 0) {
+        // If no variants, display the default price, falling back to 0 if not set
+        const defaultPrice = pricing[''] || { price: 0, discounted: null };
+        updatePriceDisplay(defaultPrice.price, defaultPrice.discounted);
+        return;
+      }
+
+      variants.forEach((variant, index) => {
+        let optionsHtml = variant.options.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+        container.innerHTML += `
+          <label>${variant.name}</label>
+          <select class="variant-select" data-index="${index}">
+            ${optionsHtml}
+          </select>
+        `;
+      });
+
+      const updatePrice = () => {
+        const selectedOptions = Array.from(getAll('.variant-select')).map(sel => sel.value);
+        const comboKey = selectedOptions.join('-');
+        // Fallback to default price (empty string key) if specific combo key not found
+        const priceInfo = pricing[comboKey] || pricing[''] || { price: 'N/A', discounted: null };
+        updatePriceDisplay(priceInfo.price, priceInfo.discounted);
+      };
+
+      getAll('.variant-select').forEach(sel => sel.addEventListener('change', updatePrice));
+      updatePrice(); // Initial price update based on default selected options
+    }
+
+    function updatePriceDisplay(price, discounted) {
+      const priceEl = getEl('product-price');
+      if (priceEl) {
+          // Check if discounted price is a valid number and less than original price
+          if (typeof discounted === 'number' && !isNaN(discounted) && discounted < price) {
+              priceEl.innerHTML = `<del>₹${price}</del> <strong>₹${discounted}</strong>`;
+          } else {
+              priceEl.innerHTML = `<strong>₹${price}</strong>`;
+          }
+      }
+    }
+
+    // --- Import/Export Functions ---
+    async function exportPages() {
+        const allData = {};
+        const productIds = [];
+
+        // Fetch all product IDs reliably from the index
+        await new Promise(resolve => {
+            gun.get('products_index').once(indexData => {
+                if (indexData) {
+                    for (const key in indexData) {
+                        if (key !== '_' && indexData[key] && typeof indexData[key] === 'object') {
+                            productIds.push(key);
+                        }
+                    }
+                }
+                resolve();
+            });
+        });
+
+        if (productIds.length === 0) {
+            alert('No pages to export.');
+            return;
+        }
+
+        // Fetch all data for each product concurrently using Promise.all
+        const fetchPromises = productIds.map(id => new Promise(resolve => {
+            gun.get(id).once(data => {
+                gun.get(id).get('variants').once(variants => {
+                    gun.get(id).get('pricing').once(pricing => {
+                        allData[id] = {
+                            ...data,
+                            variants: variants, // This will be the stringified JSON
+                            pricing: pricing   // This will be the stringified JSON
+                        };
+                        resolve();
+                    });
+                });
+            });
+        }));
+
+        await Promise.all(fetchPromises); // Wait for all data to be fetched
+
+        if (Object.keys(allData).length > 0) {
+            const blob = new Blob([JSON.stringify(allData, null, 2)], { type: 'application/json' });
+            const a = createEl('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'imacx_pages_backup.json'; // Changed filename
+            document.body.appendChild(a); // Temporarily append to body to make it clickable
+            a.click();
+            document.body.removeChild(a); // Clean up
+            URL.revokeObjectURL(a.href); // Release the object URL
+            alert('📤 Pages exported successfully!');
+        } else {
+            alert('No data collected for export.');
+        }
+    }
+
+    function importPages(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const data = JSON.parse(e.target.result);
+          let importedCount = 0;
+          for (const id in data) {
+            const entry = data[id];
+            // Basic validation for imported entry
+            if (entry.id && entry.id === id && typeof entry === 'object' && entry !== null) {
+              gun.get(id).put({
+                id: entry.id,
+                name: entry.name,
+                details: entry.details,
+                category: entry.category,
+                subcategory: entry.subcategory,
+                images: entry.images
+              });
+              gun.get(id).get('variants').put(entry.variants); // These are already stringified
+              gun.get(id).get('pricing').put(entry.pricing);   // These are already stringified
+              gun.get('products_index').set(gun.get(id));
+              importedCount++;
+            } else {
+              console.warn(`Skipping import for invalid entry or ID mismatch for key: ${id}`, entry);
+            }
+          }
+          alert(`📥 Pages imported successfully! Imported ${importedCount} pages.`);
+          displayLinks(); // Refresh the displayed links after import
+        } catch (error) {
+          console.error("Error importing pages:", error);
+          alert("Failed to import pages. Please check the file format or console for details.");
+        }
+      };
+      reader.readAsText(file);
+    }
+  });
+  </script>
 </body>
 </html>
