@@ -1,68 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Product Generator - imacx</title>
+  <meta charset="UTF-8">
+  <title>Product Generator</title>
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-  <style>
-    body { font-family: Arial; padding: 20px; background: #f7f7f7; }
-    input, button { margin: 10px 0; padding: 10px; width: 100%; max-width: 400px; }
-    .link-item { background: #fff; padding: 10px; border: 1px solid #ccc; margin-top: 10px; }
-    .delete { color: red; cursor: pointer; }
-  </style>
 </head>
 <body>
-  <h2>Generate Product</h2>
-  <input id="name" placeholder="Product Name" />
-  <input id="price" type="number" placeholder="Price (INR)" />
-  <button onclick="generateLink()">Generate Token Link</button>
+  <h2>Generate Product Link</h2>
+  <input id="name" placeholder="Product Name"><br><br>
+  <input id="price" placeholder="Price"><br><br>
+  <button onclick="generate()">Generate Link</button>
 
-  <h3>Generated Links</h3>
-  <div id="links"></div>
+  <p id="link"></p>
 
   <script>
-    const gun = Gun({
-      peers: [
-        'https://gun-manhattan.herokuapp.com/gun',
-        'https://gun-eu.herokuapp.com/gun',
-        'https://gunjs.herokuapp.com/gun',
-        'https://gun-deploy.vercel.app/gun'
-      ]
-    });
+    const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
+    const db = gun.get("imacx-products");
 
-    const linksRef = gun.get('imacx-products');
-
-    function generateLink() {
+    function generate() {
       const name = document.getElementById('name').value.trim();
       const price = document.getElementById('price').value.trim();
-      if (!name || !price) return alert('Enter name and price.');
+      if (!name || !price) {
+        alert("Enter both name and price!");
+        return;
+      }
 
-      const id = 'token_' + Date.now();
-      linksRef.get(id).put({ id, name, price });
+      const id = "token_" + Date.now(); // unique token
+
+      db.get(id).put({ name, price });
+
+      const link = `https://new22222.netlify.app/view.html?id=${id}`;
+      document.getElementById('link').innerHTML = `
+        <strong>Link:</strong> <a href="${link}" target="_blank">${link}</a>
+      `;
     }
-
-    function deleteLink(id) {
-      linksRef.get(id).put(null);
-    }
-
-    function loadLinks() {
-      document.getElementById('links').innerHTML = '';
-      linksRef.map().once(data => {
-        if (data && data.id) {
-          const div = document.createElement('div');
-          div.className = 'link-item';
-          div.innerHTML = `
-            <strong>${data.name}</strong> - ₹${data.price}<br>
-            <a href="view.html?id=${data.id}" target="_blank">View Product</a>
-            <span class="delete" onclick="deleteLink('${data.id}')"> [Delete]</span>
-          `;
-          document.getElementById('links').appendChild(div);
-        }
-      });
-    }
-
-    loadLinks();
   </script>
 </body>
 </html>
