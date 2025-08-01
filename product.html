@@ -10,19 +10,19 @@
         /* Custom font and base styling */
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #fff;
-            color: #333;
+            background-color: #f9fafb; /* Lighter background */
+            color: #1f2937;
         }
-
+        
         /* Styles for the custom message box */
         .message-box {
             position: fixed;
             top: 20px;
             right: 20px;
-            background-color: #4CAF50;
+            background-color: #10b981; /* Green color */
             color: white;
             padding: 15px 25px;
-            border-radius: 8px;
+            border-radius: 12px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             z-index: 1000;
             transition: transform 0.5s ease-in-out, opacity 0.5s ease-in-out;
@@ -41,41 +41,41 @@
     <!-- Custom Message Box for alerts -->
     <div id="messageBox" class="message-box"></div>
 
-    <nav class="bg-gray-100 p-4 flex items-center justify-between border-b border-gray-200 shadow-sm">
+    <nav class="bg-white p-4 flex items-center justify-between border-b border-gray-200 shadow-sm sticky top-0 z-50">
         <div class="flex items-center space-x-3">
             <span class="text-2xl font-bold text-yellow-600">imacx</span>
             <!-- Using a placeholder image for the logo -->
             <img src="https://placehold.co/40x40/d6a32d/ffffff?text=im" alt="imacx logo" class="h-10 w-10 rounded-full">
         </div>
         <div class="flex items-center space-x-4">
-            <a href="home.html" class="text-yellow-600 hover:text-yellow-800 font-semibold transition-colors duration-200">Home</a>
-            <a href="account.html" class="text-yellow-600 hover:text-yellow-800 font-semibold transition-colors duration-200">Account</a>
-            <a href="basket.html" class="text-yellow-600 hover:text-yellow-800 font-semibold transition-colors duration-200">Basket</a>
+            <a href="home.html" class="text-gray-600 hover:text-yellow-600 font-semibold transition-colors duration-200">Home</a>
+            <a href="account.html" class="text-gray-600 hover:text-yellow-600 font-semibold transition-colors duration-200">Account</a>
+            <a href="basket.html" class="text-gray-600 hover:text-yellow-600 font-semibold transition-colors duration-200">Basket</a>
         </div>
     </nav>
 
     <div class="container mx-auto p-4 md:p-8 max-w-7xl flex flex-wrap lg:flex-nowrap gap-8 mt-6">
         <!-- Product Media Section -->
-        <div class="product-media w-full lg:w-1/2 p-4 bg-white rounded-lg shadow-md border border-gray-200">
-            <div id="slider-content" class="w-full h-96 flex items-center justify-center overflow-hidden bg-gray-100 rounded-lg mb-4">
+        <div class="product-media w-full lg:w-1/2 p-4 bg-white rounded-xl shadow-md border border-gray-200">
+            <div id="slider-content" class="w-full h-96 flex items-center justify-center overflow-hidden bg-gray-100 rounded-xl mb-4">
                 <p class="text-gray-400">Loading images...</p>
             </div>
             <div class="flex justify-center space-x-4">
-                <button onclick="moveSlider(-1)" class="bg-yellow-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-yellow-700 transition-colors duration-200">Left</button>
-                <button onclick="moveSlider(1)" class="bg-yellow-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-yellow-700 transition-colors duration-200">Right</button>
+                <button onclick="moveSlider(-1)" class="bg-yellow-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-yellow-700 transition-colors duration-200">Previous</button>
+                <button onclick="moveSlider(1)" class="bg-yellow-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-yellow-700 transition-colors duration-200">Next</button>
             </div>
         </div>
 
         <!-- Product Info Section -->
         <div class="product-info w-full lg:w-1/2 p-4">
-            <h1 id="productName" class="text-4xl font-extrabold text-yellow-600 mb-2">Loading Product...</h1>
+            <h1 id="productName" class="text-4xl font-extrabold text-gray-900 mb-2">Loading Product...</h1>
             <p class="text-sm text-gray-500 mb-4">
-                Category: <span id="productCategory"></span>, Subcategory: <span id="productSubcategory"></span>
+                Category: <span id="productCategory" class="font-semibold text-gray-700"></span>, Subcategory: <span id="productSubcategory" class="font-semibold text-gray-700"></span>
             </p>
 
             <p class="text-3xl font-bold text-yellow-600 mb-2">
                 ₹<span id="productPrice">0.00</span>
-                <span id="discountedPrice" class="text-xl text-red-500 line-through font-normal"></span>
+                <span id="discountedPrice" class="text-xl text-red-500 line-through font-normal ml-2"></span>
             </p>
 
             <div id="productVariants" class="flex flex-wrap items-center gap-4 my-4">
@@ -88,8 +88,8 @@
                     <input type="number" id="quantityInput" value="1" min="1" class="w-16 text-center border-none focus:outline-none bg-white text-gray-800">
                     <button id="increaseQty" class="px-3 py-1 text-xl font-bold text-white bg-yellow-600 rounded-r-md hover:bg-yellow-700 transition-colors duration-200">+</button>
                 </div>
+                <button id="addToBasketBtn" class="add-to-basket-btn bg-yellow-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg hover:bg-yellow-700 transition-colors duration-200">Add to Basket</button>
             </div>
-            <button id="addToBasketBtn" class="add-to-basket-btn bg-yellow-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg hover:bg-yellow-700 transition-colors duration-200">Add to Basket</button>
         </div>
     </div>
 
@@ -109,7 +109,7 @@
         </div>
 
         <h3 class="text-xl font-bold text-yellow-600 mt-8 mb-4">Write a Review</h3>
-        <form id="reviewForm" class="bg-gray-100 p-6 rounded-lg shadow-md">
+        <form id="reviewForm" class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
             <label for="reviewerName" class="block text-gray-700 font-semibold mb-2">Your Name:</label>
             <input type="text" id="reviewerName" required class="w-full max-w-md p-2 border border-gray-300 rounded-md mb-4 focus:ring-yellow-500 focus:border-yellow-500">
 
@@ -138,26 +138,122 @@
             <p class="text-gray-400">Start typing to search products...</p>
         </div>
     </div>
+    
+    <footer class="bg-gray-800 text-white p-6 mt-12">
+        <div class="container mx-auto flex flex-col md:flex-row justify-between items-center">
+            <div class="text-center md:text-left mb-4 md:mb-0">
+                <h3 class="text-lg font-bold text-yellow-600">imacx Shop</h3>
+                <p class="text-sm text-gray-400">© 2024 All rights reserved.</p>
+            </div>
+            <div class="flex space-x-6">
+                <a href="#" class="text-gray-400 hover:text-yellow-600 transition-colors duration-200">About Us</a>
+                <a href="#" class="text-gray-400 hover:text-yellow-600 transition-colors duration-200">Privacy Policy</a>
+                <a href="#" class="text-gray-400 hover:text-yellow-600 transition-colors duration-200">Terms of Service</a>
+            </div>
+        </div>
+    </footer>
 
     <!-- GunDB Library -->
     <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
 
-    <!-- Mock Product Data for Search Functionality -->
-    <script id="products-data">
-        const allProducts = [
-            { id: '~V4G1_product1', name: 'Luxury Smartwatch', price: 2999.00, image: 'https://placehold.co/120x120/d6a32d/ffffff?text=Watch', category: 'Electronics', subcategory: 'Wearables' },
-            { id: '~V4G1_product2', name: 'Premium Leather Wallet', price: 850.00, image: 'https://placehold.co/120x120/d6a32d/ffffff?text=Wallet', category: 'Accessories', subcategory: 'Wallets' },
-            { id: '~V4G1_product3', name: 'Ultra HD 4K Monitor', price: 25000.00, image: 'https://placehold.co/120x120/d6a32d/ffffff?text=Monitor', category: 'Electronics', subcategory: 'Displays' },
-            { id: '~V4G1_product4', name: 'Wireless Bluetooth Earbuds', price: 1500.00, image: 'https://placehold.co/120x120/d6a32d/ffffff?text=Earbuds', category: 'Electronics', subcategory: 'Audio' },
-            { id: '~V4G1_product5', name: 'Vintage Gold Fountain Pen', price: 5000.00, image: 'https://placehold.co/120x120/d6a32d/ffffff?text=Pen', category: 'Stationery', subcategory: 'Writing' }
-        ];
-    </script>
-
     <!-- Main JavaScript Logic -->
     <script>
-        // Initialize GunDB
+        // Initialize GunDB with a public server
         const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
-        const productsDB = gun.get('imacx_products'); // Root node for all products
+        const productsDB = gun.get('imacx_shop_products'); // Using a custom root node to avoid conflicts
+
+        // Mock Product Data, now with more details and variants
+        const allProducts = [
+            {
+                id: 'imacx_product_1',
+                name: 'Luxury Smartwatch',
+                price: 2999.00,
+                discountedPrice: 2499.00,
+                images: [
+                    'https://placehold.co/550x400/d6a32d/ffffff?text=Smartwatch_Front',
+                    'https://placehold.co/550x400/d6a32d/ffffff?text=Smartwatch_Side',
+                    'https://placehold.co/550x400/d6a32d/ffffff?text=Smartwatch_Back'
+                ],
+                category: 'Electronics',
+                subcategory: 'Wearables',
+                details: 'A stylish and powerful smartwatch with advanced health tracking and long-lasting battery life. Features a vibrant AMOLED display and a durable stainless steel frame.',
+                variants: [
+                    {
+                        name: 'Color',
+                        options: [
+                            { value: 'Silver', price_modifier: 0 },
+                            { value: 'Gold', price_modifier: 100 },
+                            { value: 'Black', price_modifier: 0 }
+                        ]
+                    },
+                    {
+                        name: 'Band',
+                        options: [
+                            { value: 'Rubber', price_modifier: 0 },
+                            { value: 'Leather', price_modifier: 500 },
+                            { value: 'Metal Link', price_modifier: 800 }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 'imacx_product_2',
+                name: 'Premium Leather Wallet',
+                price: 850.00,
+                images: [
+                    'https://placehold.co/550x400/d6a32d/ffffff?text=Wallet_Closed',
+                    'https://placehold.co/550x400/d6a32d/ffffff?text=Wallet_Open'
+                ],
+                category: 'Accessories',
+                subcategory: 'Wallets',
+                details: 'Handcrafted from premium full-grain leather, this wallet combines classic style with modern functionality. It includes RFID protection and multiple card slots.',
+                variants: [
+                    {
+                        name: 'Leather Type',
+                        options: [
+                            { value: 'Cowhide', price_modifier: 0 },
+                            { value: 'Sheepskin', price_modifier: 150 },
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 'imacx_product_3',
+                name: 'Ultra HD 4K Monitor',
+                price: 25000.00,
+                discountedPrice: null,
+                images: [
+                    'https://placehold.co/550x400/d6a32d/ffffff?text=Monitor'
+                ],
+                category: 'Electronics',
+                subcategory: 'Displays',
+                details: 'Experience stunning visuals with this 27-inch 4K monitor. Perfect for designers, gamers, and anyone who demands crisp, vibrant picture quality.',
+                variants: []
+            },
+            {
+                id: 'imacx_product_4',
+                name: 'Wireless Bluetooth Earbuds',
+                price: 1500.00,
+                discountedPrice: 1200.00,
+                images: [
+                    'https://placehold.co/550x400/d6a32d/ffffff?text=Earbuds',
+                    'https://placehold.co/550x400/d6a32d/ffffff?text=Earbuds_Case'
+                ],
+                category: 'Electronics',
+                subcategory: 'Audio',
+                details: 'Compact and powerful earbuds with active noise cancellation and a wireless charging case. Enjoy high-fidelity sound for up to 24 hours.',
+                variants: [
+                    {
+                        name: 'Color',
+                        options: [
+                            { value: 'White', price_modifier: 0 },
+                            { value: 'Black', price_modifier: 0 },
+                            { value: 'Navy Blue', price_modifier: 50 },
+                        ]
+                    }
+                ]
+            }
+        ];
 
         // Global state variables
         let currentProduct = null;
@@ -170,10 +266,17 @@
          * Shows a custom message box with a given message.
          * Replaces the native alert() for a better user experience.
          * @param {string} message The message to display.
+         * @param {string} type 'success' or 'error' to change styling.
          */
-        function showMessage(message) {
+        function showMessage(message, type = 'success') {
             const messageBox = document.getElementById('messageBox');
             messageBox.textContent = message;
+            // Update styling based on type
+            if (type === 'success') {
+                messageBox.style.backgroundColor = '#10b981'; // Green
+            } else {
+                messageBox.style.backgroundColor = '#ef4444'; // Red
+            }
             messageBox.classList.add('show');
             setTimeout(() => {
                 messageBox.classList.remove('show');
@@ -203,13 +306,13 @@
 
         /**
          * Calculates and updates the displayed price based on selected variants.
-         * @returns {number} The effective price (discounted if applicable).
          */
         function calculateCurrentPrice() {
-            if (!currentProduct) return 0;
+            if (!currentProduct) return;
 
-            let price = parseFloat(currentProduct.price) || 0;
+            let basePrice = parseFloat(currentProduct.price) || 0;
             let discountedPrice = currentProduct.discountedPrice !== null ? parseFloat(currentProduct.discountedPrice) : null;
+            let finalPrice = basePrice;
 
             if (currentProduct.variants && Array.isArray(currentProduct.variants)) {
                 currentProduct.variants.forEach(variant => {
@@ -217,23 +320,25 @@
                     if (selectedOptionValue) {
                         const selectedOption = variant.options.find(opt => opt.value === selectedOptionValue);
                         if (selectedOption) {
-                            price += parseFloat(selectedOption.price_modifier) || 0;
+                            finalPrice += parseFloat(selectedOption.price_modifier) || 0;
                             if (discountedPrice !== null) {
-                                discountedPrice += parseFloat(selectedOption.discounted_price_modifier) || 0;
+                                discountedPrice += parseFloat(selectedOption.price_modifier) || 0;
                             }
                         }
                     }
                 });
             }
 
-            document.getElementById('productPrice').textContent = price.toFixed(2);
-            if (discountedPrice !== null && discountedPrice < price) {
-                document.getElementById('discountedPrice').textContent = `(MRP ₹${discountedPrice.toFixed(2)})`;
+            document.getElementById('productPrice').textContent = finalPrice.toFixed(2);
+            const discountedPriceElement = document.getElementById('discountedPrice');
+            if (discountedPrice !== null && discountedPrice < finalPrice) {
+                 // Correctly display the original price and the discounted price
+                document.getElementById('productPrice').textContent = discountedPrice.toFixed(2);
+                discountedPriceElement.textContent = `(MRP ₹${finalPrice.toFixed(2)})`;
             } else {
-                document.getElementById('discountedPrice').textContent = '';
+                 document.getElementById('productPrice').textContent = finalPrice.toFixed(2);
+                 discountedPriceElement.textContent = '';
             }
-
-            return discountedPrice !== null && discountedPrice < price ? discountedPrice : price;
         }
 
         /**
@@ -264,7 +369,7 @@
             if (product.variants && Array.isArray(product.variants) && product.variants.length > 0) {
                 product.variants.forEach(variant => {
                     const variantDiv = document.createElement('div');
-                    variantDiv.className = 'flex items-center space-x-2';
+                    variantDiv.className = 'flex flex-col space-y-2';
                     variantDiv.innerHTML = `<label for="variant-${variant.name.replace(/\s/g, '_')}" class="text-gray-700 font-medium">${variant.name}: </label>`;
                     const select = document.createElement('select');
                     select.id = `variant-${variant.name.replace(/\s/g, '_')}`;
@@ -312,18 +417,10 @@
                     const img = document.createElement('img');
                     img.src = mediaUrl;
                     img.alt = `Product image ${currentImageIndex + 1}`;
-                    img.className = 'max-w-full max-h-full object-contain block rounded-lg';
+                    img.className = 'max-w-full max-h-full object-contain block rounded-xl';
                     // Fallback for broken images
                     img.onerror = () => img.src = `https://placehold.co/550x400/d6a32d/ffffff?text=Image+Not+Found`;
                     sliderContent.appendChild(img);
-                } else if (mediaUrl.match(/\.(mp4|webm|ogg)$/i)) {
-                    const video = document.createElement('video');
-                    video.src = mediaUrl;
-                    video.controls = true;
-                    video.loop = true;
-                    video.muted = true;
-                    video.className = 'max-w-full max-h-full object-contain block rounded-lg';
-                    sliderContent.appendChild(video);
                 } else {
                     sliderContent.innerHTML = `<p class="text-gray-400">Unsupported media type: ${mediaUrl}</p>`;
                 }
@@ -370,15 +467,15 @@
         // --- Add to Basket ---
         document.getElementById('addToBasketBtn').addEventListener('click', () => {
             if (!currentProduct) {
-                showMessage('Product data not loaded yet. Please wait.');
+                showMessage('Product data not loaded yet. Please wait.', 'error');
                 return;
             }
 
             const basket = getBasket();
-            const effectivePrice = calculateCurrentPrice();
+            const effectivePrice = parseFloat(document.getElementById('productPrice').textContent) || 0;
 
             const itemToAdd = {
-                id: currentProduct._.pub,
+                id: currentProduct.id,
                 name: currentProduct.name,
                 image: currentMedia.length > 0 ? currentMedia[0] : 'https://placehold.co/120x120/d6a32d/ffffff?text=Product',
                 category: currentProduct.category,
@@ -419,7 +516,7 @@
         document.getElementById('reviewForm').addEventListener('submit', function(e) {
             e.preventDefault();
             if (!currentProduct) {
-                showMessage('Cannot submit review: Product data not loaded.');
+                showMessage('Cannot submit review: Product data not loaded.', 'error');
                 return;
             }
 
@@ -428,7 +525,7 @@
             const rating = parseInt(document.getElementById('selectedRating').value);
 
             if (rating === 0 || !reviewerName || !reviewComment) {
-                showMessage('Please select a star rating and fill in all fields.');
+                showMessage('Please select a star rating and fill in all fields.', 'error');
                 return;
             }
 
@@ -440,7 +537,7 @@
             };
 
             // Store review in GunDB under the product's review node
-            productsDB.get(currentProduct._.pub).get('reviews').set(review);
+            productsDB.get(currentProduct.id).get('reviews').set(review);
 
             showMessage('Review submitted successfully!');
             this.reset();
@@ -461,13 +558,13 @@
             let hasReviews = false;
             let firstLoad = true;
 
+            // Use on() and map() for real-time updates of reviews
             productsDB.get(productId).get('reviews').map().on((review, key) => {
                 if (review && review.reviewer && review.comment && review.rating) {
                     hasReviews = true;
-                    // Check if review already exists to avoid duplicates on real-time update
                     if (!document.getElementById(`review-${key}`)) {
                         const reviewDiv = document.createElement('div');
-                        reviewDiv.className = 'review-item bg-gray-100 p-4 rounded-lg shadow-sm border border-gray-200';
+                        reviewDiv.className = 'review-item bg-gray-100 p-4 rounded-xl shadow-sm border border-gray-200';
                         reviewDiv.id = `review-${key}`; // Unique ID for each review
                         let starsHtml = '';
                         for (let i = 0; i < 5; i++) {
@@ -482,14 +579,12 @@
                         reviewsListDiv.prepend(reviewDiv);
                     }
                 }
-                // When the first data from GunDB arrives, clear the loading message.
                 if (firstLoad) {
                     reviewsListDiv.innerHTML = '';
                     firstLoad = false;
                 }
             });
 
-            // Fallback for if no reviews are ever loaded
             setTimeout(() => {
                 if (!hasReviews && reviewsListDiv.children.length === 0) {
                     reviewsListDiv.innerHTML = '<p class="text-gray-400">No reviews yet.</p>';
@@ -497,18 +592,18 @@
             }, 1000);
         }
 
-        // --- Product Search from products-data.js ---
+        // --- Product Search from mock data ---
         const productSearchInput = document.getElementById('productSearch');
         const searchResultsDiv = document.getElementById('searchResults');
 
         function renderProductCard(product) {
             return `
-                <div class="product-card bg-white p-4 text-center rounded-lg shadow-md border border-gray-200 hover:shadow-lg transition-shadow duration-200">
-                    <img src="${product.image}" alt="${product.name}" onerror="this.onerror=null;this.src='https://placehold.co/120x120/d6a32d/ffffff?text=Product';" class="w-32 h-32 object-cover mx-auto mb-4 rounded-md">
-                    <h3 class="text-lg font-semibold text-yellow-600">${product.name}</h3>
-                    <p class="text-xl font-bold text-gray-700 mb-4">₹${product.price.toFixed(2)}</p>
-                    <a href="product.html#${product.id}" class="inline-block bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-yellow-700 transition-colors duration-200">View Product</a>
-                </div>
+                <a href="#${product.id}" class="product-card bg-white p-4 text-center rounded-xl shadow-md border border-gray-200 hover:shadow-lg transition-shadow duration-200 block">
+                    <img src="${product.images[0]}" alt="${product.name}" onerror="this.onerror=null;this.src='https://placehold.co/120x120/d6a32d/ffffff?text=Product';" class="w-32 h-32 object-cover mx-auto mb-4 rounded-md">
+                    <h3 class="text-lg font-semibold text-gray-900">${product.name}</h3>
+                    <p class="text-xl font-bold text-yellow-600 mb-4">₹${(product.discountedPrice || product.price).toFixed(2)}</p>
+                    <span class="inline-block bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-yellow-700 transition-colors duration-200">View Product</span>
+                </a>
             `;
         }
 
@@ -536,13 +631,24 @@
             }
         });
 
-        // --- Initialize Page on load ---
-        window.onload = () => {
+        // Add a hash change listener to update the product view when the URL changes
+        window.addEventListener('hashchange', () => {
             const productId = window.location.hash.substring(1);
+            loadProduct(productId);
+        });
+
+        /**
+         * Loads and renders a product from GunDB based on its ID.
+         * @param {string} productId The ID of the product to load.
+         */
+        function loadProduct(productId) {
             if (productId) {
-                // Use .on() for real-time updates and initial data load
                 productsDB.get(productId).on(data => {
                     if (data && data.name) {
+                        // Unsubscribe from previous product data to avoid duplicate listeners
+                        if (currentProduct) {
+                            productsDB.get(currentProduct.id).off();
+                        }
                         renderProduct(data);
                         renderReviews(productId);
                     } else if (data === null) {
@@ -552,10 +658,6 @@
                         document.getElementById('reviewsList').innerHTML = '<p class="text-gray-400">No reviews available.</p>';
                         document.getElementById('slider-content').innerHTML = '<p class="text-gray-400">No media available.</p>';
                         document.getElementById('addToBasketBtn').disabled = true;
-                    } else {
-                        // Data is empty, but not explicitly null. Could be initial sync.
-                        document.getElementById('productName').textContent = 'Loading Product...';
-                        document.getElementById('productDescription').innerHTML = '<p class="text-gray-600">Loading description...</p>';
                     }
                 });
             } else {
@@ -566,7 +668,38 @@
                 document.getElementById('slider-content').innerHTML = '<p class="text-gray-400">Select a product to view media.</p>';
                 document.getElementById('addToBasketBtn').disabled = true;
             }
-        };
+        }
+        
+        /**
+         * Seeds the GunDB with the mock product data if it's empty.
+         */
+        function seedDatabase() {
+            // Check if any products exist to avoid re-seeding
+            let productExists = false;
+            productsDB.map().on((data) => {
+                if(data && !productExists) {
+                    productExists = true;
+                }
+            });
+
+            // Wait a moment for GunDB to check, then seed if necessary
+            setTimeout(() => {
+                if (!productExists) {
+                    console.log("Seeding GunDB with mock product data...");
+                    allProducts.forEach(product => {
+                        productsDB.get(product.id).put(product);
+                    });
+                    showMessage('Database seeded with mock products! Try searching or navigate to a product ID in the URL hash.');
+                }
+                
+                // After seeding (or checking), load the initial product from the URL hash
+                const productId = window.location.hash.substring(1);
+                loadProduct(productId);
+            }, 1500); // Give GunDB a moment to sync
+        }
+
+        // --- Initialize Page on load ---
+        window.onload = seedDatabase;
     </script>
 </body>
 </html>
