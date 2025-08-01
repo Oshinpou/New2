@@ -358,6 +358,97 @@
             }
             updateProductsListUI(); // Update the UI whenever the cache changes
         });
-    </script>
+
+        
+// Utility: Generate Unique ID
+function generateUniqueId() {
+  return 'product_' + Date.now() + Math.floor(Math.random() * 1000);
+}
+
+// Handle Product Generation
+document.getElementById("generate").addEventListener("click", () => {
+  const name = document.getElementById("productName").value.trim();
+  const price = document.getElementById("productPrice").value.trim();
+  const img1 = document.getElementById("productImage1").value.trim();
+  const img2 = document.getElementById("productImage2").value.trim();
+  const category = document.getElementById("productCategory").value.trim();
+  const subcategory = document.getElementById("productSubcategory").value.trim();
+  const variants = document.getElementById("productVariants").value.trim();
+
+  // Validate all required fields
+  if (!name || !price || !img1 || !category || !subcategory || !variants) {
+    showMessage("Please fill in all required fields.", "error");
+    return;
+  }
+
+  // Generate product ID & data
+  const id = generateUniqueId();
+  const productData = {
+    id,
+    name,
+    price,
+    images: [img1, img2],
+    category,
+    subcategory,
+    variants: variants.split(",").map(v => v.trim()),
+    created: new Date().toISOString()
+  };
+
+  // Store to GunDB
+  gun.get("products").get(id).put(productData, ack => {
+    if (ack.err) {
+      showMessage("Error occurred while saving product. Please try again.", "error");
+      console.error("GunDB Error:", ack.err);
+    } else {
+      showMessage("Product generated successfully!", "success");
+      addProductToList(productData); // Update UI
+    }
+  });
+});
+
+// Append to UI
+function addProductToList(product) {
+  const div = document.createElement("div");
+  div.className = "bg-white rounded-lg shadow p-4 flex justify-between items-center";
+
+  const url = `product.html#${product.id}`;
+  div.innerHTML = `
+    <div class="flex flex-col">
+      <span class="text-sm text-gray-700"><b>Name:</b> ${product.name}</span>
+      <a href="${url}" target="_blank" class="text-blue-600 hover:underline">${url}</a>
+    </div>
+    <button onclick="deleteProduct('${product.id}', this)" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm">Delete</button>
+  `;
+  document.getElementById("productsList").prepend(div);
+}
+
+// Delete product
+function deleteProduct(id, btn) {
+  gun.get("products").get(id).put(null, ack => {
+    if (ack.err) {
+      showMessage("Error deleting product. Try again.", "error");
+    } else {
+      btn.parentElement.remove();
+      showMessage("Product deleted.", "success");
+    }
+  });
+}
+
+// Feedback messages
+function showMessage(msg, type = "success") {
+  const div = document.getElementById("message");
+  div.textContent = msg;
+  div.className = `text-${type === "success" ? "green" : "red"}-600 mb-2 text-sm`;
+  setTimeout(() => (div.textContent = ""), 4000);
+}
+
+// Load all products on page load
+gun.get("products").map().once(product => {
+  if (!product || !product.id) return;
+  addProductToList(product);
+});
+</script>
+
+
 </body>
 </html>
