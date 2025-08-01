@@ -1,94 +1,86 @@
-<!DOCTYPE html><html lang="en"><head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Product Generator - imacx Admin</title>
+<!-- view.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Product View - imacx</title>
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
-</head><body class="bg-gray-100 text-gray-900 p-4">
-  <div class="max-w-4xl mx-auto">
-    <h1 class="text-3xl font-bold mb-4">imacx Product Generator</h1>
-    <div id="message" class="text-center text-red-500 font-semibold mb-4"></div>
-    <form id="productForm" class="grid gap-4 bg-white p-4 rounded shadow">
-      <input type="text" id="name" placeholder="Product Name" class="border p-2 rounded" required>
-      <input type="text" id="price" placeholder="Price" class="border p-2 rounded" required>
-      <input type="text" id="image" placeholder="Main Image URL" class="border p-2 rounded" required>
-      <input type="text" id="image2" placeholder="Image 2 URL (optional)" class="border p-2 rounded">
-      <input type="text" id="image3" placeholder="Image 3 URL (optional)" class="border p-2 rounded">
-      <input type="text" id="category" placeholder="Category" class="border p-2 rounded" required>
-      <input type="text" id="subcategory" placeholder="Subcategory" class="border p-2 rounded">
-      <input type="text" id="variants" placeholder="Variants (comma separated)" class="border p-2 rounded">
-      <textarea id="description" placeholder="Description" class="border p-2 rounded"></textarea>
-      <button type="submit" class="bg-blue-600 text-white p-2 rounded">Generate Product</button>
-    </form><h2 class="text-xl font-semibold mt-10 mb-4">Generated Product Links</h2>
-<div id="generatedLinks" class="space-y-4"></div>
-
-  </div>  <script>
-    const gun = Gun();
-    const productDB = gun.get('products');
-    const linksContainer = document.getElementById('generatedLinks');
-    const message = document.getElementById('message');
-
-    document.getElementById('productForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const id = 'product_' + Date.now();
-      const product = {
-        id,
-        name: name.value,
-        price: price.value,
-        image: image.value,
-        image2: image2.value,
-        image3: image3.value,
-        category: category.value,
-        subcategory: subcategory.value,
-        variants: variants.value.split(',').map(v => v.trim()),
-        description: description.value
-      };
-
-      try {
-        productDB.get(id).put(product, ack => {
-          if (ack.err) {
-            message.innerText = '❌ Failed to save product';
-          } else {
-            message.innerText = '✅ Product saved successfully';
-            appendLink(id);
-          }
-        });
-      } catch (err) {
-        message.innerText = '❌ Error occurred: ' + err.message;
-      }
-    });
-
-    function appendLink(id) {
-      const wrapper = document.createElement('div');
-      wrapper.className = "bg-white p-3 rounded shadow flex justify-between items-center";
-
-      const link = document.createElement('a');
-      link.href = `product.html#${id}`;
-      link.innerText = `View Product → ${id}`;
-      link.className = "text-blue-600 hover:underline";
-
-      const delBtn = document.createElement('button');
-      delBtn.innerText = '🗑️ Delete';
-      delBtn.className = "text-red-600 hover:underline ml-4";
-      delBtn.onclick = () => deleteProduct(id, wrapper);
-
-      wrapper.appendChild(link);
-      wrapper.appendChild(delBtn);
-      linksContainer.prepend(wrapper);
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #fff;
+      margin: 0;
+      padding: 0;
     }
+    nav {
+      background-color: #000;
+      color: #fff;
+      display: flex;
+      justify-content: space-between;
+      padding: 15px 20px;
+    }
+    nav a {
+      color: white;
+      margin: 0 10px;
+      text-decoration: none;
+    }
+    nav img {
+      height: 24px;
+      vertical-align: middle;
+    }
+    .container {
+      padding: 20px;
+    }
+    .product {
+      background: #f9f9f9;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 600px;
+      margin: 20px auto;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .product h2 {
+      margin-bottom: 10px;
+    }
+    .product p {
+      font-size: 18px;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div><strong>imacx</strong></div>
+    <div>
+      <a href="index.html">Home</a>
+      <a href="basket.html">Basket</a>
+      <a href="account.html">Account</a>
+      <img src="logout.png" alt="Logout">
+    </div>
+  </nav>
+  <div class="container">
+    <div class="product" id="product"></div>
+  </div>
 
-    function deleteProduct(id, element) {
-      productDB.get(id).put(null, ack => {
-        if (!ack.err) {
-          element.remove();
+  <script>
+    const gun = Gun();
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('id');
+
+    if (id) {
+      gun.get('imacx-products').get(id).once(data => {
+        if (data) {
+          document.getElementById('product').innerHTML = `
+            <h2>${data.name}</h2>
+            <p><strong>Price:</strong> ₹${data.price}</p>
+          `;
+        } else {
+          document.getElementById('product').innerHTML = '<p>Product not found.</p>';
         }
       });
+    } else {
+      document.getElementById('product').innerHTML = '<p>Invalid product ID.</p>';
     }
-
-    // Load previously saved products on page load
-    productDB.map().once((product, id) => {
-      if (product && product.name) {
-        appendLink(id);
-      }
-    });
-  </script></body></html>
+  </script>
+</body>
+</html>
