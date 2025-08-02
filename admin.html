@@ -6,220 +6,153 @@
   <title>Admin - imacx Orders</title>
   <style>
     body {
-      font-family: sans-serif;
-      background-color: #fff;
-      color: #333;
+      font-family: 'Arial', sans-serif;
+      background: #f2f2f2;
+      margin: 0;
       padding: 20px;
     }
+
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+
+    #searchBar {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      margin: 20px auto;
+      display: block;
+      max-width: 500px;
+    }
+
     .order {
-      border: 1px solid #ccc;
+      background: #fff;
       border-radius: 8px;
       padding: 15px;
       margin-bottom: 20px;
-      background: #f9f9f9;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
-    input[type="text"] {
-      padding: 4px 6px;
-      margin: 4px 0;
+
+    .order strong {
+      display: inline-block;
+      width: 100px;
     }
-    button {
-      padding: 4px 10px;
-      margin-left: 8px;
+
+    .status-input {
+      width: 60%;
+      padding: 5px;
+      margin-right: 10px;
+    }
+
+    .update-btn {
+      padding: 6px 12px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    .update-btn:hover {
+      background-color: #45a049;
+    }
+
+    .order-id {
+      font-weight: bold;
+      font-size: 18px;
+      margin-bottom: 10px;
     }
   </style>
 </head>
 <body>
-  <h1>📦 imacx Admin - Orders</h1>
- <h2>🔍 Search Order</h2>
-<input type="text" id="searchInput" placeholder="Enter Order ID" />
-<button onclick="searchOrder()">Search</button>
-<div id="searchResult"></div>
-  
-  <div id="orderList">Loading orders...</div>
-<script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-<script>
-  const gun = Gun();
-  const orders = gun.get('imacx_orders');
-  const orderList = document.getElementById('orderList');
+  <h1>Admin Panel - All Orders</h1>
 
-  orderList.innerHTML = '';
+  <input type="text" id="searchBar" placeholder="Search by Order ID..." />
 
-  orders.map().once((order, id) => {
-    if (!order) return;
+  <div id="ordersContainer">Loading orders...</div>
 
-    // If order is stored directly (not inside `data`)
-    const data = order.data || order;
+  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+  <script>
+    const gun = Gun();
+    const ordersContainer = document.getElementById("ordersContainer");
+    const searchBar = document.getElementById("searchBar");
 
-    const orderId = data.orderId || id;
-    const total = data.total || '0';
-    const shipping = data.shipping || {};
-    const status = data.status || 'Pending';
+    function displayOrder(id, data) {
+      const orderDiv = document.createElement("div");
+      orderDiv.className = "order";
+      orderDiv.dataset.id = id;
 
-    const container = document.createElement('div');
-    container.className = 'order';
-    container.style = "padding:10px;border:1px solid #ccc;margin-bottom:10px;";
+      const name = data.name || "N/A";
+      const phone = data.phone || "N/A";
+      const address = [data.address, data.city, data.state, data.pincode].filter(Boolean).join(", ") || "-";
+      const status = data.status || "Pending";
+      const total = data.total || "0";
 
-    const statusInput = document.createElement('input');
-    statusInput.type = 'text';
-    statusInput.value = status;
+      orderDiv.innerHTML = `
+        <div class="order-id">Order ID: ${id}</div>
+        <div><strong>Total:</strong> ₹${total}</div>
+        <div><strong>Recipient:</strong> ${name}</div>
+        <div><strong>Phone:</strong> ${phone}</div>
+        <div><strong>Address:</strong> ${address}</div>
+        <div><strong>Status:</strong> 
+          <input type="text" class="status-input" value="${status}" />
+          <button class="update-btn">Update Status</button>
+        </div>
+      `;
 
-    const updateBtn = document.createElement('button');
-    updateBtn.textContent = 'Update Status';
-    updateBtn.onclick = () => {
-  const newStatus = statusInput.value.trim();
+      const updateBtn = orderDiv.querySelector(".update-btn");
+      const statusInput = orderDiv.querySelector(".status-input");
 
-  // Read the full order object from GunDB
-  gun.get('imacx_orders').get(id).once(order => {
-    if (!order) return alert('❌ Order not found.');
+      updateBtn.onclick = () => {
+        const newStatus = statusInput.value.trim();
 
-    // Extract current data object or create empty one
-    const currentData = order.data || {};
+        // Get current order, update status and save
+        gun.get('imacx_orders').get(id).once(order => {
+          if (!order || !order.data) {
+            alert("❌ Order not found.");
+            return;
+          }
 
-    // Update the status inside data
-    currentData.status = newStatus;
+          const updatedData = { ...order.data, status: newStatus };
 
-    // Save back the updated data into the same order ID
-    gun.get('imacx_orders').get(id).put({ data: currentData }, ack => {
-      if (ack.err) {
-        alert('❌ Failed to update status.');
-      } else {
-        alert('✅ Status updated and saved!');
-      }
-    });
-  });
-};
-
-// Status update handler used after order is found via search bar
-function attachStatusUpdateHandler(orderId, data) {
-  const updateBtn = document.getElementById('updateStatusBtn');
-  const statusInput = document.getElementById('statusInput');
-
-  updateBtn.onclick = () => {
-  const newStatus = statusInput.value.trim();
-
-  // Read the full order object from GunDB
-  gun.get('imacx_orders').get(id).once(order => {
-    if (!order) return alert('❌ Order not found.');
-
-    // Extract current data object or create empty one
-    const currentData = order.data || {};
-
-    // Update the status inside data
-    currentData.status = newStatus;
-
-    // Save back the updated data into the same order ID
-    gun.get('imacx_orders').get(id).put({ data: currentData }, ack => {
-      if (ack.err) {
-        alert('❌ Failed to update status.');
-      } else {
-        alert('✅ Status updated and saved!');
-      }
-    });
-  });
-};
-
-      // Step 2: Merge new status with existing fields
-      const updatedData = {
-        ...existingData,
-        status: newStatus,
+          gun.get('imacx_orders').get(id).put({ data: updatedData }, ack => {
+            if (ack.err) {
+              alert("❌ Failed to update.");
+            } else {
+              alert("✅ Status updated.");
+            }
+          });
+        });
       };
 
-      // Step 3: Save the updated data to GunDB
-      gun.get('imacx_orders').get(orderId).get('data').put(updatedData, ack => {
-        if (ack.err) {
-          alert("❌ Failed to update status.");
+      ordersContainer.appendChild(orderDiv);
+    }
+
+    function loadAllOrders() {
+      ordersContainer.innerHTML = "";
+
+      gun.get('imacx_orders').map().once((orderNode, key) => {
+        if (orderNode && orderNode.data) {
+          displayOrder(key, orderNode.data);
+        }
+      });
+    }
+
+    searchBar.addEventListener("input", () => {
+      const term = searchBar.value.trim().toLowerCase();
+      const orders = document.querySelectorAll(".order");
+
+      orders.forEach(order => {
+        const id = order.dataset.id.toLowerCase();
+        if (id.includes(term)) {
+          order.style.display = "block";
         } else {
-          alert("✅ Status updated successfully and saved.");
-          // Optional: Refresh displayed status without needing reload
-          document.getElementById('currentStatus').innerText = newStatus;
+          order.style.display = "none";
         }
       });
     });
-  };
-}
- 
-    
-    container.innerHTML = `
-      <strong>Order ID:</strong> ${orderId}<br>
-      <strong>Total:</strong> ₹${total}<br>
-      <strong>Recipient:</strong> ${shipping.name || 'N/A'}<br>
-      <strong>Phone:</strong> ${shipping.phone || 'N/A'}<br>
-      <strong>Address:</strong> 
-        ${shipping.address || ''}, 
-        ${shipping.city || ''}, 
-        ${shipping.state || ''}, 
-        ${shipping.country || ''} - 
-        ${shipping.pincode || ''}<br>
-      <strong>Status:</strong> 
-    `;
 
-    container.appendChild(statusInput);
-    container.appendChild(updateBtn);
-    orderList.appendChild(container);
-  });
-</script>
-<script>
-  function searchOrder() {
-  const id = document.getElementById('searchInput').value.trim();
-  const resultDiv = document.getElementById('searchResult');
-  resultDiv.innerHTML = '';
-
-  if (!id) {
-    resultDiv.innerHTML = '<p>⚠️ Please enter an Order ID.</p>';
-    return;
-  }
-
-  gun.get('imacx_orders').get(id).once(orderNode => {
-    if (!orderNode) {
-      resultDiv.innerHTML = '<p>❌ Order not found.</p>';
-      return;
-    }
-
-    const data = orderNode.data || orderNode;
-    const shipping = data.shipping || {};
-    const status = data.status || 'Pending';
-
-    const statusInput = document.createElement('input');
-    statusInput.type = 'text';
-    statusInput.value = status;
-
-    const updateBtn = document.createElement('button');
-    updateBtn.textContent = 'Update Status';
-    updateBtn.onclick = () => {
-  const newStatus = statusInput.value.trim();
-  gun.get('imacx_orders').get(id).once(existing => {
-    const existingData = existing?.data || existing || {};
-    const updatedData = { ...existingData, status: newStatus };
-    gun.get('imacx_orders').get(id).put({ data: updatedData }, ack => {
-      if (ack.err) {
-        alert('❌ Failed to update status.');
-      } else {
-        alert('✅ Status updated and saved.');
-      }
-    });
-  });
-};
-
-    const resultHTML = `
-      <div class="order" style="margin-top:20px;padding:10px;border:1px solid #ccc;">
-        <strong>Order ID:</strong> ${data.orderId || id}<br>
-        <strong>Total:</strong> ₹${data.total || '0'}<br>
-        <strong>Recipient:</strong> ${shipping.name || 'N/A'}<br>
-        <strong>Phone:</strong> ${shipping.phone || 'N/A'}<br>
-        <strong>Address:</strong> 
-          ${shipping.address || ''}, 
-          ${shipping.city || ''}, 
-          ${shipping.state || ''}, 
-          ${shipping.country || ''} - 
-          ${shipping.pincode || ''}<br>
-        <strong>Status:</strong> 
-      `;
-
-    resultDiv.innerHTML = resultHTML;
-    resultDiv.appendChild(statusInput);
-    resultDiv.appendChild(updateBtn);
-  });
-}     
-</script>
+    loadAllOrders();
+  </script>
 </body>
 </html>
