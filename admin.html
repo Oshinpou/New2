@@ -31,61 +31,59 @@
 <body>
   <h1>📦 imacx Admin - Orders</h1>
   <div id="orderList">Loading orders...</div>
-
-  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
 <script>
   const gun = Gun();
   const orders = gun.get('imacx_orders');
   const orderList = document.getElementById('orderList');
 
-  // Clear initial message
   orderList.innerHTML = '';
 
-  // Listen to all orders
-  orders.map().on((orderNode, orderId) => {
-    console.log('🧠 Order ID:', orderId, 'Node:', orderNode);
+  orders.map().once((order, id) => {
+    if (!order) return;
 
-    if (!orderNode || !orderNode.data) {
-      console.warn('❌ Missing data for order:', orderId);
-      return;
-    }
+    // If order is stored directly (not inside `data`)
+    const data = order.data || order;
 
-    const data = orderNode.data;
+    const orderId = data.orderId || id;
+    const total = data.total || '0';
+    const shipping = data.shipping || {};
+    const status = data.status || 'Pending';
+
     const container = document.createElement('div');
     container.className = 'order';
+    container.style = "padding:10px;border:1px solid #ccc;margin-bottom:10px;";
 
-    const orderStatusInput = document.createElement('input');
-    orderStatusInput.type = 'text';
-    orderStatusInput.value = data.status || '';
+    const statusInput = document.createElement('input');
+    statusInput.type = 'text';
+    statusInput.value = status;
 
     const updateBtn = document.createElement('button');
     updateBtn.textContent = 'Update Status';
     updateBtn.onclick = () => {
-      orders.get(orderId).get('data').get('status').put(orderStatusInput.value);
+      orders.get(id).put({ data: { ...data, status: statusInput.value } });
       alert('✅ Status updated');
     };
 
     container.innerHTML = `
-      <strong>Order ID:</strong> ${data.orderId}<br>
-      <strong>Total:</strong> ₹${data.total}<br>
-      <strong>Recipient:</strong> ${data.shipping?.name || 'N/A'}<br>
-      <strong>Phone:</strong> ${data.shipping?.phone || 'N/A'}<br>
+      <strong>Order ID:</strong> ${orderId}<br>
+      <strong>Total:</strong> ₹${total}<br>
+      <strong>Recipient:</strong> ${shipping.name || 'N/A'}<br>
+      <strong>Phone:</strong> ${shipping.phone || 'N/A'}<br>
       <strong>Address:</strong> 
-        ${data.shipping?.address || ''}, 
-        ${data.shipping?.city || ''}, 
-        ${data.shipping?.state || ''}, 
-        ${data.shipping?.country || ''} - 
-        ${data.shipping?.pincode || ''}<br>
-      <strong>Status:</strong>
+        ${shipping.address || ''}, 
+        ${shipping.city || ''}, 
+        ${shipping.state || ''}, 
+        ${shipping.country || ''} - 
+        ${shipping.pincode || ''}<br>
+      <strong>Status:</strong> 
     `;
 
-    container.appendChild(orderStatusInput);
+    container.appendChild(statusInput);
     container.appendChild(updateBtn);
     orderList.appendChild(container);
   });
 </script>
-       
-
       
 </body>
 </html>
