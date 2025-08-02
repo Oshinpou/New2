@@ -1,14 +1,29 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BasketOne - imacx Shop</title>
+  <title>Basket - imacx Shop</title>
+
+  <!-- Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tonic@next/dist/tonic.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/radash"></script>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
   <style>
     body {
-      font-family: 'Cursive', sans-serif;
-      background-color: #fff;
-      color: goldenrod;
-      padding: 1rem;
+      font-family: system-ui, sans-serif;
+      background: #fff;
+      padding: 2rem;
+      color: #333;
+    }
+    tonic-button {
+      margin-right: 8px;
+    }
+    img {
+      width: 50px;
+      border-radius: 6px;
     }
     table {
       width: 100%;
@@ -16,56 +31,40 @@
       margin-bottom: 2rem;
     }
     th, td {
-      border: 1px solid goldenrod;
-      padding: 0.5rem;
+      padding: 8px;
+      border: 1px solid #ddd;
       text-align: center;
-    }
-    input, select, textarea, button {
-      font-family: 'Cursive', sans-serif;
-      padding: 0.5rem;
-      margin: 0.5rem 0;
-      border: 1px solid goldenrod;
-    }
-    button {
-      background: goldenrod;
-      color: white;
-      cursor: pointer;
-      border-radius: 5px;
-    }
-    h2 {
-      color: goldenrod;
     }
     #orderOutput {
       white-space: pre-wrap;
-      border: 1px solid goldenrod;
+      background: #f1f1f1;
       padding: 1rem;
-      margin-top: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 8px;
     }
   </style>
 </head>
 <body>
-  <h2>🛒 Basket</h2>
-  <div id="basket-table"></div>  <h2>Shipping Details</h2>
-  <form id="shippingForm">
-    <label>Recipient Name: <input type="text" id="recipient" required></label><br>
-    <label>Email: <input type="email" id="email" required></label><br>
-    <label>Country Code: <input type="text" id="countryCode" required></label>
-    <label>Phone: <input type="text" id="phone" required></label><br>
-    <label>Address: <textarea id="address" required></textarea></label><br>
-    <label>Area: <input type="text" id="area" required></label>
-    <label>City: <input type="text" id="city" required></label><br>
-    <label>State: <input type="text" id="state" required></label>
-    <label>Country: <input type="text" id="country" required></label>
-    <label>Zip Code: <input type="text" id="zip" required></label><br>
-    <button type="button" onclick="collectOrderDetails()">📋 Collect Order Info</button>
-    <button type="button" onclick="generateOrderId()">🔐 Generate Order ID</button>
-    <button type="button" onclick="storeToAdmin()">📏 Save Order</button>
-  </form>  <div id="orderOutput"></div>  <script src="https://cdn.jsdelivr.net/npm/pouchdb@7.3.1/dist/pouchdb.min.js"></script>  <script src="https://cdn.jsdelivr.net/npm/ipfs/dist/index.min.js"></script>  <script src="https://cdn.jsdelivr.net/npm/orbit-db/dist/orbitdb.min.js"></script>  <script>
+  <h1>🛒 Basket</h1>
+  <div id="basket-table"></div>
+
+  <h2>Shipping Details</h2>
+  <div id="shipping-form"></div>
+
+  <tonic-button onclick="collectOrderDetails()">📋 Collect Order Info</tonic-button>
+  <tonic-button onclick="generateOrderId()">🔐 Generate Order ID</tonic-button>
+  <tonic-button onclick="storeToAdmin()">💾 Save Order</tonic-button>
+  <tonic-button onclick="startPaymentFlow()">💳 Pay Now</tonic-button>
+
+  <h3>📦 Order Summary</h3>
+  <div id="orderOutput"></div>
+
+  <script>
+    const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
+    const globalOrders = gun.get('imacx_orders');
     let orderId = '';
     let shipping = {};
-    let newOrder = {};
     let total = 0;
-    const pouch = new PouchDB('imacx_orders');
 
     function getBasket() {
       return JSON.parse(localStorage.getItem('basket')) || [];
@@ -73,23 +72,23 @@
 
     function renderBasket() {
       const basket = getBasket();
+      const tableDiv = document.getElementById('basket-table');
       if (basket.length === 0) {
-        document.getElementById('basket-table').innerHTML = '<p>No items in basket.</p>';
+        tableDiv.innerHTML = '<p>No items in basket.</p>';
         return;
       }
 
       total = 0;
       let html = `<table>
         <tr>
-          <th>Image</th><th>Name</th><th>Qty</th><th>Price</th>
-          <th>Total</th><th>Category</th><th>Subcategory</th><th>Action</th>
+          <th>Image</th><th>Name</th><th>Qty</th><th>Price</th><th>Total</th><th>Category</th><th>Subcategory</th><th>Action</th>
         </tr>`;
 
       basket.forEach((item, index) => {
         const itemTotal = item.price * item.quantity;
         total += itemTotal;
         html += `<tr>
-          <td><img src="${item.image}" width="50"></td>
+          <td><img src="${item.image}"></td>
           <td>${item.name}</td>
           <td>${item.quantity}</td>
           <td>₹${item.price}</td>
@@ -101,20 +100,36 @@
       });
 
       html += `<tr><td colspan="4"><strong>Grand Total</strong></td><td colspan="4"><strong>₹${total}</strong></td></tr></table>`;
-      document.getElementById('basket-table').innerHTML = html;
+      tableDiv.innerHTML = html;
     }
 
     function deleteItem(index) {
       const basket = getBasket();
-      if (confirm("Remove this item from basket?")) {
+      if (confirm("Remove this item?")) {
         basket.splice(index, 1);
         localStorage.setItem('basket', JSON.stringify(basket));
         renderBasket();
       }
     }
 
+    function renderShippingForm() {
+      document.getElementById('shipping-form').innerHTML = `
+        <tonic-input placeholder="Recipient Name" id="recipient"></tonic-input><br>
+        <tonic-input placeholder="Email" id="email" type="email"></tonic-input><br>
+        <tonic-input placeholder="Country Code" id="countryCode"></tonic-input>
+        <tonic-input placeholder="Phone" id="phone"></tonic-input><br>
+        <tonic-textarea placeholder="Full Address" id="address"></tonic-textarea><br>
+        <tonic-input placeholder="Area" id="area"></tonic-input>
+        <tonic-input placeholder="City" id="city"></tonic-input><br>
+        <tonic-input placeholder="State" id="state"></tonic-input>
+        <tonic-input placeholder="Country" id="country"></tonic-input>
+        <tonic-input placeholder="Zip Code" id="zip"></tonic-input><br>
+      `;
+    }
+
     function collectOrderDetails() {
       const basket = getBasket();
+      total = radash.sum(basket.map(i => i.quantity * i.price));
       shipping = {
         recipient: document.getElementById('recipient').value,
         email: document.getElementById('email').value,
@@ -128,8 +143,6 @@
         zip: document.getElementById('zip').value
       };
 
-      total = basket.reduce((acc, item) => acc + item.price * item.quantity, 0);
-
       document.getElementById('orderOutput').textContent = JSON.stringify({
         orderId,
         shipping,
@@ -140,38 +153,74 @@
 
     function generateOrderId() {
       orderId = 'IMX' + Math.random().toString(36).substr(2, 9).toUpperCase();
-      console.log("Generated Order ID:", orderId);
+      alert("Generated Order ID: " + orderId);
     }
 
-    async function storeToAdmin() {
+    function storeToAdmin() {
       const basket = getBasket();
-      if (!orderId || Object.keys(shipping).length === 0 || basket.length === 0) {
-        alert("❗ Please collect shipping info, generate order ID, and have items in basket.");
+      if (!orderId || !shipping.recipient || basket.length === 0) {
+        alert("Collect shipping, generate order ID, and add items first.");
         return;
       }
 
-      total = basket.reduce((acc, item) => acc + item.quantity * item.price, 0);
-      newOrder = {
-        _id: orderId,
+      const order = {
         orderId,
-        basket,
-        shipping,
+        basket: JSON.parse(JSON.stringify(basket)),
+        shipping: JSON.parse(JSON.stringify(shipping)),
         total,
         status: "Order Created",
         timestamp: Date.now()
       };
 
-      try {
-        await pouch.put(newOrder);
-        alert("✅ Order saved to PouchDB.");
-        document.getElementById('orderOutput').textContent = JSON.stringify(newOrder, null, 2);
-      } catch (err) {
-        console.error("PouchDB error:", err);
+      const orderRef = globalOrders.get(orderId).put(order);
+      orderRef.get('orderId').put(orderId);
+      globalOrders.set(orderRef);
+
+      alert("✅ Order saved.");
+      localStorage.setItem('admin_orders', JSON.stringify([...(JSON.parse(localStorage.getItem('admin_orders')) || []), order]));
+      document.getElementById('orderOutput').textContent = JSON.stringify(order, null, 2);
+    }
+
+    function startPaymentFlow() {
+      const basket = getBasket();
+      if (!orderId || !shipping.recipient || basket.length === 0) {
+        alert("Save order first.");
+        return;
       }
 
-      // Optionally replicate with CouchDB or OrbitDB here
+      const options = {
+        key: "rzp_live_ozWo08bXwqssx3",
+        amount: Math.round(total * 100),
+        currency: "INR",
+        name: "imacx Shop",
+        description: `Order ID: ${orderId}`,
+        notes: {
+          ...shipping,
+          orderId,
+          total: `₹${total}`,
+          items: basket.map(i => `${i.name} x${i.quantity}`).join(', ')
+        },
+        handler: function (response) {
+          globalOrders.get(orderId).get('status').put('Payment Done');
+          localStorage.removeItem('basket');
+          alert("✅ Payment Successful!");
+          window.location.href = 'thankyou.html';
+        },
+        prefill: {
+          name: shipping.recipient,
+          email: shipping.email,
+          contact: shipping.countryCode + shipping.phone
+        },
+        theme: {
+          color: "#bfa046"
+        }
+      };
+
+      new Razorpay(options).open();
     }
 
     renderBasket();
-  </script></body>
+    renderShippingForm();
+  </script>
+</body>
 </html>
