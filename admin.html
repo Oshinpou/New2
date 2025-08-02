@@ -2,132 +2,84 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>imacx Admin - Orders</title>
-  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-  <style>
-    body {
-      font-family: sans-serif;
-      padding: 20px;
-      background: #fefefe;
-    }
-    h1 {
-      text-align: center;
-    }
-    .order {
-      border: 1px solid #ccc;
-      padding: 15px;
-      margin-bottom: 20px;
-      border-radius: 5px;
-      background: #ffffef;
-    }
-    pre {
-      background: #fff;
-      padding: 10px;
-      border: 1px dashed #aaa;
-      overflow-x: auto;
-    }
-    select, button {
-      margin-top: 10px;
-      padding: 6px 10px;
-      font-size: 14px;
-    }
-  </style>
-</head>
-<body>
+  <title>Admin Orders Panel</title>
+  <script src="https://cdn.jsdelivr.net/npm/pouchdb@7.3.1/dist/pouchdb.min.js"></script>
+  <script>
+    const db = new PouchDB('orders');
 
-<h1>🌍 imacx Admin - Global Orders</h1>
-<div style="text-align:center; margin-bottom: 20px;">
-  <input type="text" id="searchInput" placeholder="Enter Order ID" style="padding:8px; width:250px;">
-  <button onclick="searchOrder()">🔍 Search</button>
-</div>
-<div id="orders"></div>
-<p id="emptyNote">No orders found.</p>
+    function loadOrders(filterId = '') {
+      db.allDocs({ include_docs: true }).then(result => {
+        const container = document.getElementById("ordersContainer");
+        container.innerHTML = "";
 
-<script>
-  const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
-  const ordersRef = gun.get('imacx_orders');
-  const ordersDiv = document.getElementById('orders');
-  const emptyNote = document.getElementById('emptyNote');
+        const orders = result.rows
+          .map(row => row.doc)
+          .filter(doc => filterId ? doc._id.includes(filterId) : true);
 
-  const STATUS_LIST = [
-    'Order Created', 'Payment Done', 'Order Cancelled',
-    'Order Processing', 'Out for Shipping', 'Shipped',
-    'Out for Delivery', 'Delivered'
-  ];
-
-  function renderOrder(order, orderId) {
-    const wrapper = document.createElement('div');
-    wrapper.className = 'order';
-
-    const pre = document.createElement('pre');
-    pre.textContent = JSON.stringify(order, null, 2);
-
-    const statusLabel = document.createElement('label');
-    statusLabel.textContent = "Status: ";
-
-    const select = document.createElement('select');
-    STATUS_LIST.forEach(status => {
-      const opt = document.createElement('option');
-      opt.value = status;
-      opt.textContent = status;
-      if (order.status === status) opt.selected = true;
-      select.appendChild(opt);
-    });
-
-    const btn = document.createElement('button');
-    btn.textContent = "Update Status";
-    btn.onclick = () => {
-      ordersRef.get(orderId).put({ ...order, status: select.value }, ack => {
-        if (ack.err) {
-          alert("❌ Failed to update status.");
-        } else {
-          alert("✅ Status updated successfully.");
+        if (orders.length === 0) {
+          container.innerHTML = "<p>No orders found.</p>";
+          return;
         }
+
+        orders.forEach(order => {
+          const div = document.createElement("div");
+          div.className = "order-card";
+          div.style = "border:1px solid #ccc; padding:10px; margin:10px; border-radius:8px";
+
+          div.innerHTML = `
+            <p><strong>Order ID:</strong> ${order._id}</p>
+            <p><strong>Name:</strong> ${order.name || "N/A"}</p>
+            <p><strong>Price:</strong> ₹${order.price || "0"}</p>
+            <p><strong>Description:</strong> ${order.description || "N/A"}</p>
+            <p><strong>Status:</strong> ${order.status || "Pending"}</p>
+
+            <select id="status_${order._id}">
+              <option value="Pending" ${order.status === "Pending" ? "selected" : ""}>Pending</option>
+              <option value="Shipped" ${order.status === "Shipped" ? "selected" : ""}>Shipped</option>
+              <option value="Delivered" ${order.status === "Delivered" ? "selected" : ""}>Delivered</option>
+              <option value="Cancelled" ${order.status === "Cancelled" ? "selected" : ""}>Cancelled</option>
+            </select>
+            <button onclick="updateStatus('${order._id}')">Update Status</button>
+          `;
+
+          container.appendChild(div);
+        });
       });
-    };
-
-    wrapper.appendChild(pre);
-    wrapper.appendChild(statusLabel);
-    wrapper.appendChild(select);
-    wrapper.appendChild(btn);
-    ordersDiv.appendChild(wrapper);
-  }
-
-  function loadOrders() {
-    ordersDiv.innerHTML = '';
-    emptyNote.style.display = 'block';
-
-    ordersRef.map().once((order, orderId) => {
-      if (!order || !order.orderId) return;
-      emptyNote.style.display = 'none';
-      renderOrder(order, orderId);
-    });
-  }
-
-  function searchOrder() {
-    const searchId = document.getElementById('searchInput').value.trim();
-    ordersDiv.innerHTML = '';
-    emptyNote.style.display = 'block';
-    emptyNote.textContent = "Searching...";
-
-    if (!searchId) {
-      alert("❗ Enter an Order ID to search.");
-      return;
     }
 
-    ordersRef.get(searchId).once(order => {
-      if (order && order.orderId) {
-        emptyNote.style.display = 'none';
-        renderOrder(order, searchId);
-      } else {
-        ordersDiv.innerHTML = '';
-        emptyNote.textContent = "❌ Order not found.";
-      }
-    });
-  }
+    function updateStatus(orderId) {
+      db.get(orderId).then(doc => {
+        const newStatus = document.getElementById(`status_${orderId}`).value;
+        doc.status = newStatus;
+        return db.put(doc);
+      }).then(() => {
+        alert("Order status updated");
+        loadOrders(); // reload to reflect changes
+      }).catch(err => {
+        console.error("Failed to update:", err);
+        alert("Failed to update order");
+      });
+    }
 
-  window.onload = loadOrders;
-</script>
+    function searchOrder() {
+      const id = document.getElementById("searchInput").value.trim();
+      loadOrders(id);
+    }
 
+    window.onload = () => {
+      loadOrders();
+    }
+  </script>
+</head>
+<body style="font-family:sans-serif;padding:20px;">
+  <h1>Admin Panel - All Orders</h1>
+  
+  <div style="margin-bottom:20px;">
+    <input type="text" id="searchInput" placeholder="Search Order ID..." />
+    <button onclick="searchOrder()">Search</button>
+    <button onclick="loadOrders()">Show All</button>
+  </div>
+
+  <div id="ordersContainer"></div>
 </body>
 </html>
