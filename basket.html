@@ -173,7 +173,8 @@
         timestamp: new Date().toISOString()
       };
 
-      globalOrders.get(orderId).put(newOrder, ack => {
+      // ✅ Save as { data: newOrder }
+      globalOrders.get(orderId).put({ data: newOrder }, ack => {
         if (ack.err) {
           console.error("❌ Error saving order:", ack.err);
           document.getElementById('orderOutput').textContent = '❌ Error saving order: ' + ack.err;
@@ -201,7 +202,8 @@
         timestamp: new Date().toISOString()
       };
 
-      globalOrders.get(orderId).put(newOrder);
+      // ✅ Save under data again
+      globalOrders.get(orderId).put({ data: newOrder });
 
       const options = {
         key: "rzp_live_ozWo08bXwqssx3",
@@ -227,7 +229,10 @@
         },
         handler: function (response) {
           alert("✅ Payment Successful! Razorpay ID: " + response.razorpay_payment_id);
-          globalOrders.get(orderId).get('status').put('Payment Done');
+
+          // ✅ Update inside data.status
+          globalOrders.get(orderId).get('data').get('status').put('Payment Done');
+
           localStorage.setItem('orderData', JSON.stringify({
             ...newOrder,
             status: 'Payment Done',
