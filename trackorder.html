@@ -1,81 +1,50 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Track Order from Admin Pages</title>
+  <meta charset="UTF-8" />
+  <title>Track Order</title>
   <style>
-    body { font-family: sans-serif; padding: 20px; background: #f4f8ff; }
-    input { padding: 10px; width: 100%; margin-bottom: 15px; }
-    .result { background: #fff; border-left: 5px solid #007bff; padding: 15px; margin-top: 20px; box-shadow: 0 0 5px #ccc; }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-    th, td { padding: 10px; border: 1px solid #ccc; }
-    iframe { display: none; }
+    body { font-family: sans-serif; padding: 20px; }
+    input { padding: 6px; width: 100%; margin-bottom: 10px; }
+    .order-block { border: 1px solid #ccc; padding: 10px; margin-top: 10px; }
   </style>
 </head>
 <body>
 
-  <h2>Track Order by Order ID</h2>
-  <input id="searchInput" placeholder="Enter Order ID to Search" />
-  <button onclick="searchAcrossAdminPages()">Search Order</button>
-
-  <div id="resultContainer"></div>
-
-  <!-- Load admin pages as hidden iframes -->
-  <iframe id="admin1" src="admin1.html"></iframe>
-  <iframe id="admin2" src="admin2.html"></iframe>
-  <!-- Add more if needed -->
+  <h2>Track Your Order</h2>
+  <input id="searchId" placeholder="Enter Order ID" oninput="searchOrder()" />
+  <div id="result"></div>
 
   <script>
-    const adminPages = ['admin1', 'admin2']; // iframe IDs
+    function searchOrder() {
+      const id = document.getElementById("searchId").value.trim();
+      const resultDiv = document.getElementById("result");
+      resultDiv.innerHTML = "";
 
-    function searchAcrossAdminPages() {
-      const orderId = document.getElementById('searchInput').value.trim().toLowerCase();
-      document.getElementById('resultContainer').innerHTML = '';
+      const adminPages = ["admin1_orders"]; // You can add more admin page keys here like "admin2_orders", etc.
+      
       let found = false;
-
-      adminPages.forEach(frameId => {
-        const frame = document.getElementById(frameId);
-
-        // Delay to make sure iframe is loaded
-        setTimeout(() => {
-          try {
-            const doc = frame.contentDocument || frame.contentWindow.document;
-            const tables = doc.querySelectorAll(".order-box");
-
-            tables.forEach(box => {
-              const table = box.querySelector("table");
-              const cell = table.rows[1]?.cells[0];
-              if (cell && cell.innerText.trim().toLowerCase() === orderId) {
-                const clone = table.cloneNode(true);
-                cleanTable(clone);
-                const div = document.createElement('div');
-                div.className = 'result';
-                div.innerHTML = `<h3>Order Found in ${frameId}.html</h3>`;
-                div.appendChild(clone);
-                document.getElementById('resultContainer').appendChild(div);
-                found = true;
-              }
-            });
-
-            if (!found && frameId === adminPages[adminPages.length - 1]) {
-              setTimeout(() => {
-                if (!found) document.getElementById('resultContainer').innerHTML = '<p>No matching order found.</p>';
-              }, 200);
-            }
-          } catch (e) {
-            console.error("Access error from", frameId);
-          }
-        }, 200);
+      adminPages.forEach(key => {
+        const orders = JSON.parse(localStorage.getItem(key)) || [];
+        const match = orders.find(order => order.id === id);
+        if (match) {
+          found = true;
+          const block = document.createElement("div");
+          block.className = "order-block";
+          block.innerHTML = `
+            <strong>Order ID:</strong> ${match.id}<br/>
+            <strong>Status:</strong> ${match.status}<br/>
+            <strong>Items:</strong><br/><pre>${match.items}</pre>
+            <strong>Total:</strong> ${match.total}
+          `;
+          resultDiv.appendChild(block);
+        }
       });
-    }
 
-    function cleanTable(table) {
-      const buttons = table.querySelectorAll('button');
-      buttons.forEach(btn => btn.remove());
-      const rows = table.querySelectorAll('td');
-      rows.forEach(td => td.removeAttribute('contenteditable'));
+      if (!found && id.length > 0) {
+        resultDiv.innerHTML = "<p>No order found with that ID.</p>";
+      }
     }
   </script>
-
 </body>
 </html>
