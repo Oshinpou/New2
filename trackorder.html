@@ -1,63 +1,78 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Track Order</title>
-  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+  <meta charset="UTF-8" />
+  <title>Track Order by ID</title>
   <style>
-    body { font-family: sans-serif; padding: 20px; background: #eef; }
-    input { margin: 5px 0; padding: 6px; width: 100%; }
-    button { margin-top: 10px; }
-    .order { border: 1px solid #999; background: #fff; padding: 10px; margin-top: 10px; }
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      background: #eef;
+    }
+    input {
+      padding: 10px;
+      width: 100%;
+      box-sizing: border-box;
+      margin-bottom: 10px;
+    }
+    .order-box {
+      background: #fff;
+      padding: 15px;
+      margin: 15px 0;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+      border-left: 5px solid #007bff;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ccc;
+      background: #fdfdfd;
+    }
   </style>
 </head>
 <body>
+
   <h2>Track Order</h2>
-  <input id="trackId" placeholder="Enter Order ID" />
-  <button onclick="trackOrder()">Search</button>
-  <div id="trackResults"></div>
+  <input id="searchInput" placeholder="Enter Order ID to Search" oninput="searchOrder()" />
+
+  <div id="results"></div>
 
   <script>
-    const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
-    const adminPages = ['admin1-orders', 'admin2-orders']; // Add more later
-    let found = false;
+    const orders = JSON.parse(localStorage.getItem("orders") || "[]");
 
-    function trackOrder() {
-      const id = document.getElementById('trackId').value.trim();
-      document.getElementById('trackResults').innerHTML = '';
-      found = false;
+    function searchOrder() {
+      const keyword = document.getElementById("searchInput").value.trim().toLowerCase();
+      const container = document.getElementById("results");
+      container.innerHTML = "";
 
-      adminPages.forEach(pageKey => {
-        gun.get(pageKey).get(id).once(data => {
-          if (data && !found) {
-            found = true;
-            showOrder(data);
-          }
-        });
+      const matches = orders.filter(o => o.id.toLowerCase().includes(keyword));
+      if (matches.length === 0) {
+        container.innerHTML = "<p>No orders found.</p>";
+        return;
+      }
+
+      matches.forEach(order => {
+        const box = document.createElement("div");
+        box.className = "order-box";
+        box.innerHTML = `
+          <h3>Order Found</h3>
+          <table>
+            <thead>
+              <tr><th>Order ID</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>${order.id}</td><td>${order.status}</td></tr>
+            </tbody>
+          </table>
+        `;
+        container.appendChild(box);
       });
-
-      setTimeout(() => {
-        if (!found) {
-          document.getElementById('trackResults').innerHTML = 'Order not found.';
-        }
-      }, 1000);
-    }
-
-    function showOrder(order) {
-      const div = document.createElement('div');
-      div.className = 'order';
-      div.innerHTML = `
-        <strong>Order ID:</strong> ${order.id}<br>
-        <strong>Status:</strong> ${order.status}<br>
-        <strong>Category:</strong> ${order.category}<br>
-        <strong>Subcategory:</strong> ${order.subcategory}<br>
-        <strong>Total:</strong> ₹${order.total}<br>
-        <strong>Items:</strong><ul>
-          ${order.items.map(i => `<li>${i.name} - ${i.qty} x ₹${i.price} [${i.color}, ${i.size}]</li>`).join('')}
-        </ul>
-      `;
-      document.getElementById('trackResults').appendChild(div);
     }
   </script>
+
 </body>
 </html>
