@@ -2,97 +2,61 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Search Order - imacx Admin</title>
+  <title>Track Order</title>
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
   <style>
-    body {
-      font-family: sans-serif;
-      padding: 2rem;
-      background-color: #fffff0;
-      color: #333;
-    }
-    h1 {
-      color: goldenrod;
-    }
-    input {
-      padding: 0.6rem;
-      width: 300px;
-      font-size: 16px;
-      margin-right: 10px;
-      border: 1px solid goldenrod;
-      border-radius: 4px;
-    }
-    button {
-      padding: 0.6rem 1rem;
-      background-color: goldenrod;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    .result {
-      margin-top: 2rem;
-      border: 1px solid #ccc;
-      background: #fff;
-      padding: 1rem;
-      border-radius: 5px;
-    }
-    select {
-      margin-top: 1rem;
-      padding: 0.5rem;
-    }
+    body { font-family: sans-serif; padding: 20px; background: #eef; }
+    input { margin: 5px 0; padding: 6px; width: 100%; }
+    button { margin-top: 10px; }
+    .order { border: 1px solid #999; background: #fff; padding: 10px; margin-top: 10px; }
   </style>
 </head>
 <body>
-
-  <h1>🔍 Search Order by ID</h1>
-
-  <input type="text" id="orderIdInput" placeholder="Enter Order ID (e.g., IMX...)">
-  <button onclick="searchOrder()">Search</button>
-
-  <div id="result" class="result" style="display: none;"></div>
+  <h2>Track Order</h2>
+  <input id="trackId" placeholder="Enter Order ID" />
+  <button onclick="trackOrder()">Search</button>
+  <div id="trackResults"></div>
 
   <script>
     const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
-    const globalOrders = gun.get('imacx_orders');
+    const adminPages = ['admin1-orders', 'admin2-orders']; // Add more later
+    let found = false;
 
-    const STATUS_LIST = [
-      'Order Created', 'Payment Done', 'Order Cancelled',
-      'Order Processing', 'Out for Shipping', 'Shipped',
-      'Out for Delivery', 'Delivered'
-    ];
+    function trackOrder() {
+      const id = document.getElementById('trackId').value.trim();
+      document.getElementById('trackResults').innerHTML = '';
+      found = false;
 
-     function searchOrder() {
-  const orderId = document.getElementById('orderIdInput').value.trim().toUpperCase();
-  if (!orderId.startsWith('IMX')) {
-    alert('⚠️ Please enter a valid Order ID starting with "IMX".');
-    return;
-  }
+      adminPages.forEach(pageKey => {
+        gun.get(pageKey).get(id).once(data => {
+          if (data && !found) {
+            found = true;
+            showOrder(data);
+          }
+        });
+      });
 
-  globalOrders.get(orderId).once(order => {
-    const resultBox = document.getElementById('result');
-    if (!order || !order.orderId) {
-      resultBox.innerHTML = `<p style="color:red">❌ Order not found.</p>`;
-      resultBox.style.display = 'block';
-      return;
+      setTimeout(() => {
+        if (!found) {
+          document.getElementById('trackResults').innerHTML = 'Order not found.';
+        }
+      }, 1000);
     }
 
-    // Display order (hide update button, keep status select)
-    resultBox.innerHTML = `
-      <pre>${JSON.stringify(order, null, 2)}</pre>
-      <label for="statusSelect">Status: </label>
-      <select id="statusSelect" disabled>
-        ${STATUS_LIST.map(s => `<option value="${s}" ${s === order.status ? 'selected' : ''}>${s}</option>`).join('')}
-      </select>
-    `;
-    resultBox.style.display = 'block';
-  });
-}   
-
-    function updateStatus(orderId) {
-      const newStatus = document.getElementById('statusSelect').value;
-      globalOrders.get(orderId).get('status').put(newStatus);
-      alert('✅ Status updated to: ' + newStatus);
+    function showOrder(order) {
+      const div = document.createElement('div');
+      div.className = 'order';
+      div.innerHTML = `
+        <strong>Order ID:</strong> ${order.id}<br>
+        <strong>Status:</strong> ${order.status}<br>
+        <strong>Category:</strong> ${order.category}<br>
+        <strong>Subcategory:</strong> ${order.subcategory}<br>
+        <strong>Total:</strong> ₹${order.total}<br>
+        <strong>Items:</strong><ul>
+          ${order.items.map(i => `<li>${i.name} - ${i.qty} x ₹${i.price} [${i.color}, ${i.size}]</li>`).join('')}
+        </ul>
+      `;
+      document.getElementById('trackResults').appendChild(div);
     }
   </script>
 </body>
