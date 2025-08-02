@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Basket - imacx Shop</title>
+  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <style>
     body {
       font-family: 'Cursive', sans-serif;
@@ -41,6 +43,7 @@
       border: 1px solid goldenrod;
       padding: 1rem;
       margin-top: 1rem;
+      background-color: #fefae0;
     }
   </style>
 </head>
@@ -66,10 +69,8 @@
     <button type="button" onclick="startPaymentFlow()">💳 Pay Now</button>
   </form>
 
-  <div id="orderOutput"></div>
+  <div id="orderOutput">Order output will appear here...</div>
 
-  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <script>
     const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
     const globalOrders = gun.get('imacx_orders');
@@ -169,16 +170,16 @@
         shipping,
         total,
         status: "Order Created",
-        timestamp: Date.now()
+        timestamp: new Date().toISOString()
       };
 
       globalOrders.get(orderId).put(newOrder, ack => {
         if (ack.err) {
-          alert("❌ Error saving order to GunDB.");
+          console.error("❌ Error saving order:", ack.err);
+          document.getElementById('orderOutput').textContent = '❌ Error saving order: ' + ack.err;
         } else {
-          alert("✅ Order saved to GunDB.");
-          localStorage.setItem('admin_orders', JSON.stringify([...(JSON.parse(localStorage.getItem('admin_orders')) || []), newOrder]));
-          document.getElementById('orderOutput').textContent = JSON.stringify(newOrder, null, 2);
+          console.log("✅ Order saved:", newOrder);
+          document.getElementById('orderOutput').textContent = '✅ Order saved:\n' + JSON.stringify(newOrder, null, 2);
         }
       });
     }
@@ -197,7 +198,7 @@
         shipping,
         total,
         status: "Order Created",
-        timestamp: Date.now()
+        timestamp: new Date().toISOString()
       };
 
       globalOrders.get(orderId).put(newOrder);
