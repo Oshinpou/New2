@@ -66,9 +66,15 @@
     const updateBtn = document.createElement('button');
     updateBtn.textContent = 'Update Status';
     updateBtn.onclick = () => {
-      orders.get(id).put({ data: { ...data, status: statusInput.value } });
-      alert('✅ Status updated');
-    };
+  const updatedData = { ...data, status: statusInput.value };
+  gun.get('imacx_orders').get(id).get('data').put(updatedData, ack => {
+    if (ack.err) {
+      alert('❌ Failed to update status.');
+    } else {
+      alert('✅ Status updated successfully!');
+    }
+  });
+};
 
     container.innerHTML = `
       <strong>Order ID:</strong> ${orderId}<br>
