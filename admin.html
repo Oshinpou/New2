@@ -56,7 +56,7 @@
     'Out for Delivery', 'Delivered'
   ];
 
-  function renderOrder(order) {
+  function renderOrder(order, key) {
     const wrapper = document.createElement('div');
     wrapper.className = 'order';
 
@@ -78,7 +78,7 @@
     const btn = document.createElement('button');
     btn.textContent = "Update Status";
     btn.onclick = () => {
-      ordersRef.get(order.orderId).get('status').put(select.value);
+      ordersRef.get(key).get('status').put(select.value);
       alert("✅ Status updated");
     };
 
@@ -91,18 +91,18 @@
   }
 
   function loadOrders() {
-    ordersDiv.innerHTML = ''; // clear previous
-    let foundAny = false;
+    ordersDiv.innerHTML = '';
+    let found = false;
 
     ordersRef.map().once((order, key) => {
       if (!order || !order.orderId) return;
-      foundAny = true;
+      found = true;
       emptyNote.style.display = 'none';
-      renderOrder(order);
+      renderOrder(order, key);
     });
 
     setTimeout(() => {
-      if (!foundAny) {
+      if (!found) {
         emptyNote.style.display = 'block';
         emptyNote.textContent = 'No orders found.';
       }
@@ -123,7 +123,7 @@
     ordersRef.get(searchId).once(order => {
       if (order && order.orderId) {
         emptyNote.style.display = 'none';
-        renderOrder(order);
+        renderOrder(order, searchId);
       } else {
         emptyNote.textContent = "❌ Order not found.";
       }
