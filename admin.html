@@ -66,13 +66,17 @@
     const updateBtn = document.createElement('button');
     updateBtn.textContent = 'Update Status';
     updateBtn.onclick = () => {
-  const updatedData = { ...data, status: statusInput.value };
-  gun.get('imacx_orders').get(id).get('data').put(updatedData, ack => {
-    if (ack.err) {
-      alert('❌ Failed to update status.');
-    } else {
-      alert('✅ Status updated successfully!');
-    }
+  const newStatus = statusInput.value.trim();
+  gun.get('imacx_orders').get(id).once(existing => {
+    const existingData = existing?.data || existing || {};
+    const updatedData = { ...existingData, status: newStatus };
+    gun.get('imacx_orders').get(id).put({ data: updatedData }, ack => {
+      if (ack.err) {
+        alert('❌ Failed to update status.');
+      } else {
+        alert('✅ Status updated successfully!');
+      }
+    });
   });
 };
 
@@ -164,9 +168,19 @@ function attachStatusUpdateHandler(orderId, data) {
     const updateBtn = document.createElement('button');
     updateBtn.textContent = 'Update Status';
     updateBtn.onclick = () => {
-      gun.get('imacx_orders').get(id).put({ data: { ...data, status: statusInput.value } });
-      alert('✅ Status updated');
-    };
+  const newStatus = statusInput.value.trim();
+  gun.get('imacx_orders').get(id).once(existing => {
+    const existingData = existing?.data || existing || {};
+    const updatedData = { ...existingData, status: newStatus };
+    gun.get('imacx_orders').get(id).put({ data: updatedData }, ack => {
+      if (ack.err) {
+        alert('❌ Failed to update status.');
+      } else {
+        alert('✅ Status updated and saved.');
+      }
+    });
+  });
+};
 
     const resultHTML = `
       <div class="order" style="margin-top:20px;padding:10px;border:1px solid #ccc;">
