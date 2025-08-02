@@ -2,84 +2,110 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Admin Orders Panel</title>
+  <title>Admin Orders - Imacx</title>
   <script src="https://cdn.jsdelivr.net/npm/pouchdb@7.3.1/dist/pouchdb.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background-color: #f9f9f9;
+    }
+    .order {
+      border: 1px solid #ccc;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-radius: 8px;
+      background: white;
+    }
+    .order h3 {
+      margin-top: 0;
+    }
+    .status-btn {
+      background-color: #4caf50;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      margin-top: 10px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .status-btn:hover {
+      background-color: #45a049;
+    }
+    input[type="text"] {
+      padding: 8px;
+      width: 250px;
+      margin-bottom: 20px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Admin Order Panel</h1>
+  <input type="text" id="search" placeholder="Search by Order ID..." oninput="filterOrders()">
+
+  <div id="orders"></div>
+
   <script>
     const db = new PouchDB('orders');
 
-    function loadOrders(filterId = '') {
-      db.allDocs({ include_docs: true }).then(result => {
-        const container = document.getElementById("ordersContainer");
-        container.innerHTML = "";
-
-        const orders = result.rows
-          .map(row => row.doc)
-          .filter(doc => filterId ? doc._id.includes(filterId) : true);
-
-        if (orders.length === 0) {
-          container.innerHTML = "<p>No orders found.</p>";
-          return;
-        }
-
-        orders.forEach(order => {
-          const div = document.createElement("div");
-          div.className = "order-card";
-          div.style = "border:1px solid #ccc; padding:10px; margin:10px; border-radius:8px";
-
-          div.innerHTML = `
-            <p><strong>Order ID:</strong> ${order._id}</p>
-            <p><strong>Name:</strong> ${order.name || "N/A"}</p>
-            <p><strong>Price:</strong> ₹${order.price || "0"}</p>
-            <p><strong>Description:</strong> ${order.description || "N/A"}</p>
-            <p><strong>Status:</strong> ${order.status || "Pending"}</p>
-
-            <select id="status_${order._id}">
-              <option value="Pending" ${order.status === "Pending" ? "selected" : ""}>Pending</option>
-              <option value="Shipped" ${order.status === "Shipped" ? "selected" : ""}>Shipped</option>
-              <option value="Delivered" ${order.status === "Delivered" ? "selected" : ""}>Delivered</option>
-              <option value="Cancelled" ${order.status === "Cancelled" ? "selected" : ""}>Cancelled</option>
-            </select>
-            <button onclick="updateStatus('${order._id}')">Update Status</button>
-          `;
-
-          container.appendChild(div);
+    async function fetchOrders() {
+      const container = document.getElementById('orders');
+      container.innerHTML = '';
+      try {
+        const result = await db.allDocs({ include_docs: true });
+        result.rows.forEach(row => {
+          if (row.doc && row.doc._id.startsWith('order_')) {
+            displayOrder(row.doc);
+          }
         });
+      } catch (err) {
+        console.error('Failed to fetch orders:', err);
+      }
+    }
+
+    function displayOrder(order) {
+      const container = document.getElementById('orders');
+
+      const orderDiv = document.createElement('div');
+      orderDiv.className = 'order';
+      orderDiv.dataset.orderId = order._id;
+
+      orderDiv.innerHTML = `
+        <h3>Order ID: ${order._id}</h3>
+        <p><strong>Name:</strong> ${order.name || ''}</p>
+        <p><strong>Email:</strong> ${order.email || ''}</p>
+        <p><strong>Product:</strong> ${order.product || ''}</p>
+        <p><strong>Status:</strong> <span class="status-text">${order.status || 'pending'}</span></p>
+        <button class="status-btn" onclick="updateStatus('${order._id}')">Mark as Shipped</button>
+      `;
+
+      container.appendChild(orderDiv);
+    }
+
+    async function updateStatus(orderId) {
+      try {
+        const order = await db.get(orderId);
+        order.status = 'shipped';
+        await db.put(order);
+        fetchOrders(); // Refresh display
+      } catch (err) {
+        console.error('Error updating order:', err);
+      }
+    }
+
+    function filterOrders() {
+      const searchValue = document.getElementById('search').value.trim().toLowerCase();
+      const orders = document.querySelectorAll('.order');
+      orders.forEach(order => {
+        const orderId = order.dataset.orderId.toLowerCase();
+        order.style.display = orderId.includes(searchValue) ? 'block' : 'none';
       });
     }
 
-    function updateStatus(orderId) {
-      db.get(orderId).then(doc => {
-        const newStatus = document.getElementById(`status_${orderId}`).value;
-        doc.status = newStatus;
-        return db.put(doc);
-      }).then(() => {
-        alert("Order status updated");
-        loadOrders(); // reload to reflect changes
-      }).catch(err => {
-        console.error("Failed to update:", err);
-        alert("Failed to update order");
-      });
-    }
-
-    function searchOrder() {
-      const id = document.getElementById("searchInput").value.trim();
-      loadOrders(id);
-    }
-
-    window.onload = () => {
-      loadOrders();
-    }
+    fetchOrders();
   </script>
-</head>
-<body style="font-family:sans-serif;padding:20px;">
-  <h1>Admin Panel - All Orders</h1>
-  
-  <div style="margin-bottom:20px;">
-    <input type="text" id="searchInput" placeholder="Search Order ID..." />
-    <button onclick="searchOrder()">Search</button>
-    <button onclick="loadOrders()">Show All</button>
-  </div>
-
-  <div id="ordersContainer"></div>
 </body>
 </html>
