@@ -4,73 +4,78 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Admin - imacx Orders</title>
-  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
   <style>
     body {
-      font-family: 'Cursive', sans-serif;
-      background-color: #fff8dc;
-      color: #6b4c00;
-      padding: 2rem;
+      font-family: sans-serif;
+      background-color: #fff;
+      color: #333;
+      padding: 20px;
     }
-    h1 {
-      color: goldenrod;
-      text-align: center;
-    }
-    .order-card {
-      border: 2px solid goldenrod;
-      border-radius: 8px;
-      padding: 1rem;
-      margin: 1rem 0;
-      background: #fffef0;
-    }
-    .order-card pre {
-      white-space: pre-wrap;
-      font-size: 0.9rem;
-      background: #f7f7f7;
-      padding: 0.5rem;
+    .order {
       border: 1px solid #ccc;
-      overflow-x: auto;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 20px;
+      background: #f9f9f9;
     }
-    .order-id {
-      font-weight: bold;
-      color: #8b4513;
+    input[type="text"] {
+      padding: 4px 6px;
+      margin: 4px 0;
+    }
+    button {
+      padding: 4px 10px;
+      margin-left: 8px;
     }
   </style>
 </head>
 <body>
-  <h1>📦 imacx Orders Admin</h1>
-  <div id="ordersContainer">Loading orders...</div>
+  <h1>📦 imacx Admin - Orders</h1>
+  <div id="orderList">Loading orders...</div>
 
+  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
   <script>
-    const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
-    const globalOrders = gun.get('imacx_orders');
-    const ordersContainer = document.getElementById('ordersContainer');
+    const gun = Gun();
+    const orders = gun.get('imacx_orders');
+    const orderList = document.getElementById('orderList');
 
-    ordersContainer.innerHTML = '';
+    // Load and render all orders
+    orders.map().on((orderNode, orderId) => {
+      if (!orderNode || !orderNode.data) return;
 
-    globalOrders.map().once((value, orderId) => {
-      if (!orderId || !value || typeof value !== 'object') return;
+      const data = orderNode.data;
+      if (!data.orderId) return;
 
-      // Get the real data inside the `.data` object
-      globalOrders.get(orderId).get('data').once(order => {
-        if (!order || document.getElementById(orderId)) return;
+      const container = document.createElement('div');
+      container.className = 'order';
 
-        const orderCard = document.createElement('div');
-        orderCard.className = 'order-card';
-        orderCard.id = orderId;
+      const orderStatusInput = document.createElement('input');
+      orderStatusInput.type = 'text';
+      orderStatusInput.value = data.status || '';
 
-        orderCard.innerHTML = `
-          <div class="order-id">🆔 Order ID: ${order.orderId || orderId}</div>
-          <div><strong>Status:</strong> ${order.status || 'N/A'}</div>
-          <div><strong>Total:</strong> ₹${order.total || 0}</div>
-          <div><strong>Recipient:</strong> ${order.shipping?.recipient || 'N/A'}</div>
-          <div><strong>Phone:</strong> ${order.shipping?.countryCode || ''}${order.shipping?.phone || ''}</div>
-          <div><strong>Address:</strong> ${order.shipping?.address || ''}, ${order.shipping?.area || ''}, ${order.shipping?.city || ''}, ${order.shipping?.state || ''}, ${order.shipping?.country || ''} - ${order.shipping?.zip || ''}</div>
-          <pre>${JSON.stringify(order, null, 2)}</pre>
-        `;
+      const updateBtn = document.createElement('button');
+      updateBtn.textContent = 'Update Status';
+      updateBtn.onclick = () => {
+        orders.get(orderId).get('data').get('status').put(orderStatusInput.value);
+        alert('✅ Status updated');
+      };
 
-        ordersContainer.appendChild(orderCard);
-      });
+      container.innerHTML = `
+        <strong>Order ID:</strong> ${data.orderId}<br>
+        <strong>Total:</strong> ₹${data.total}<br>
+        <strong>Recipient:</strong> ${data.shipping?.name || 'N/A'}<br>
+        <strong>Phone:</strong> ${data.shipping?.phone || 'N/A'}<br>
+        <strong>Address:</strong> 
+          ${data.shipping?.address || ''}, 
+          ${data.shipping?.city || ''}, 
+          ${data.shipping?.state || ''}, 
+          ${data.shipping?.country || ''} - 
+          ${data.shipping?.pincode || ''}<br>
+        <strong>Status:</strong>
+      `;
+
+      container.appendChild(orderStatusInput);
+      container.appendChild(updateBtn);
+      orderList.appendChild(container);
     });
   </script>
 </body>
