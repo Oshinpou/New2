@@ -1,222 +1,127 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Admin - IMACX Orders</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin - imacx Orders</title>
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background-color: #fafafa;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f3f4f6;
       padding: 20px;
     }
     h1 {
       text-align: center;
-      color: #333;
-    }
-    .order {
-      background: white;
-      border: 1px solid #ddd;
-      margin: 15px 0;
-      padding: 20px;
-      border-radius: 8px;
-    }
-    .order span {
-      font-weight: bold;
-    }
-    .status-container {
-      margin-top: 10px;
-    }
-    .status-container input {
-      padding: 5px;
-      width: 200px;
-    }
-    .status-container button {
-      padding: 5px 10px;
-      margin-left: 5px;
     }
     #searchBar {
+      width: 100%;
       padding: 10px;
-      width: 300px;
-      margin: 20px auto;
-      display: block;
+      font-size: 16px;
+      margin-bottom: 20px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    .order {
+      border: 1px solid #ddd;
+      padding: 15px;
+      border-radius: 12px;
+      margin-bottom: 15px;
+      background-color: #ffffff;
+      box-shadow: 2px 2px 6px rgba(0,0,0,0.05);
+    }
+    input[type="text"] {
+      padding: 6px 10px;
+      margin-right: 8px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    button {
+      padding: 6px 12px;
+      background-color: #4f46e5;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #4338ca;
     }
   </style>
 </head>
 <body>
-  <h1>Admin Orders Panel</h1>
-  <input type="text" id="searchBar" placeholder="Search by Order ID..." />
-  <div id="ordersContainer">Loading orders...</div>
+  <h1>🛒 Admin - View & Update Orders</h1>
+  <input type="text" id="searchBar" placeholder="🔍 Search by Order ID..." />
+
+  <div id="ordersContainer"></div>
 
   <script>
-    const gun = Gun();
-    const ordersContainer = document.getElementById('ordersContainer');
-    const searchBar = document.getElementById('searchBar');
+    const gun = Gun({
+      peers: ['https://gun-manhattan.herokuapp.com/gun']
+    });
+
+    const ordersContainer = document.getElementById("ordersContainer");
+    const searchBar = document.getElementById("searchBar");
+
+    const orderElements = {}; // For real-time search filtering
 
     // Load all orders
-    function loadOrders(filter = "") {
-      ordersContainer.innerHTML = "";
-      gun.get('imacx_orders').map().once((orderData, orderId) => {
-        if (!orderData || !orderData.data) return;
+    gun.get("imacx_orders").map().once((order, id) => {
+      if (!order || !order.data) return;
+      const data = order.data;
 
-        const data = orderData.data;
-        if (filter && !orderId.includes(filter)) return;
+      const orderDiv = document.createElement("div");
+      orderDiv.className = "order";
+      orderDiv.dataset.orderId = id;
 
-        const orderDiv = document.createElement('div');
-        orderDiv.className = 'order';
+      const statusInput = document.createElement("input");
+      statusInput.type = "text";
+      statusInput.placeholder = "Enter status";
 
-        const id = orderId;
-        const total = data.total || 'N/A';
-        const name = data.name || 'N/A';
-        const phone = (data.phone || '') + (data.altPhone || '');
-        const address = `${data.address || ''}, ${data.city || ''}, ${data.state || ''}, ${data.country || ''} - ${data.pincode || ''}`;
+      const updateBtn = document.createElement("button");
+      updateBtn.textContent = "Update Status";
 
-        const statusInput = document.createElement('input');
-        statusInput.placeholder = 'Enter status...';
+      updateBtn.onclick = () => {
+        const newStatus = statusInput.value.trim();
+        if (newStatus) {
+          gun.get("imacx_order_status").get(id).put({ status: newStatus });
+          alert("✅ Status permanently updated.");
+        }
+      };
 
-        const updateBtn = document.createElement('button');
-        updateBtn.textContent = 'Update Status';
-
-        const statusDisplay = document.createElement('div');
-        statusDisplay.style.marginTop = '5px';
-        statusDisplay.style.color = 'green';
-
-        // Load stored status from separate node
-        gun.get('imacx_order_status').get(id).once(storedStatus => {
-          if (storedStatus) {
-            statusInput.value = storedStatus;
-            statusDisplay.textContent = `Saved status: ${storedStatus}`;
-          }
-        });
-
-        updateBtn.onclick = () => {
-          const newStatus = statusInput.value.trim();
-          if (newStatus) {
-            gun.get('imacx_order_status').get(id).put(newStatus, ack => {
-              if (ack.err) {
-                alert("Failed to save status.");
-              } else {
-                alert("✅ Status saved!");
-                statusDisplay.textContent = `Saved status: ${newStatus}`;
-              }
-            });
-          }
-        };
-
-        const statusContainer = document.createElement('div');
-        statusContainer.className = 'status-container';
-        statusContainer.appendChild(statusInput);
-        statusContainer.appendChild(updateBtn);
-        statusContainer.appendChild(statusDisplay);
-
-        orderDiv.innerHTML = `
-          <span>Order ID:</span> ${id}<br>
-          <span>Total:</span> ₹${total}<br>
-          <span>Recipient:</span> ${name}<br>
-          <span>Phone:</span> ${phone}<br>
-          <span>Address:</span> ${address}<br>
-        `;
-
-        orderDiv.appendChild(statusContainer);
-        ordersContainer.appendChild(orderDiv);
-      });
-    }
-
-    searchBar.addEventListener('input', () => {
-      const query = searchBar.value.trim();
-      loadOrders(query);
-    });
-
-    loadOrders(); // Initial load
-  </script>
-<script>
-  const gun = Gun();
-  const ordersList = document.getElementById('ordersList');
-
-  // Load all orders
-  gun.get('imacx_orders').map().once((order, id) => {
-    if (!order || !order.data) return;
-
-    const data = order.data;
-    const statusNode = gun.get('imacx_order_statuses').get(id);
-
-    const container = document.createElement('div');
-    container.style.border = '1px solid #ccc';
-    container.style.padding = '15px';
-    container.style.marginBottom = '15px';
-    container.style.borderRadius = '10px';
-    container.style.backgroundColor = '#f7f7f7';
-
-    const heading = document.createElement('h3');
-    heading.textContent = `🆔 Order ID: ${id}`;
-    container.appendChild(heading);
-
-    const recipient = document.createElement('p');
-    recipient.innerHTML = `<strong>Recipient:</strong> ${data.name || 'N/A'}`;
-    container.appendChild(recipient);
-
-    const phone = document.createElement('p');
-    phone.innerHTML = `<strong>Phone:</strong> ${data.phone || 'N/A'}`;
-    container.appendChild(phone);
-
-    const address = document.createElement('p');
-    address.innerHTML = `<strong>Address:</strong> ${[data.address, data.city, data.state, data.country, data.zip].filter(Boolean).join(', ')}`;
-    container.appendChild(address);
-
-    const total = document.createElement('p');
-    total.innerHTML = `<strong>Total:</strong> ₹${data.total || 'N/A'}`;
-    container.appendChild(total);
-
-    const statusLabel = document.createElement('label');
-    statusLabel.textContent = '📝 Status: ';
-    const statusInput = document.createElement('input');
-    statusInput.type = 'text';
-    statusInput.placeholder = 'Enter status';
-    statusInput.style.margin = '0 10px';
-    statusInput.style.padding = '4px';
-    statusInput.style.borderRadius = '5px';
-
-    // Load saved status
-    statusNode.once(savedStatus => {
-      if (savedStatus) {
-        statusInput.value = savedStatus;
-      }
-    });
-
-    const updateBtn = document.createElement('button');
-    updateBtn.textContent = 'Update Status';
-    updateBtn.style.padding = '4px 10px';
-    updateBtn.style.border = 'none';
-    updateBtn.style.borderRadius = '5px';
-    updateBtn.style.backgroundColor = '#007bff';
-    updateBtn.style.color = 'white';
-    updateBtn.style.cursor = 'pointer';
-
-    updateBtn.onclick = () => {
-      const newStatus = statusInput.value.trim();
-      if (!newStatus) {
-        alert('Please enter a status.');
-        return;
-      }
-      statusNode.put(newStatus, ack => {
-        if (ack.err) {
-          alert('❌ Failed to update status.');
-        } else {
-          alert('✅ Status updated and saved globally!');
+      // Fetch saved status from distributed database
+      gun.get("imacx_order_status").get(id).once(saved => {
+        if (saved && saved.status) {
+          statusInput.value = saved.status;
         }
       });
-    };
 
-    const statusGroup = document.createElement('div');
-    statusGroup.appendChild(statusLabel);
-    statusGroup.appendChild(statusInput);
-    statusGroup.appendChild(updateBtn);
-    statusGroup.style.marginTop = '10px';
+      const content = document.createElement("div");
+      content.innerHTML = `
+        <strong>Order ID:</strong> ${id}<br>
+        <strong>Total:</strong> ₹${data.total}<br>
+        <strong>Recipient:</strong> ${data.name}<br>
+        <strong>Phone:</strong> ${data.phone1}, ${data.phone2}<br>
+        <strong>Address:</strong> ${data.address}, ${data.city}, ${data.state}, ${data.country} - ${data.pincode}<br>
+        <strong>Status:</strong> 
+      `;
 
-    container.appendChild(statusGroup);
-    ordersList.appendChild(container);
-  });
-</script>
+      orderDiv.appendChild(content);
+      orderDiv.appendChild(statusInput);
+      orderDiv.appendChild(updateBtn);
+      ordersContainer.appendChild(orderDiv);
 
+      orderElements[id] = orderDiv;
+    });
+
+    // Filter orders by ID in real-time
+    searchBar.addEventListener("input", () => {
+      const term = searchBar.value.trim().toLowerCase();
+      Object.keys(orderElements).forEach(orderId => {
+        const visible = orderId.toLowerCase().includes(term);
+        orderElements[orderId].style.display = visible ? "block" : "none";
+      });
+    });
+  </script>
 </body>
 </html>
