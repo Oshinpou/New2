@@ -129,5 +129,94 @@
 
     loadOrders(); // Initial load
   </script>
+<script>
+  const gun = Gun();
+  const ordersList = document.getElementById('ordersList');
+
+  // Load all orders
+  gun.get('imacx_orders').map().once((order, id) => {
+    if (!order || !order.data) return;
+
+    const data = order.data;
+    const statusNode = gun.get('imacx_order_statuses').get(id);
+
+    const container = document.createElement('div');
+    container.style.border = '1px solid #ccc';
+    container.style.padding = '15px';
+    container.style.marginBottom = '15px';
+    container.style.borderRadius = '10px';
+    container.style.backgroundColor = '#f7f7f7';
+
+    const heading = document.createElement('h3');
+    heading.textContent = `🆔 Order ID: ${id}`;
+    container.appendChild(heading);
+
+    const recipient = document.createElement('p');
+    recipient.innerHTML = `<strong>Recipient:</strong> ${data.name || 'N/A'}`;
+    container.appendChild(recipient);
+
+    const phone = document.createElement('p');
+    phone.innerHTML = `<strong>Phone:</strong> ${data.phone || 'N/A'}`;
+    container.appendChild(phone);
+
+    const address = document.createElement('p');
+    address.innerHTML = `<strong>Address:</strong> ${[data.address, data.city, data.state, data.country, data.zip].filter(Boolean).join(', ')}`;
+    container.appendChild(address);
+
+    const total = document.createElement('p');
+    total.innerHTML = `<strong>Total:</strong> ₹${data.total || 'N/A'}`;
+    container.appendChild(total);
+
+    const statusLabel = document.createElement('label');
+    statusLabel.textContent = '📝 Status: ';
+    const statusInput = document.createElement('input');
+    statusInput.type = 'text';
+    statusInput.placeholder = 'Enter status';
+    statusInput.style.margin = '0 10px';
+    statusInput.style.padding = '4px';
+    statusInput.style.borderRadius = '5px';
+
+    // Load saved status
+    statusNode.once(savedStatus => {
+      if (savedStatus) {
+        statusInput.value = savedStatus;
+      }
+    });
+
+    const updateBtn = document.createElement('button');
+    updateBtn.textContent = 'Update Status';
+    updateBtn.style.padding = '4px 10px';
+    updateBtn.style.border = 'none';
+    updateBtn.style.borderRadius = '5px';
+    updateBtn.style.backgroundColor = '#007bff';
+    updateBtn.style.color = 'white';
+    updateBtn.style.cursor = 'pointer';
+
+    updateBtn.onclick = () => {
+      const newStatus = statusInput.value.trim();
+      if (!newStatus) {
+        alert('Please enter a status.');
+        return;
+      }
+      statusNode.put(newStatus, ack => {
+        if (ack.err) {
+          alert('❌ Failed to update status.');
+        } else {
+          alert('✅ Status updated and saved globally!');
+        }
+      });
+    };
+
+    const statusGroup = document.createElement('div');
+    statusGroup.appendChild(statusLabel);
+    statusGroup.appendChild(statusInput);
+    statusGroup.appendChild(updateBtn);
+    statusGroup.style.marginTop = '10px';
+
+    container.appendChild(statusGroup);
+    ordersList.appendChild(container);
+  });
+</script>
+
 </body>
 </html>
