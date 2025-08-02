@@ -175,7 +175,7 @@
     timestamp: new Date().toISOString()
   };
 
-  globalOrders.get(orderId).put({ data: newOrder }, ack => {
+  globalOrders.get(orderId).put(newOrder, ack => {
     if (ack.err) {
       console.error("❌ Error saving order:", ack.err);
       document.getElementById('orderOutput').textContent = '❌ Error saving order: ' + ack.err;
@@ -203,7 +203,7 @@
   timestamp: new Date().toISOString()
 };
       // ✅ Save under data again
-      globalOrders.get(orderId).put({ data: newOrder });
+      globalOrders.get(orderId).put(newOrder);
 
       const options = {
         key: "rzp_live_ozWo08bXwqssx3",
