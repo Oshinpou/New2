@@ -73,6 +73,7 @@
   <script>
     // Initialize GunDB
     const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
+   console.log("Gun initialized:", gun);
     const globalOrders = gun.get('imacx_orders');
 
     // Shared order data
@@ -184,7 +185,9 @@
   // ✅ Step 3: Add to the GunDB set (makes it globally visible in admin)
   globalOrders.set(orderRef);
 
-  // ✅ Step 4: Optional localStorage for user’s local view
+  console.log("Saving order to Gun:", orderRef);
+    
+    // ✅ Step 4: Optional localStorage for user’s local view
   const existingOrders = JSON.parse(localStorage.getItem('admin_orders')) || [];
   existingOrders.push(newOrder);
   localStorage.setItem('admin_orders', JSON.stringify(existingOrders));
