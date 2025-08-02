@@ -76,6 +76,47 @@
   });
 };
 
+// Status update handler used after order is found via search bar
+function attachStatusUpdateHandler(orderId, data) {
+  const updateBtn = document.getElementById('updateStatusBtn');
+  const statusInput = document.getElementById('statusInput');
+
+  updateBtn.onclick = () => {
+    const newStatus = statusInput.value.trim();
+
+    if (!newStatus) {
+      alert("❌ Please enter a valid status.");
+      return;
+    }
+
+    // Step 1: Get existing data again to avoid overwriting
+    gun.get('imacx_orders').get(orderId).get('data').once(existingData => {
+      if (!existingData) {
+        alert("❌ Failed to retrieve existing data.");
+        return;
+      }
+
+      // Step 2: Merge new status with existing fields
+      const updatedData = {
+        ...existingData,
+        status: newStatus,
+      };
+
+      // Step 3: Save the updated data to GunDB
+      gun.get('imacx_orders').get(orderId).get('data').put(updatedData, ack => {
+        if (ack.err) {
+          alert("❌ Failed to update status.");
+        } else {
+          alert("✅ Status updated successfully and saved.");
+          // Optional: Refresh displayed status without needing reload
+          document.getElementById('currentStatus').innerText = newStatus;
+        }
+      });
+    });
+  };
+}
+ 
+    
     container.innerHTML = `
       <strong>Order ID:</strong> ${orderId}<br>
       <strong>Total:</strong> ₹${total}<br>
