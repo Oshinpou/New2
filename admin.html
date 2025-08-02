@@ -89,16 +89,13 @@
     ordersDiv.appendChild(wrapper);
   }
 
-  function loadOrders() {
-    ordersRef.map().once((ref) => {
-      if (!ref || !ref.orderId) return;
-      ordersRef.get(ref.orderId).once(order => {
-        if (!order || !order.orderId) return;
-        emptyNote.style.display = 'none';
-        renderOrder(order);
-      });
-    });
-  }
+ function loadOrders() {
+  ordersRef.map().once(order => {
+    if (!order || !order.orderId) return;
+    emptyNote.style.display = 'none';
+    renderOrder(order);
+  });
+      } 
 
  function searchOrder() {
   const searchId = document.getElementById('searchInput').value.trim().toUpperCase();
