@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <title>imacx Basket</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Basket - imacx Shop</title>
 
-  <!-- Libraries -->
+  <!-- CDN Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/tonic@next/dist/tonic.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/radash"></script>
@@ -14,41 +14,52 @@
   <style>
     body {
       font-family: system-ui, sans-serif;
-      background: #fff;
-      padding: 2rem;
-      color: #333;
+      margin: 2rem;
+      background-color: #fefefe;
+      color: #222;
     }
-    tonic-button {
-      margin-right: 8px;
+
+    h1, h2 {
+      color: goldenrod;
     }
+
     img {
       width: 50px;
-      border-radius: 6px;
+      border-radius: 4px;
     }
+
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 2rem;
+      margin-bottom: 1.5rem;
     }
+
     th, td {
+      border: 1px solid #e3e3e3;
       padding: 8px;
-      border: 1px solid #ddd;
       text-align: center;
     }
+
+    tonic-button {
+      margin: 5px 10px 10px 0;
+    }
+
     #orderOutput {
       white-space: pre-wrap;
-      background: #f1f1f1;
+      background: #f9f9f9;
       padding: 1rem;
       border: 1px solid #ccc;
       border-radius: 8px;
+      margin-top: 1rem;
     }
   </style>
 </head>
 <body>
+
   <h1>🛒 Basket</h1>
   <div id="basket-table"></div>
 
-  <h2>Shipping Details</h2>
+  <h2>🚚 Shipping Info</h2>
   <div id="shipping-form"></div>
 
   <tonic-button onclick="collectOrderDetails()">📋 Collect Order Info</tonic-button>
@@ -56,33 +67,29 @@
   <tonic-button onclick="storeToAdmin()">💾 Save Order</tonic-button>
   <tonic-button onclick="startPaymentFlow()">💳 Pay Now</tonic-button>
 
-  <h3>📦 Order Summary</h3>
   <div id="orderOutput"></div>
 
   <script>
     const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
-    const globalOrders = gun.get('imacx_orders');
+    const ordersRef = gun.get('imacx_orders');
+
     let orderId = '';
     let shipping = {};
     let total = 0;
 
-    function getBasket() {
-      return JSON.parse(localStorage.getItem('basket')) || [];
-    }
+    const getBasket = () => JSON.parse(localStorage.getItem('basket')) || [];
 
     function renderBasket() {
       const basket = getBasket();
-      const tableDiv = document.getElementById('basket-table');
+      const container = document.getElementById('basket-table');
       if (basket.length === 0) {
-        tableDiv.innerHTML = '<p>No items in basket.</p>';
+        container.innerHTML = '<p>Your basket is empty.</p>';
         return;
       }
 
       total = 0;
       let html = `<table>
-        <tr>
-          <th>Image</th><th>Name</th><th>Qty</th><th>Price</th><th>Total</th><th>Category</th><th>Subcategory</th><th>Action</th>
-        </tr>`;
+        <tr><th>Image</th><th>Name</th><th>Qty</th><th>Price</th><th>Total</th><th>Category</th><th>Subcategory</th><th>Action</th></tr>`;
 
       basket.forEach((item, index) => {
         const itemTotal = item.price * item.quantity;
@@ -95,53 +102,60 @@
           <td>₹${itemTotal}</td>
           <td>${item.category}</td>
           <td>${item.subcategory}</td>
-          <td><button onclick="deleteItem(${index})">Delete</button></td>
+          <td><button onclick="deleteItem(${index})">❌</button></td>
         </tr>`;
       });
 
       html += `<tr><td colspan="4"><strong>Grand Total</strong></td><td colspan="4"><strong>₹${total}</strong></td></tr></table>`;
-      tableDiv.innerHTML = html;
+      container.innerHTML = html;
     }
 
     function deleteItem(index) {
       const basket = getBasket();
-      if (confirm("Remove this item?")) {
-        basket.splice(index, 1);
-        localStorage.setItem('basket', JSON.stringify(basket));
-        renderBasket();
-      }
+      basket.splice(index, 1);
+      localStorage.setItem('basket', JSON.stringify(basket));
+      renderBasket();
     }
 
     function renderShippingForm() {
       document.getElementById('shipping-form').innerHTML = `
-        <tonic-input placeholder="Recipient Name" id="recipient"></tonic-input><br>
-        <tonic-input placeholder="Email" id="email" type="email"></tonic-input><br>
-        <tonic-input placeholder="Country Code" id="countryCode"></tonic-input>
-        <tonic-input placeholder="Phone" id="phone"></tonic-input><br>
-        <tonic-textarea placeholder="Full Address" id="address"></tonic-textarea><br>
-        <tonic-input placeholder="Area" id="area"></tonic-input>
-        <tonic-input placeholder="City" id="city"></tonic-input><br>
-        <tonic-input placeholder="State" id="state"></tonic-input>
-        <tonic-input placeholder="Country" id="country"></tonic-input>
-        <tonic-input placeholder="Zip Code" id="zip"></tonic-input><br>
+        <tonic-input id="recipient" placeholder="Recipient Name" required></tonic-input><br>
+        <tonic-input id="email" placeholder="Email" type="email" required></tonic-input><br>
+        <tonic-input id="countryCode" placeholder="Country Code" required></tonic-input>
+        <tonic-input id="phone" placeholder="Phone" required></tonic-input><br>
+        <tonic-textarea id="address" placeholder="Full Address" required></tonic-textarea><br>
+        <tonic-input id="area" placeholder="Area" required></tonic-input>
+        <tonic-input id="city" placeholder="City" required></tonic-input><br>
+        <tonic-input id="state" placeholder="State" required></tonic-input>
+        <tonic-input id="country" placeholder="Country" required></tonic-input>
+        <tonic-input id="zip" placeholder="Zip Code" required></tonic-input><br>
       `;
     }
 
     function collectOrderDetails() {
       const basket = getBasket();
-      total = radash.sum(basket.map(i => i.quantity * i.price));
+      if (!basket.length) return alert('❌ Basket is empty.');
+
+      const getVal = id => document.getElementById(id)?.value.trim();
       shipping = {
-        recipient: document.getElementById('recipient').value,
-        email: document.getElementById('email').value,
-        countryCode: document.getElementById('countryCode').value,
-        phone: document.getElementById('phone').value,
-        address: document.getElementById('address').value,
-        area: document.getElementById('area').value,
-        city: document.getElementById('city').value,
-        state: document.getElementById('state').value,
-        country: document.getElementById('country').value,
-        zip: document.getElementById('zip').value
+        recipient: getVal('recipient'),
+        email: getVal('email'),
+        countryCode: getVal('countryCode'),
+        phone: getVal('phone'),
+        address: getVal('address'),
+        area: getVal('area'),
+        city: getVal('city'),
+        state: getVal('state'),
+        country: getVal('country'),
+        zip: getVal('zip')
       };
+
+      if (Object.values(shipping).some(v => !v)) {
+        alert("❗ Please complete all shipping fields.");
+        return;
+      }
+
+      total = radash.sum(basket.map(i => i.price * i.quantity));
 
       document.getElementById('orderOutput').textContent = JSON.stringify({
         orderId,
@@ -153,38 +167,41 @@
 
     function generateOrderId() {
       orderId = 'IMX' + Math.random().toString(36).substr(2, 9).toUpperCase();
-      alert("Generated Order ID: " + orderId);
+      alert(`🆔 Order ID Generated: ${orderId}`);
     }
 
     function storeToAdmin() {
       const basket = getBasket();
       if (!orderId || !shipping.recipient || basket.length === 0) {
-        alert("Collect shipping, generate order ID, and add items first.");
+        alert("❗ Collect shipping info, generate ID, and have items.");
         return;
       }
 
       const order = {
         orderId,
-        basket: JSON.parse(JSON.stringify(basket)),
-        shipping: JSON.parse(JSON.stringify(shipping)),
+        basket,
+        shipping,
         total,
         status: "Order Created",
         timestamp: Date.now()
       };
 
-      const orderRef = globalOrders.get(orderId).put(order);
-      orderRef.get('orderId').put(orderId);
-      globalOrders.set(orderRef);
+      const ref = ordersRef.get(orderId).put(order);
+      ref.get('orderId').put(orderId); // enable map
+      ordersRef.set(ref);
 
-      alert("✅ Order saved.");
-      localStorage.setItem('admin_orders', JSON.stringify([...(JSON.parse(localStorage.getItem('admin_orders')) || []), order]));
+      const localOrders = JSON.parse(localStorage.getItem('admin_orders') || '[]');
+      localOrders.push(order);
+      localStorage.setItem('admin_orders', JSON.stringify(localOrders));
+
+      alert("✅ Order saved successfully.");
       document.getElementById('orderOutput').textContent = JSON.stringify(order, null, 2);
     }
 
     function startPaymentFlow() {
       const basket = getBasket();
-      if (!orderId || !shipping.recipient || basket.length === 0) {
-        alert("Save order first.");
+      if (!orderId || !shipping.recipient || !basket.length) {
+        alert("❗ Save order before payment.");
         return;
       }
 
@@ -197,13 +214,19 @@
         notes: {
           ...shipping,
           orderId,
-          total: `₹${total}`,
+          grandTotal: `₹${total}`,
           items: basket.map(i => `${i.name} x${i.quantity}`).join(', ')
         },
         handler: function (response) {
-          globalOrders.get(orderId).get('status').put('Payment Done');
+          alert(`✅ Payment Successful: ${response.razorpay_payment_id}`);
+          ordersRef.get(orderId).get('status').put('Payment Done');
           localStorage.removeItem('basket');
-          alert("✅ Payment Successful!");
+          localStorage.setItem('lastOrder', JSON.stringify({
+            orderId,
+            ...shipping,
+            total,
+            razorpay_payment_id: response.razorpay_payment_id
+          }));
           window.location.href = 'thankyou.html';
         },
         prefill: {
@@ -211,9 +234,7 @@
           email: shipping.email,
           contact: shipping.countryCode + shipping.phone
         },
-        theme: {
-          color: "#bfa046"
-        }
+        theme: { color: "#bfa046" }
       };
 
       new Razorpay(options).open();
