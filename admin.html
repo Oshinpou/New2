@@ -48,28 +48,29 @@
 
     ordersContainer.innerHTML = '';
 
-    globalOrders.map().on((orderData, orderId) => {
-      if (!orderData || !orderData.data) return;
+    globalOrders.map().once((value, orderId) => {
+      if (!orderId || !value || typeof value !== 'object') return;
 
-      // Avoid duplicate display
-      if (document.getElementById(orderId)) return;
+      // Get the real data inside the `.data` object
+      globalOrders.get(orderId).get('data').once(order => {
+        if (!order || document.getElementById(orderId)) return;
 
-      const order = orderData.data;
-      const orderCard = document.createElement('div');
-      orderCard.className = 'order-card';
-      orderCard.id = orderId;
+        const orderCard = document.createElement('div');
+        orderCard.className = 'order-card';
+        orderCard.id = orderId;
 
-      orderCard.innerHTML = `
-        <div class="order-id">🆔 Order ID: ${order.orderId}</div>
-        <div><strong>Status:</strong> ${order.status}</div>
-        <div><strong>Total:</strong> ₹${order.total}</div>
-        <div><strong>Recipient:</strong> ${order.shipping?.recipient}</div>
-        <div><strong>Phone:</strong> ${order.shipping?.countryCode}${order.shipping?.phone}</div>
-        <div><strong>Address:</strong> ${order.shipping?.address}, ${order.shipping?.area}, ${order.shipping?.city}, ${order.shipping?.state}, ${order.shipping?.country} - ${order.shipping?.zip}</div>
-        <pre>${JSON.stringify(order, null, 2)}</pre>
-      `;
+        orderCard.innerHTML = `
+          <div class="order-id">🆔 Order ID: ${order.orderId || orderId}</div>
+          <div><strong>Status:</strong> ${order.status || 'N/A'}</div>
+          <div><strong>Total:</strong> ₹${order.total || 0}</div>
+          <div><strong>Recipient:</strong> ${order.shipping?.recipient || 'N/A'}</div>
+          <div><strong>Phone:</strong> ${order.shipping?.countryCode || ''}${order.shipping?.phone || ''}</div>
+          <div><strong>Address:</strong> ${order.shipping?.address || ''}, ${order.shipping?.area || ''}, ${order.shipping?.city || ''}, ${order.shipping?.state || ''}, ${order.shipping?.country || ''} - ${order.shipping?.zip || ''}</div>
+          <pre>${JSON.stringify(order, null, 2)}</pre>
+        `;
 
-      ordersContainer.appendChild(orderCard);
+        ordersContainer.appendChild(orderCard);
+      });
     });
   </script>
 </body>
