@@ -97,7 +97,7 @@
     gun.get("imacx_orders").map().once((order, id) => {
       if (!order || !order.data) return;
 
-      const data = order.data;
+      const data = order.data || order; // fallback if no wrapper
       gun.get("imacx_order_status").get(id).once(statusObj => {
         const status = statusObj?.status || "";
         displayOrder(id, data, status);
