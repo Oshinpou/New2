@@ -157,33 +157,34 @@
     }
 
     function storeToAdmin() {
-      const basket = getBasket();
-      if (!orderId || Object.keys(shipping).length === 0 || basket.length === 0) {
-        alert("❗ Please collect shipping info, generate order ID, and have items in basket.");
-        return;
-      }
+  const basket = getBasket();
+  if (!orderId || Object.keys(shipping).length === 0 || basket.length === 0) {
+    alert("❗ Please collect shipping info, generate order ID, and have items in basket.");
+    return;
+  }
 
-      total = basket.reduce((acc, item) => acc + item.quantity * item.price, 0);
-      newOrder = {
-        orderId,
-        basket,
-        shipping,
-        total,
-        status: "Order Created",
-        timestamp: new Date().toISOString()
-      };
+  total = basket.reduce((acc, item) => acc + item.quantity * item.price, 0);
+  const basketObj = Object.fromEntries(basket.map((item, index) => [index, item]));
 
-      // ✅ Save as { data: newOrder }
-      globalOrders.get(orderId).put({ data: newOrder }, ack => {
-        if (ack.err) {
-          console.error("❌ Error saving order:", ack.err);
-          document.getElementById('orderOutput').textContent = '❌ Error saving order: ' + ack.err;
-        } else {
-          console.log("✅ Order saved:", newOrder);
-          document.getElementById('orderOutput').textContent = '✅ Order saved:\n' + JSON.stringify(newOrder, null, 2);
-        }
-      });
+  newOrder = {
+    orderId,
+    basket: basketObj,
+    shipping,
+    total,
+    status: "Order Created",
+    timestamp: new Date().toISOString()
+  };
+
+  globalOrders.get(orderId).put({ data: newOrder }, ack => {
+    if (ack.err) {
+      console.error("❌ Error saving order:", ack.err);
+      document.getElementById('orderOutput').textContent = '❌ Error saving order: ' + ack.err;
+    } else {
+      console.log("✅ Order saved:", newOrder);
+      document.getElementById('orderOutput').textContent = '✅ Order saved:\n' + JSON.stringify(newOrder, null, 2);
     }
+  });
+}
 
     function startPaymentFlow() {
       const basket = getBasket();
@@ -194,14 +195,13 @@
 
       total = basket.reduce((acc, item) => acc + item.price * item.quantity, 0);
       newOrder = {
-        orderId,
-        basket,
-        shipping,
-        total,
-        status: "Order Created",
-        timestamp: new Date().toISOString()
-      };
-
+  orderId,
+  basket: Object.fromEntries(basket.map((item, index) => [index, item])),
+  shipping,
+  total,
+  status: "Order Created",
+  timestamp: new Date().toISOString()
+};
       // ✅ Save under data again
       globalOrders.get(orderId).put({ data: newOrder });
 
