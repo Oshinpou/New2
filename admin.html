@@ -67,14 +67,23 @@
     updateBtn.textContent = 'Update Status';
     updateBtn.onclick = () => {
   const newStatus = statusInput.value.trim();
-  gun.get('imacx_orders').get(id).once(existing => {
-    const existingData = existing?.data || existing || {};
-    const updatedData = { ...existingData, status: newStatus };
-    gun.get('imacx_orders').get(id).put({ data: updatedData }, ack => {
+
+  // Read the full order object from GunDB
+  gun.get('imacx_orders').get(id).once(order => {
+    if (!order) return alert('❌ Order not found.');
+
+    // Extract current data object or create empty one
+    const currentData = order.data || {};
+
+    // Update the status inside data
+    currentData.status = newStatus;
+
+    // Save back the updated data into the same order ID
+    gun.get('imacx_orders').get(id).put({ data: currentData }, ack => {
       if (ack.err) {
         alert('❌ Failed to update status.');
       } else {
-        alert('✅ Status updated successfully!');
+        alert('✅ Status updated and saved!');
       }
     });
   });
@@ -86,19 +95,28 @@ function attachStatusUpdateHandler(orderId, data) {
   const statusInput = document.getElementById('statusInput');
 
   updateBtn.onclick = () => {
-    const newStatus = statusInput.value.trim();
+  const newStatus = statusInput.value.trim();
 
-    if (!newStatus) {
-      alert("❌ Please enter a valid status.");
-      return;
-    }
+  // Read the full order object from GunDB
+  gun.get('imacx_orders').get(id).once(order => {
+    if (!order) return alert('❌ Order not found.');
 
-    // Step 1: Get existing data again to avoid overwriting
-    gun.get('imacx_orders').get(orderId).get('data').once(existingData => {
-      if (!existingData) {
-        alert("❌ Failed to retrieve existing data.");
-        return;
+    // Extract current data object or create empty one
+    const currentData = order.data || {};
+
+    // Update the status inside data
+    currentData.status = newStatus;
+
+    // Save back the updated data into the same order ID
+    gun.get('imacx_orders').get(id).put({ data: currentData }, ack => {
+      if (ack.err) {
+        alert('❌ Failed to update status.');
+      } else {
+        alert('✅ Status updated and saved!');
       }
+    });
+  });
+};
 
       // Step 2: Merge new status with existing fields
       const updatedData = {
