@@ -1,0 +1,177 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BasketOne - imacx Shop</title>
+  <style>
+    body {
+      font-family: 'Cursive', sans-serif;
+      background-color: #fff;
+      color: goldenrod;
+      padding: 1rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 2rem;
+    }
+    th, td {
+      border: 1px solid goldenrod;
+      padding: 0.5rem;
+      text-align: center;
+    }
+    input, select, textarea, button {
+      font-family: 'Cursive', sans-serif;
+      padding: 0.5rem;
+      margin: 0.5rem 0;
+      border: 1px solid goldenrod;
+    }
+    button {
+      background: goldenrod;
+      color: white;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+    h2 {
+      color: goldenrod;
+    }
+    #orderOutput {
+      white-space: pre-wrap;
+      border: 1px solid goldenrod;
+      padding: 1rem;
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <h2>🛒 Basket</h2>
+  <div id="basket-table"></div>  <h2>Shipping Details</h2>
+  <form id="shippingForm">
+    <label>Recipient Name: <input type="text" id="recipient" required></label><br>
+    <label>Email: <input type="email" id="email" required></label><br>
+    <label>Country Code: <input type="text" id="countryCode" required></label>
+    <label>Phone: <input type="text" id="phone" required></label><br>
+    <label>Address: <textarea id="address" required></textarea></label><br>
+    <label>Area: <input type="text" id="area" required></label>
+    <label>City: <input type="text" id="city" required></label><br>
+    <label>State: <input type="text" id="state" required></label>
+    <label>Country: <input type="text" id="country" required></label>
+    <label>Zip Code: <input type="text" id="zip" required></label><br>
+    <button type="button" onclick="collectOrderDetails()">📋 Collect Order Info</button>
+    <button type="button" onclick="generateOrderId()">🔐 Generate Order ID</button>
+    <button type="button" onclick="storeToAdmin()">📏 Save Order</button>
+  </form>  <div id="orderOutput"></div>  <script src="https://cdn.jsdelivr.net/npm/pouchdb@7.3.1/dist/pouchdb.min.js"></script>  <script src="https://cdn.jsdelivr.net/npm/ipfs/dist/index.min.js"></script>  <script src="https://cdn.jsdelivr.net/npm/orbit-db/dist/orbitdb.min.js"></script>  <script>
+    let orderId = '';
+    let shipping = {};
+    let newOrder = {};
+    let total = 0;
+    const pouch = new PouchDB('imacx_orders');
+
+    function getBasket() {
+      return JSON.parse(localStorage.getItem('basket')) || [];
+    }
+
+    function renderBasket() {
+      const basket = getBasket();
+      if (basket.length === 0) {
+        document.getElementById('basket-table').innerHTML = '<p>No items in basket.</p>';
+        return;
+      }
+
+      total = 0;
+      let html = `<table>
+        <tr>
+          <th>Image</th><th>Name</th><th>Qty</th><th>Price</th>
+          <th>Total</th><th>Category</th><th>Subcategory</th><th>Action</th>
+        </tr>`;
+
+      basket.forEach((item, index) => {
+        const itemTotal = item.price * item.quantity;
+        total += itemTotal;
+        html += `<tr>
+          <td><img src="${item.image}" width="50"></td>
+          <td>${item.name}</td>
+          <td>${item.quantity}</td>
+          <td>₹${item.price}</td>
+          <td>₹${itemTotal}</td>
+          <td>${item.category}</td>
+          <td>${item.subcategory}</td>
+          <td><button onclick="deleteItem(${index})">Delete</button></td>
+        </tr>`;
+      });
+
+      html += `<tr><td colspan="4"><strong>Grand Total</strong></td><td colspan="4"><strong>₹${total}</strong></td></tr></table>`;
+      document.getElementById('basket-table').innerHTML = html;
+    }
+
+    function deleteItem(index) {
+      const basket = getBasket();
+      if (confirm("Remove this item from basket?")) {
+        basket.splice(index, 1);
+        localStorage.setItem('basket', JSON.stringify(basket));
+        renderBasket();
+      }
+    }
+
+    function collectOrderDetails() {
+      const basket = getBasket();
+      shipping = {
+        recipient: document.getElementById('recipient').value,
+        email: document.getElementById('email').value,
+        countryCode: document.getElementById('countryCode').value,
+        phone: document.getElementById('phone').value,
+        address: document.getElementById('address').value,
+        area: document.getElementById('area').value,
+        city: document.getElementById('city').value,
+        state: document.getElementById('state').value,
+        country: document.getElementById('country').value,
+        zip: document.getElementById('zip').value
+      };
+
+      total = basket.reduce((acc, item) => acc + item.price * item.quantity, 0);
+
+      document.getElementById('orderOutput').textContent = JSON.stringify({
+        orderId,
+        shipping,
+        basket,
+        total
+      }, null, 2);
+    }
+
+    function generateOrderId() {
+      orderId = 'IMX' + Math.random().toString(36).substr(2, 9).toUpperCase();
+      console.log("Generated Order ID:", orderId);
+    }
+
+    async function storeToAdmin() {
+      const basket = getBasket();
+      if (!orderId || Object.keys(shipping).length === 0 || basket.length === 0) {
+        alert("❗ Please collect shipping info, generate order ID, and have items in basket.");
+        return;
+      }
+
+      total = basket.reduce((acc, item) => acc + item.quantity * item.price, 0);
+      newOrder = {
+        _id: orderId,
+        orderId,
+        basket,
+        shipping,
+        total,
+        status: "Order Created",
+        timestamp: Date.now()
+      };
+
+      try {
+        await pouch.put(newOrder);
+        alert("✅ Order saved to PouchDB.");
+        document.getElementById('orderOutput').textContent = JSON.stringify(newOrder, null, 2);
+      } catch (err) {
+        console.error("PouchDB error:", err);
+      }
+
+      // Optionally replicate with CouchDB or OrbitDB here
+    }
+
+    renderBasket();
+  </script></body>
+</html>
