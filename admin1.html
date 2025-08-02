@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Orders Page</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    input, textarea { display: block; margin: 8px 0; width: 100%; padding: 6px; }
+    button { margin: 6px 4px 12px 0; }
+    .order-block { border: 1px solid #ccc; padding: 10px; margin-bottom: 20px; }
+  </style>
+</head>
+<body>
+
+  <h2>Create New Order</h2>
+  <input id="orderId" placeholder="Order ID" />
+  <input id="status" placeholder="Order Status" />
+  <textarea id="items" placeholder="Items (e.g. Product1 x2 - Red, Product2 x1 - Blue)"></textarea>
+  <input id="total" placeholder="Total Price" />
+  <button onclick="addOrder()">Add Order</button>
+
+  <h2>Saved Orders</h2>
+  <div id="ordersList"></div>
+
+  <script>
+    const STORAGE_KEY = "admin1_orders";
+
+    function loadOrders() {
+      const data = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+      const container = document.getElementById("ordersList");
+      container.innerHTML = "";
+      data.forEach((order, index) => {
+        const block = document.createElement("div");
+        block.className = "order-block";
+        block.innerHTML = `
+          <input value="${order.id}" onchange="updateOrder(${index}, 'id', this.value)" />
+          <input value="${order.status}" onchange="updateOrder(${index}, 'status', this.value)" />
+          <textarea onchange="updateOrder(${index}, 'items', this.value)">${order.items}</textarea>
+          <input value="${order.total}" onchange="updateOrder(${index}, 'total', this.value)" />
+          <button onclick="deleteOrder(${index})">Delete</button>
+        `;
+        container.appendChild(block);
+      });
+    }
+
+    function addOrder() {
+      const id = document.getElementById("orderId").value;
+      const status = document.getElementById("status").value;
+      const items = document.getElementById("items").value;
+      const total = document.getElementById("total").value;
+      const newOrder = { id, status, items, total };
+
+      const data = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+      data.push(newOrder);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+
+      document.getElementById("orderId").value = "";
+      document.getElementById("status").value = "";
+      document.getElementById("items").value = "";
+      document.getElementById("total").value = "";
+
+      loadOrders();
+    }
+
+    function updateOrder(index, field, value) {
+      const data = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+      data[index][field] = value;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    function deleteOrder(index) {
+      const data = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+      data.splice(index, 1);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      loadOrders();
+    }
+
+    window.onload = loadOrders;
+  </script>
+</body>
+</html>
