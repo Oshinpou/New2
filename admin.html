@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>imacx Admin - Orders</title>
+  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      background: #fefefe;
+    }
+    h1 {
+      text-align: center;
+    }
+    .order {
+      border: 1px solid #ccc;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 5px;
+      background: #ffffef;
+    }
+    pre {
+      background: #fff;
+      padding: 10px;
+      border: 1px dashed #aaa;
+      overflow-x: auto;
+    }
+    select, button {
+      margin-top: 10px;
+      padding: 6px 10px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>🌍 imacx Admin - Global Orders</h1>
+<div style="text-align:center; margin-bottom: 20px;">
+  <input type="text" id="searchInput" placeholder="Enter Order ID" style="padding:8px; width:250px;">
+  <button onclick="searchOrder()">🔍 Search</button>
+</div>
+<div id="orders"></div>
+<p id="emptyNote">No orders found.</p>
+
+<script>
+  const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
+  const ordersRef = gun.get('imacx_orders');
+  const ordersDiv = document.getElementById('orders');
+  const emptyNote = document.getElementById('emptyNote');
+
+  const STATUS_LIST = [
+    'Order Created', 'Payment Done', 'Order Cancelled',
+    'Order Processing', 'Out for Shipping', 'Shipped',
+    'Out for Delivery', 'Delivered'
+  ];
+
+  function renderOrder(order) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'order';
+
+    const pre = document.createElement('pre');
+    pre.textContent = JSON.stringify(order, null, 2);
+
+    const statusLabel = document.createElement('label');
+    statusLabel.textContent = "Status: ";
+
+    const select = document.createElement('select');
+    STATUS_LIST.forEach(status => {
+      const opt = document.createElement('option');
+      opt.value = status;
+      opt.textContent = status;
+      if (order.status === status) opt.selected = true;
+      select.appendChild(opt);
+    });
+
+    const btn = document.createElement('button');
+    btn.textContent = "Update Status";
+    btn.onclick = () => {
+      if (!order.orderId) {
+        alert("⚠️ Invalid order ID.");
+        return;
+      }
+
+      const updatedStatus = select.value;
+      const updatedOrder = { ...order, status: updatedStatus };
+
+      ordersRef.get(order.orderId).put(updatedOrder, ack => {
+        if (ack.err) {
+          alert("❌ Failed to update status");
+          console.error(ack.err);
+        } else {
+          alert("✅ Status updated successfully");
+        }
+      });
+    };
+
+    wrapper.appendChild(pre);
+    wrapper.appendChild(statusLabel);
+    wrapper.appendChild(select);
+    wrapper.appendChild(btn);
+
+    ordersDiv.appendChild(wrapper);
+  }
+
+  function loadOrders() {
+    ordersRef.map().once(order => {
+      if (!order || !order.orderId) return;
+      emptyNote.style.display = 'none';
+      renderOrder(order);
+    });
+  }
+
+  function searchOrder() {
+    const searchId = document.getElementById('searchInput').value.trim();
+    ordersDiv.innerHTML = ''; // Clear previous results
+    emptyNote.style.display = 'block';
+    emptyNote.textContent = 'No orders found.';
+
+    if (!searchId) {
+      alert("❗ Enter an Order ID to search.");
+      return;
+    }
+
+    ordersRef.get(searchId).once(order => {
+      if (order && order.orderId) {
+        emptyNote.style.display = 'none';
+        renderOrder(order);
+      } else {
+        ordersDiv.innerHTML = '';
+        emptyNote.textContent = "❌ Order not found.";
+      }
+    });
+  }
+
+  window.onload = loadOrders;
+</script>
+
+</body>
+</html>
