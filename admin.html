@@ -2,108 +2,86 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Admin Orders - Imacx</title>
-  <script src="https://cdn.jsdelivr.net/npm/pouchdb@7.3.1/dist/pouchdb.min.js"></script>
+  <title>Admin Orders - imacx</title>
+  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fuse.js@7"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tonic@next/dist/tonic.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/radash"></script>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: sans-serif;
       padding: 20px;
-      background-color: #f9f9f9;
+      background-color: #fafafa;
+    }
+    tonic-input, tonic-button {
+      margin-bottom: 10px;
     }
     .order {
-      border: 1px solid #ccc;
-      padding: 15px;
-      margin-bottom: 15px;
-      border-radius: 8px;
       background: white;
-    }
-    .order h3 {
-      margin-top: 0;
-    }
-    .status-btn {
-      background-color: #4caf50;
-      color: white;
-      border: none;
-      padding: 6px 12px;
-      margin-top: 10px;
-      cursor: pointer;
-      border-radius: 4px;
-    }
-    .status-btn:hover {
-      background-color: #45a049;
-    }
-    input[type="text"] {
-      padding: 8px;
-      width: 250px;
-      margin-bottom: 20px;
-      border-radius: 4px;
-      border: 1px solid #ccc;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      margin-bottom: 15px;
     }
   </style>
 </head>
 <body>
 
-  <h1>Admin Order Panel</h1>
-  <input type="text" id="search" placeholder="Search by Order ID..." oninput="filterOrders()">
-
+  <h1>Admin Orders</h1>
+  <tonic-input placeholder="Search by Order ID..." id="searchBox"></tonic-input>
   <div id="orders"></div>
 
   <script>
-    const db = new PouchDB('orders');
+    const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
+    const orders = gun.get('imacx_orders');
+    const allOrders = [];
 
     async function fetchOrders() {
-      const container = document.getElementById('orders');
-      container.innerHTML = '';
-      try {
-        const result = await db.allDocs({ include_docs: true });
-        result.rows.forEach(row => {
-          if (row.doc && row.doc._id.startsWith('order_')) {
-            displayOrder(row.doc);
-          }
-        });
-      } catch (err) {
-        console.error('Failed to fetch orders:', err);
-      }
-    }
+      document.getElementById('orders').innerHTML = 'Loading orders...';
+      orders.map().once(data => {
+        if (!data || !data.orderId) return;
 
-    function displayOrder(order) {
-      const container = document.getElementById('orders');
-
-      const orderDiv = document.createElement('div');
-      orderDiv.className = 'order';
-      orderDiv.dataset.orderId = order._id;
-
-      orderDiv.innerHTML = `
-        <h3>Order ID: ${order._id}</h3>
-        <p><strong>Name:</strong> ${order.name || ''}</p>
-        <p><strong>Email:</strong> ${order.email || ''}</p>
-        <p><strong>Product:</strong> ${order.product || ''}</p>
-        <p><strong>Status:</strong> <span class="status-text">${order.status || 'pending'}</span></p>
-        <button class="status-btn" onclick="updateStatus('${order._id}')">Mark as Shipped</button>
-      `;
-
-      container.appendChild(orderDiv);
-    }
-
-    async function updateStatus(orderId) {
-      try {
-        const order = await db.get(orderId);
-        order.status = 'shipped';
-        await db.put(order);
-        fetchOrders(); // Refresh display
-      } catch (err) {
-        console.error('Error updating order:', err);
-      }
-    }
-
-    function filterOrders() {
-      const searchValue = document.getElementById('search').value.trim().toLowerCase();
-      const orders = document.querySelectorAll('.order');
-      orders.forEach(order => {
-        const orderId = order.dataset.orderId.toLowerCase();
-        order.style.display = orderId.includes(searchValue) ? 'block' : 'none';
+        const exists = allOrders.find(o => o.orderId === data.orderId);
+        if (!exists) {
+          allOrders.push(data);
+          renderOrders(allOrders);
+        }
       });
     }
+
+    function renderOrders(orderList) {
+      const container = document.getElementById('orders');
+      container.innerHTML = '';
+
+      const sorted = radash.sort(orderList, x => -x.timestamp);
+
+      sorted.forEach(order => {
+        const div = document.createElement('div');
+        div.className = 'order';
+        div.innerHTML = `
+          <strong>Order ID:</strong> ${order.orderId}<br>
+          <strong>Name:</strong> ${order.shipping?.recipient || ''}<br>
+          <strong>Email:</strong> ${order.shipping?.email || ''}<br>
+          <strong>Status:</strong> ${order.status || 'pending'}<br>
+          <strong>Total:</strong> ₹${order.total}<br>
+          <tonic-button onclick="markShipped('${order.orderId}')">Mark as Shipped</tonic-button>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function markShipped(orderId) {
+      const orderRef = orders.get(orderId);
+      orderRef.get('status').put('shipped');
+      alert(`✅ Order ${orderId} marked as shipped.`);
+    }
+
+    document.getElementById('searchBox').addEventListener('input', e => {
+      const search = e.target.value.toLowerCase();
+      const fuse = new Fuse(allOrders, { keys: ['orderId'], threshold: 0.3 });
+      const results = search ? fuse.search(search).map(r => r.item) : allOrders;
+      renderOrders(results);
+    });
 
     fetchOrders();
   </script>
