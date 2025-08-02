@@ -1,131 +1,133 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Admin - imacx Orders</title>
+  <meta charset="UTF-8">
+  <title>Admin - IMACX Orders</title>
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #f7f7f7;
+      background-color: #fafafa;
       padding: 20px;
     }
     h1 {
       text-align: center;
-      color: #444;
+      color: #333;
     }
-    .order-card {
-      background-color: #fff;
-      border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    .order {
+      background: white;
+      border: 1px solid #ddd;
+      margin: 15px 0;
       padding: 20px;
-      margin-bottom: 20px;
+      border-radius: 8px;
     }
-    .order-card input[type="text"] {
-      padding: 6px;
-      margin-top: 4px;
-      width: 60%;
+    .order span {
+      font-weight: bold;
     }
-    .order-card button {
-      padding: 6px 12px;
-      margin-top: 6px;
-      cursor: pointer;
+    .status-container {
+      margin-top: 10px;
     }
-    .search-container {
-      text-align: center;
-      margin-bottom: 20px;
+    .status-container input {
+      padding: 5px;
+      width: 200px;
     }
-    .search-container input {
-      padding: 8px;
-      width: 60%;
-      font-size: 16px;
+    .status-container button {
+      padding: 5px 10px;
+      margin-left: 5px;
+    }
+    #searchBar {
+      padding: 10px;
+      width: 300px;
+      margin: 20px auto;
+      display: block;
     }
   </style>
 </head>
 <body>
-  <h1>Admin - All Orders</h1>
-
-  <div class="search-container">
-    <input type="text" id="searchBox" placeholder="Search by Order ID...">
-  </div>
-
+  <h1>Admin Orders Panel</h1>
+  <input type="text" id="searchBar" placeholder="Search by Order ID..." />
   <div id="ordersContainer">Loading orders...</div>
 
   <script>
     const gun = Gun();
-    const ordersContainer = document.getElementById("ordersContainer");
-    const searchBox = document.getElementById("searchBox");
+    const ordersContainer = document.getElementById('ordersContainer');
+    const searchBar = document.getElementById('searchBar');
 
-    const renderOrder = (id, data) => {
-      const card = document.createElement("div");
-      card.className = "order-card";
+    // Load all orders
+    function loadOrders(filter = "") {
+      ordersContainer.innerHTML = "";
+      gun.get('imacx_orders').map().once((orderData, orderId) => {
+        if (!orderData || !orderData.data) return;
 
-      const statusInput = document.createElement("input");
-      statusInput.type = "text";
-      statusInput.value = data.status || "";
+        const data = orderData.data;
+        if (filter && !orderId.includes(filter)) return;
 
-      const updateBtn = document.createElement("button");
-      updateBtn.textContent = "Update Status";
+        const orderDiv = document.createElement('div');
+        orderDiv.className = 'order';
 
-      updateBtn.onclick = () => {
-        const newStatus = statusInput.value.trim();
+        const id = orderId;
+        const total = data.total || 'N/A';
+        const name = data.name || 'N/A';
+        const phone = (data.phone || '') + (data.altPhone || '');
+        const address = `${data.address || ''}, ${data.city || ''}, ${data.state || ''}, ${data.country || ''} - ${data.pincode || ''}`;
 
-        // Fetch and update only the 'data' field
-        gun.get('imacx_orders').get(id).once(order => {
-          if (!order || !order.data) return alert("Order not found!");
+        const statusInput = document.createElement('input');
+        statusInput.placeholder = 'Enter status...';
 
-          const updatedData = { ...order.data, status: newStatus };
+        const updateBtn = document.createElement('button');
+        updateBtn.textContent = 'Update Status';
 
-          gun.get('imacx_orders').get(id).put({ data: updatedData }, ack => {
-            if (ack.err) {
-              alert("❌ Failed to update status.");
-            } else {
-              alert("✅ Status updated!");
-            }
-          });
+        const statusDisplay = document.createElement('div');
+        statusDisplay.style.marginTop = '5px';
+        statusDisplay.style.color = 'green';
+
+        // Load stored status from separate node
+        gun.get('imacx_order_status').get(id).once(storedStatus => {
+          if (storedStatus) {
+            statusInput.value = storedStatus;
+            statusDisplay.textContent = `Saved status: ${storedStatus}`;
+          }
         });
-      };
 
-      card.innerHTML = `
-        <strong>Order ID:</strong> ${id}<br>
-        <strong>Total:</strong> ₹${data.total || 'N/A'}<br>
-        <strong>Recipient:</strong> ${data.name || 'N/A'}<br>
-        <strong>Phone:</strong> ${data.phone || 'N/A'}<br>
-        <strong>Address:</strong> ${data.address || ''}, ${data.city || ''}, ${data.state || ''}, ${data.country || ''} - ${data.pincode || ''}<br>
-        <strong>Status:</strong>
-      `;
+        updateBtn.onclick = () => {
+          const newStatus = statusInput.value.trim();
+          if (newStatus) {
+            gun.get('imacx_order_status').get(id).put(newStatus, ack => {
+              if (ack.err) {
+                alert("Failed to save status.");
+              } else {
+                alert("✅ Status saved!");
+                statusDisplay.textContent = `Saved status: ${newStatus}`;
+              }
+            });
+          }
+        };
 
-      card.appendChild(statusInput);
-      card.appendChild(updateBtn);
+        const statusContainer = document.createElement('div');
+        statusContainer.className = 'status-container';
+        statusContainer.appendChild(statusInput);
+        statusContainer.appendChild(updateBtn);
+        statusContainer.appendChild(statusDisplay);
 
-      return card;
-    };
+        orderDiv.innerHTML = `
+          <span>Order ID:</span> ${id}<br>
+          <span>Total:</span> ₹${total}<br>
+          <span>Recipient:</span> ${name}<br>
+          <span>Phone:</span> ${phone}<br>
+          <span>Address:</span> ${address}<br>
+        `;
 
-    const loadOrders = () => {
-      ordersContainer.innerHTML = "";
-
-      gun.get("imacx_orders").map().once((node, id) => {
-        if (node && node.data) {
-          const card = renderOrder(id, node.data);
-          ordersContainer.appendChild(card);
-        }
+        orderDiv.appendChild(statusContainer);
+        ordersContainer.appendChild(orderDiv);
       });
-    };
+    }
 
-    searchBox.addEventListener("input", () => {
-      const query = searchBox.value.trim().toLowerCase();
-      ordersContainer.innerHTML = "";
-
-      gun.get("imacx_orders").map().once((node, id) => {
-        if (node && node.data && id.toLowerCase().includes(query)) {
-          const card = renderOrder(id, node.data);
-          ordersContainer.appendChild(card);
-        }
-      });
+    searchBar.addEventListener('input', () => {
+      const query = searchBar.value.trim();
+      loadOrders(query);
     });
 
-    loadOrders();
+    loadOrders(); // Initial load
   </script>
 </body>
 </html>
