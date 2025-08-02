@@ -1,137 +1,76 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>imacx Admin - Orders</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin - imacx Orders</title>
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
   <style>
     body {
-      font-family: sans-serif;
-      padding: 20px;
-      background: #fefefe;
+      font-family: 'Cursive', sans-serif;
+      background-color: #fff8dc;
+      color: #6b4c00;
+      padding: 2rem;
     }
     h1 {
+      color: goldenrod;
       text-align: center;
     }
-    .order {
-      border: 1px solid #ccc;
-      padding: 15px;
-      margin-bottom: 20px;
-      border-radius: 5px;
-      background: #ffffef;
+    .order-card {
+      border: 2px solid goldenrod;
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 1rem 0;
+      background: #fffef0;
     }
-    pre {
-      background: #fff;
-      padding: 10px;
-      border: 1px dashed #aaa;
+    .order-card pre {
+      white-space: pre-wrap;
+      font-size: 0.9rem;
+      background: #f7f7f7;
+      padding: 0.5rem;
+      border: 1px solid #ccc;
       overflow-x: auto;
     }
-    select, button {
-      margin-top: 10px;
-      padding: 6px 10px;
-      font-size: 14px;
+    .order-id {
+      font-weight: bold;
+      color: #8b4513;
     }
   </style>
 </head>
 <body>
+  <h1>📦 imacx Orders Admin</h1>
+  <div id="ordersContainer">Loading orders...</div>
 
-<h1>🌍 imacx Admin - Global Orders</h1>
-<div style="text-align:center; margin-bottom: 20px;">
-  <input type="text" id="searchInput" placeholder="Enter Order ID" style="padding:8px; width:250px;">
-  <button onclick="searchOrder()">🔍 Search</button>
-</div>
+  <script>
+    const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
+    const globalOrders = gun.get('imacx_orders');
+    const ordersContainer = document.getElementById('ordersContainer');
 
-<div id="orders"></div>
-<p id="emptyNote">No orders found.</p>
+    ordersContainer.innerHTML = '';
 
-<script>
-  const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
-  const ordersRef = gun.get('imacx_orders');
-  const ordersDiv = document.getElementById('orders');
-  const emptyNote = document.getElementById('emptyNote');
+    globalOrders.map().on((orderData, orderId) => {
+      if (!orderData || !orderData.data) return;
 
-  const STATUS_LIST = [
-    'Order Created', 'Payment Done', 'Order Cancelled',
-    'Order Processing', 'Out for Shipping', 'Shipped',
-    'Out for Delivery', 'Delivered'
-  ];
+      // Avoid duplicate display
+      if (document.getElementById(orderId)) return;
 
-  function renderOrder(order, key) {
-    const wrapper = document.createElement('div');
-    wrapper.className = 'order';
+      const order = orderData.data;
+      const orderCard = document.createElement('div');
+      orderCard.className = 'order-card';
+      orderCard.id = orderId;
 
-    const pre = document.createElement('pre');
-    pre.textContent = JSON.stringify(order, null, 2);
+      orderCard.innerHTML = `
+        <div class="order-id">🆔 Order ID: ${order.orderId}</div>
+        <div><strong>Status:</strong> ${order.status}</div>
+        <div><strong>Total:</strong> ₹${order.total}</div>
+        <div><strong>Recipient:</strong> ${order.shipping?.recipient}</div>
+        <div><strong>Phone:</strong> ${order.shipping?.countryCode}${order.shipping?.phone}</div>
+        <div><strong>Address:</strong> ${order.shipping?.address}, ${order.shipping?.area}, ${order.shipping?.city}, ${order.shipping?.state}, ${order.shipping?.country} - ${order.shipping?.zip}</div>
+        <pre>${JSON.stringify(order, null, 2)}</pre>
+      `;
 
-    const statusLabel = document.createElement('label');
-    statusLabel.textContent = "Status: ";
-
-    const select = document.createElement('select');
-    STATUS_LIST.forEach(status => {
-      const opt = document.createElement('option');
-      opt.value = status;
-      opt.textContent = status;
-      if (order.status === status) opt.selected = true;
-      select.appendChild(opt);
+      ordersContainer.appendChild(orderCard);
     });
-
-    const btn = document.createElement('button');
-    btn.textContent = "Update Status";
-    btn.onclick = () => {
-      ordersRef.get(key).get('status').put(select.value);
-      alert("✅ Status updated");
-    };
-
-    wrapper.appendChild(pre);
-    wrapper.appendChild(statusLabel);
-    wrapper.appendChild(select);
-    wrapper.appendChild(btn);
-
-    ordersDiv.appendChild(wrapper);
-  }
-
-  function loadOrders() {
-    ordersDiv.innerHTML = '';
-    let found = false;
-
-    ordersRef.map().once((order, key) => {
-      if (!order || !order.orderId) return;
-      found = true;
-      emptyNote.style.display = 'none';
-      renderOrder(order, key);
-    });
-
-    setTimeout(() => {
-      if (!found) {
-        emptyNote.style.display = 'block';
-        emptyNote.textContent = 'No orders found.';
-      }
-    }, 1000);
-  }
-
-  function searchOrder() {
-    const searchId = document.getElementById('searchInput').value.trim();
-    ordersDiv.innerHTML = '';
-    emptyNote.style.display = 'block';
-    emptyNote.textContent = 'Searching...';
-
-    if (!searchId) {
-      alert("❗ Enter an Order ID to search.");
-      return;
-    }
-
-    ordersRef.get(searchId).once(order => {
-      if (order && order.orderId) {
-        emptyNote.style.display = 'none';
-        renderOrder(order, searchId);
-      } else {
-        emptyNote.textContent = "❌ Order not found.";
-      }
-    });
-  }
-
-  window.onload = loadOrders;
-</script>
-
+  </script>
 </body>
 </html>
