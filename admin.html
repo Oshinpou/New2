@@ -30,6 +30,11 @@
 </head>
 <body>
   <h1>📦 imacx Admin - Orders</h1>
+ <h2>🔍 Search Order</h2>
+<input type="text" id="searchInput" placeholder="Enter Order ID" />
+<button onclick="searchOrder()">Search</button>
+<div id="searchResult"></div>
+  
   <div id="orderList">Loading orders...</div>
 <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
 <script>
@@ -84,6 +89,58 @@
     orderList.appendChild(container);
   });
 </script>
-      
+<script>
+  function searchOrder() {
+  const id = document.getElementById('searchInput').value.trim();
+  const resultDiv = document.getElementById('searchResult');
+  resultDiv.innerHTML = '';
+
+  if (!id) {
+    resultDiv.innerHTML = '<p>⚠️ Please enter an Order ID.</p>';
+    return;
+  }
+
+  gun.get('imacx_orders').get(id).once(orderNode => {
+    if (!orderNode) {
+      resultDiv.innerHTML = '<p>❌ Order not found.</p>';
+      return;
+    }
+
+    const data = orderNode.data || orderNode;
+    const shipping = data.shipping || {};
+    const status = data.status || 'Pending';
+
+    const statusInput = document.createElement('input');
+    statusInput.type = 'text';
+    statusInput.value = status;
+
+    const updateBtn = document.createElement('button');
+    updateBtn.textContent = 'Update Status';
+    updateBtn.onclick = () => {
+      gun.get('imacx_orders').get(id).put({ data: { ...data, status: statusInput.value } });
+      alert('✅ Status updated');
+    };
+
+    const resultHTML = `
+      <div class="order" style="margin-top:20px;padding:10px;border:1px solid #ccc;">
+        <strong>Order ID:</strong> ${data.orderId || id}<br>
+        <strong>Total:</strong> ₹${data.total || '0'}<br>
+        <strong>Recipient:</strong> ${shipping.name || 'N/A'}<br>
+        <strong>Phone:</strong> ${shipping.phone || 'N/A'}<br>
+        <strong>Address:</strong> 
+          ${shipping.address || ''}, 
+          ${shipping.city || ''}, 
+          ${shipping.state || ''}, 
+          ${shipping.country || ''} - 
+          ${shipping.pincode || ''}<br>
+        <strong>Status:</strong> 
+      `;
+
+    resultDiv.innerHTML = resultHTML;
+    resultDiv.appendChild(statusInput);
+    resultDiv.appendChild(updateBtn);
+  });
+}     
+</script>
 </body>
 </html>
