@@ -4,155 +4,128 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Admin - imacx Orders</title>
+  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
   <style>
     body {
-      font-family: 'Arial', sans-serif;
-      background: #f2f2f2;
-      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f7f7f7;
       padding: 20px;
     }
-
     h1 {
       text-align: center;
-      color: #333;
+      color: #444;
     }
-
-    #searchBar {
-      width: 100%;
-      padding: 10px;
-      font-size: 16px;
-      margin: 20px auto;
-      display: block;
-      max-width: 500px;
-    }
-
-    .order {
-      background: #fff;
+    .order-card {
+      background-color: #fff;
       border-radius: 8px;
-      padding: 15px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+      padding: 20px;
       margin-bottom: 20px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
-
-    .order strong {
-      display: inline-block;
-      width: 100px;
-    }
-
-    .status-input {
+    .order-card input[type="text"] {
+      padding: 6px;
+      margin-top: 4px;
       width: 60%;
-      padding: 5px;
-      margin-right: 10px;
     }
-
-    .update-btn {
+    .order-card button {
       padding: 6px 12px;
-      background-color: #4CAF50;
-      color: white;
-      border: none;
+      margin-top: 6px;
       cursor: pointer;
     }
-
-    .update-btn:hover {
-      background-color: #45a049;
+    .search-container {
+      text-align: center;
+      margin-bottom: 20px;
     }
-
-    .order-id {
-      font-weight: bold;
-      font-size: 18px;
-      margin-bottom: 10px;
+    .search-container input {
+      padding: 8px;
+      width: 60%;
+      font-size: 16px;
     }
   </style>
 </head>
 <body>
-  <h1>Admin Panel - All Orders</h1>
+  <h1>Admin - All Orders</h1>
 
-  <input type="text" id="searchBar" placeholder="Search by Order ID..." />
+  <div class="search-container">
+    <input type="text" id="searchBox" placeholder="Search by Order ID...">
+  </div>
 
   <div id="ordersContainer">Loading orders...</div>
 
-  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
   <script>
     const gun = Gun();
     const ordersContainer = document.getElementById("ordersContainer");
-    const searchBar = document.getElementById("searchBar");
+    const searchBox = document.getElementById("searchBox");
 
-    function displayOrder(id, data) {
-      const orderDiv = document.createElement("div");
-      orderDiv.className = "order";
-      orderDiv.dataset.id = id;
+    const renderOrder = (id, data) => {
+      const card = document.createElement("div");
+      card.className = "order-card";
 
-      const name = data.name || "N/A";
-      const phone = data.phone || "N/A";
-      const address = [data.address, data.city, data.state, data.pincode].filter(Boolean).join(", ") || "-";
-      const status = data.status || "Pending";
-      const total = data.total || "0";
+      const statusInput = document.createElement("input");
+      statusInput.type = "text";
+      statusInput.value = data.status || "";
 
-      orderDiv.innerHTML = `
-        <div class="order-id">Order ID: ${id}</div>
-        <div><strong>Total:</strong> ₹${total}</div>
-        <div><strong>Recipient:</strong> ${name}</div>
-        <div><strong>Phone:</strong> ${phone}</div>
-        <div><strong>Address:</strong> ${address}</div>
-        <div><strong>Status:</strong> 
-          <input type="text" class="status-input" value="${status}" />
-          <button class="update-btn">Update Status</button>
-        </div>
-      `;
-
-      const updateBtn = orderDiv.querySelector(".update-btn");
-      const statusInput = orderDiv.querySelector(".status-input");
+      const updateBtn = document.createElement("button");
+      updateBtn.textContent = "Update Status";
 
       updateBtn.onclick = () => {
         const newStatus = statusInput.value.trim();
 
-        // Get current order, update status and save
+        // Fetch and update only the 'data' field
         gun.get('imacx_orders').get(id).once(order => {
-          if (!order || !order.data) {
-            alert("❌ Order not found.");
-            return;
-          }
+          if (!order || !order.data) return alert("Order not found!");
 
           const updatedData = { ...order.data, status: newStatus };
 
           gun.get('imacx_orders').get(id).put({ data: updatedData }, ack => {
             if (ack.err) {
-              alert("❌ Failed to update.");
+              alert("❌ Failed to update status.");
             } else {
-              alert("✅ Status updated.");
+              alert("✅ Status updated!");
             }
           });
         });
       };
 
-      ordersContainer.appendChild(orderDiv);
-    }
+      card.innerHTML = `
+        <strong>Order ID:</strong> ${id}<br>
+        <strong>Total:</strong> ₹${data.total || 'N/A'}<br>
+        <strong>Recipient:</strong> ${data.name || 'N/A'}<br>
+        <strong>Phone:</strong> ${data.phone || 'N/A'}<br>
+        <strong>Address:</strong> ${data.address || ''}, ${data.city || ''}, ${data.state || ''}, ${data.country || ''} - ${data.pincode || ''}<br>
+        <strong>Status:</strong>
+      `;
 
-    function loadAllOrders() {
+      card.appendChild(statusInput);
+      card.appendChild(updateBtn);
+
+      return card;
+    };
+
+    const loadOrders = () => {
       ordersContainer.innerHTML = "";
 
-      gun.get('imacx_orders').map().once((orderNode, key) => {
-        if (orderNode && orderNode.data) {
-          displayOrder(key, orderNode.data);
+      gun.get("imacx_orders").map().once((node, id) => {
+        if (node && node.data) {
+          const card = renderOrder(id, node.data);
+          ordersContainer.appendChild(card);
         }
       });
-    }
+    };
 
-    searchBar.addEventListener("input", () => {
-      const term = searchBar.value.trim().toLowerCase();
-      const orders = document.querySelectorAll(".order");
+    searchBox.addEventListener("input", () => {
+      const query = searchBox.value.trim().toLowerCase();
+      ordersContainer.innerHTML = "";
 
-      orders.forEach(order => {
-        const id = order.dataset.id.toLowerCase();
-        if (id.includes(term)) {
-          order.style.display = "block";
-        } else {
-          order.style.display = "none";
+      gun.get("imacx_orders").map().once((node, id) => {
+        if (node && node.data && id.toLowerCase().includes(query)) {
+          const card = renderOrder(id, node.data);
+          ordersContainer.appendChild(card);
         }
       });
     });
 
-    loadAllOrders();
+    loadOrders();
   </script>
 </body>
 </html>
