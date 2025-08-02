@@ -2,106 +2,136 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Admin Order Creator - Unlimited Tables</title>
+  <title>imacx Admin - Orders</title>
+  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
   <style>
     body {
       font-family: sans-serif;
       padding: 20px;
-      background: #f0f0f0;
+      background: #fefefe;
     }
-    input, button {
-      padding: 10px;
-      margin: 5px 0;
-      width: 100%;
-      box-sizing: border-box;
+    h1 {
+      text-align: center;
     }
-    .order-box {
-      background: #fff;
-      padding: 15px;
-      margin: 15px 0;
-      box-shadow: 0 0 8px rgba(0,0,0,0.1);
-      border-left: 5px solid #007bff;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-    }
-    th, td {
-      padding: 10px;
+    .order {
       border: 1px solid #ccc;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 5px;
+      background: #ffffef;
     }
-    td[contenteditable="true"] {
-      background: #fffbe6;
+    pre {
+      background: #fff;
+      padding: 10px;
+      border: 1px dashed #aaa;
+      overflow-x: auto;
     }
-    .delete-btn {
-      background: #ff4444;
-      color: #fff;
+    select, button {
+      margin-top: 10px;
       padding: 6px 10px;
-      border: none;
-      cursor: pointer;
+      font-size: 14px;
     }
   </style>
 </head>
 <body>
 
-  <h2>Create Unlimited Orders</h2>
+<h1>🌍 imacx Admin - Global Orders</h1>
+<div style="text-align:center; margin-bottom: 20px;">
+  <input type="text" id="searchInput" placeholder="Enter Order ID" style="padding:8px; width:250px;">
+  <button onclick="searchOrder()">🔍 Search</button>
+</div>
 
-  <input id="orderId" placeholder="Enter Order ID" />
-  <input id="orderStatus" placeholder="Enter Order Status" />
-  <button onclick="createOrder()">Create Order</button>
+<div id="orders"></div>
+<p id="emptyNote">No orders found.</p>
 
-  <div id="ordersContainer"></div>
+<script>
+  const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
+  const ordersRef = gun.get('imacx_orders');
+  const ordersDiv = document.getElementById('orders');
+  const emptyNote = document.getElementById('emptyNote');
 
-  <script>
-    function createOrder() {
-      const id = document.getElementById("orderId").value.trim();
-      const status = document.getElementById("orderStatus").value.trim();
+  const STATUS_LIST = [
+    'Order Created', 'Payment Done', 'Order Cancelled',
+    'Order Processing', 'Out for Shipping', 'Shipped',
+    'Out for Delivery', 'Delivered'
+  ];
 
-      if (!id || !status) {
-        alert("Both Order ID and Status are required.");
-        return;
+  function renderOrder(order) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'order';
+
+    const pre = document.createElement('pre');
+    pre.textContent = JSON.stringify(order, null, 2);
+
+    const statusLabel = document.createElement('label');
+    statusLabel.textContent = "Status: ";
+
+    const select = document.createElement('select');
+    STATUS_LIST.forEach(status => {
+      const opt = document.createElement('option');
+      opt.value = status;
+      opt.textContent = status;
+      if (order.status === status) opt.selected = true;
+      select.appendChild(opt);
+    });
+
+    const btn = document.createElement('button');
+    btn.textContent = "Update Status";
+    btn.onclick = () => {
+      ordersRef.get(order.orderId).get('status').put(select.value);
+      alert("✅ Status updated");
+    };
+
+    wrapper.appendChild(pre);
+    wrapper.appendChild(statusLabel);
+    wrapper.appendChild(select);
+    wrapper.appendChild(btn);
+
+    ordersDiv.appendChild(wrapper);
+  }
+
+  function loadOrders() {
+    ordersDiv.innerHTML = ''; // clear previous
+    let foundAny = false;
+
+    ordersRef.map().once((order, key) => {
+      if (!order || !order.orderId) return;
+      foundAny = true;
+      emptyNote.style.display = 'none';
+      renderOrder(order);
+    });
+
+    setTimeout(() => {
+      if (!foundAny) {
+        emptyNote.style.display = 'block';
+        emptyNote.textContent = 'No orders found.';
       }
+    }, 1000);
+  }
 
-      const container = document.getElementById("ordersContainer");
+  function searchOrder() {
+    const searchId = document.getElementById('searchInput').value.trim();
+    ordersDiv.innerHTML = '';
+    emptyNote.style.display = 'block';
+    emptyNote.textContent = 'Searching...';
 
-      const box = document.createElement("div");
-      box.className = "order-box";
-
-      const title = document.createElement("h3");
-      title.innerText = "Order Table";
-      box.appendChild(title);
-
-      const table = document.createElement("table");
-      table.innerHTML = `
-        <thead>
-          <tr>
-            <th contenteditable="true">Order ID</th>
-            <th contenteditable="true">Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td contenteditable="true">${id}</td>
-            <td contenteditable="true">${status}</td>
-          </tr>
-        </tbody>
-      `;
-      box.appendChild(table);
-
-      const delBtn = document.createElement("button");
-      delBtn.innerText = "Delete This Order Table";
-      delBtn.className = "delete-btn";
-      delBtn.onclick = () => container.removeChild(box);
-      box.appendChild(delBtn);
-
-      container.appendChild(box);
-
-      // Clear inputs
-      document.getElementById("orderId").value = '';
-      document.getElementById("orderStatus").value = '';
+    if (!searchId) {
+      alert("❗ Enter an Order ID to search.");
+      return;
     }
-  </script>
+
+    ordersRef.get(searchId).once(order => {
+      if (order && order.orderId) {
+        emptyNote.style.display = 'none';
+        renderOrder(order);
+      } else {
+        emptyNote.textContent = "❌ Order not found.";
+      }
+    });
+  }
+
+  window.onload = loadOrders;
+</script>
 
 </body>
 </html>
