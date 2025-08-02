@@ -55,7 +55,7 @@
     'Out for Delivery', 'Delivered'
   ];
 
-  function renderOrder(order) {
+  function renderOrder(order, orderId) {
     const wrapper = document.createElement('div');
     wrapper.className = 'order';
 
@@ -77,20 +77,11 @@
     const btn = document.createElement('button');
     btn.textContent = "Update Status";
     btn.onclick = () => {
-      if (!order.orderId) {
-        alert("⚠️ Invalid order ID.");
-        return;
-      }
-
-      const updatedStatus = select.value;
-      const updatedOrder = { ...order, status: updatedStatus };
-
-      ordersRef.get(order.orderId).put(updatedOrder, ack => {
+      ordersRef.get(orderId).put({ ...order, status: select.value }, ack => {
         if (ack.err) {
-          alert("❌ Failed to update status");
-          console.error(ack.err);
+          alert("❌ Failed to update status.");
         } else {
-          alert("✅ Status updated successfully");
+          alert("✅ Status updated successfully.");
         }
       });
     };
@@ -99,23 +90,25 @@
     wrapper.appendChild(statusLabel);
     wrapper.appendChild(select);
     wrapper.appendChild(btn);
-
     ordersDiv.appendChild(wrapper);
   }
 
   function loadOrders() {
-    ordersRef.map().once(order => {
+    ordersDiv.innerHTML = '';
+    emptyNote.style.display = 'block';
+
+    ordersRef.map().once((order, orderId) => {
       if (!order || !order.orderId) return;
       emptyNote.style.display = 'none';
-      renderOrder(order);
+      renderOrder(order, orderId);
     });
   }
 
   function searchOrder() {
     const searchId = document.getElementById('searchInput').value.trim();
-    ordersDiv.innerHTML = ''; // Clear previous results
+    ordersDiv.innerHTML = '';
     emptyNote.style.display = 'block';
-    emptyNote.textContent = 'No orders found.';
+    emptyNote.textContent = "Searching...";
 
     if (!searchId) {
       alert("❗ Enter an Order ID to search.");
@@ -125,7 +118,7 @@
     ordersRef.get(searchId).once(order => {
       if (order && order.orderId) {
         emptyNote.style.display = 'none';
-        renderOrder(order);
+        renderOrder(order, searchId);
       } else {
         ordersDiv.innerHTML = '';
         emptyNote.textContent = "❌ Order not found.";
