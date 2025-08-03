@@ -38,17 +38,35 @@
     h2 {
       color: goldenrod;
     }
+    #searchBar {
+      margin-bottom: 1rem;
+    }
+    input[type="text"] {
+      padding: 0.4rem;
+      width: 60%;
+      border: 1px solid goldenrod;
+    }
   </style>
 </head>
 <body>
-  <h2>📦 All Orders - Admin Panel</h2>
+  <h2>📦 Admin Panel - Search & Manage Orders</h2>
+
+  <div id="searchBar">
+    <input type="text" id="searchInput" placeholder="🔍 Enter Order ID...">
+    <button onclick="searchOrder()">Search</button>
+    <button onclick="loadAllOrders()">Show All</button>
+  </div>
+
   <div id="ordersContainer">Loading orders...</div>
 
   <script>
     const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
     const ordersRef = gun.get('imacx_orders');
-
     const ordersContainer = document.getElementById('ordersContainer');
+
+    function clearOrders() {
+      ordersContainer.innerHTML = '';
+    }
 
     function renderOrder(order, orderId) {
       const div = document.createElement('div');
@@ -83,12 +101,30 @@
       alert(`✅ Order ${orderId} status updated to ${newStatus}`);
     }
 
-    // Load all orders
-    ordersRef.map().on((data, key) => {
-      if (data && data.orderId) {
-        renderOrder(data, key);
-      }
-    });
+    function loadAllOrders() {
+      clearOrders();
+      ordersRef.map().once((data, key) => {
+        if (data && data.orderId) {
+          renderOrder(data, key);
+        }
+      });
+    }
+
+    function searchOrder() {
+      const id = document.getElementById('searchInput').value.trim();
+      if (!id) return;
+
+      ordersRef.get(id).once((data) => {
+        clearOrders();
+        if (data && data.orderId) {
+          renderOrder(data, id);
+        } else {
+          ordersContainer.innerHTML = `<p>❌ No order found with ID: <strong>${id}</strong></p>`;
+        }
+      });
+    }
+
+    loadAllOrders(); // default on page load
   </script>
 </body>
 </html>
