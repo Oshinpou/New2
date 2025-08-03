@@ -86,44 +86,67 @@
     let newOrder = {};
     let total = 0;
 
+   
+    if (!localStorage.getItem('userId')) {
+  localStorage.setItem('userId', 'user_' + Math.random().toString(36).slice(2));
+}
     function getBasket() {
-      return JSON.parse(localStorage.getItem('basket')) || [];
-    }
+  const localBasket = JSON.parse(localStorage.getItem('basket')) || [];
+  const userId = localStorage.getItem('userId');
+  if (!userId) return localBasket;
+
+  const gunBasketRef = gun.get('imacx_user_baskets').get(userId);
+  return new Promise((resolve) => {
+    const result = [];
+    gunBasketRef.map().once((data, key) => {
+      if (data && data.name) {
+        result.push(data);
+      }
+    });
+    setTimeout(() => {
+      if (result.length > 0) {
+        resolve(result);
+      } else {
+        resolve(localBasket);
+      }
+    }, 1000);
+  });
+}
 
     function renderBasket() {
-      const basket = getBasket();
-      if (basket.length === 0) {
-        document.getElementById('basket-table').innerHTML = '<p>No items in basket.</p>';
-        return;
-      }
+      getBasket().then(basket => {
+  if (!Array.isArray(basket) || basket.length === 0) {
+    document.getElementById('basket-table').innerHTML = '<p>No items in basket.</p>';
+    return;
+  }
 
-      total = 0;
-      let html = `<table>
-        <tr>
-          <th>Image</th><th>Name</th><th>Qty</th><th>Price</th>
-          <th>Total</th><th>Category</th><th>Subcategory</th><th>Action</th>
-        </tr>`;
+  total = 0;
+  let html = `<table>
+    <tr>
+      <th>Image</th><th>Name</th><th>Qty</th><th>Price</th>
+      <th>Total</th><th>Category</th><th>Subcategory</th><th>Action</th>
+    </tr>`;
 
-      basket.forEach((item, index) => {
-        const itemTotal = item.price * item.quantity;
-        total += itemTotal;
-        html += `<tr>
-          <td><img src="${item.image}" width="50"></td>
-          <td>${item.name}</td>
-          <td>${item.quantity}</td>
-          <td>₹${item.price}</td>
-          <td>₹${itemTotal}</td>
-          <td>${item.category}</td>
-          <td>${item.subcategory}</td>
-          <td><button onclick="deleteItem(${index})">Delete</button></td>
-        </tr>`;
-      });
+  basket.forEach((item, index) => {
+    const itemTotal = item.price * item.quantity;
+    total += itemTotal;
+    html += `<tr>
+      <td><img src="${item.image}" width="50"></td>
+      <td>${item.name}</td>
+      <td>${item.quantity}</td>
+      <td>₹${item.price}</td>
+      <td>₹${itemTotal}</td>
+      <td>${item.category}</td>
+      <td>${item.subcategory}</td>
+      <td><button onclick="deleteItem(${index})">Delete</button></td>
+    </tr>`;
+  });
 
-      html += `<tr><td colspan="4"><strong>Grand Total</strong></td><td colspan="4"><strong>₹${total}</strong></td></tr></table>`;
-      document.getElementById('basket-table').innerHTML = html;
-    }
+  html += `<tr><td colspan="4"><strong>Grand Total</strong></td><td colspan="4"><strong>₹${total}</strong></td></tr></table>`;
+  document.getElementById('basket-table').innerHTML = html;
+});
 
-    function deleteItem(index) {
+      function deleteItem(index) {
       const basket = getBasket();
       if (confirm("Remove this item from basket?")) {
         basket.splice(index, 1);
