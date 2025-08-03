@@ -1,28 +1,37 @@
-<!-- useradmin.html - imacx Admin Panel -->
+<!-- useradmin.html - imacx User Admin Page -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://cdn.jsdelivr.net; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net">
-  <title>imacx User Admin</title>
-  <script type="module" src="db.js"></script>
+  <title>User Admin - imacx</title>
+  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gun/lib/radix.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gun/lib/radisk.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gun/lib/store.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gun/lib/rindexed.js"></script>
+  <script type="module" src="./db.js"></script>
   <style>
-    body { font-family: sans-serif; padding: 20px; max-width: 800px; margin: auto; }
-    input, button { margin: 10px 0; padding: 10px; width: 100%; }
+    body { font-family: sans-serif; padding: 20px; max-width: 900px; margin: auto; }
+    input, button { margin: 8px 0; padding: 8px; width: 100%; }
     table { width: 100%; border-collapse: collapse; margin-top: 20px; }
     th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
+    input[type=text], input[type=password], input[type=email] { width: 100%; }
   </style>
 </head>
 <body>
   <h2>User Account Management</h2>
-  <input type="text" id="search" placeholder="Search by Username, Email or Phone" oninput="searchUser()" />
+  <input type="text" id="search" placeholder="Search by Username, Email or Phone" />
   <div id="results"></div>
 
   <script type="module">
     import { DB } from './db.js';
     DB.init();
     const users = DB.use('imacx_users');
+
+    document.getElementById('search').oninput = searchUser;
 
     async function searchUser() {
       const term = document.getElementById('search').value.trim().toLowerCase();
@@ -33,15 +42,15 @@
         u.phone.toLowerCase().includes(term)
       );
 
-      let html = '<table><tr><th>Username</th><th>Email</th><th>Country Code</th><th>Phone</th><th>Password</th><th>Actions</th></tr>';
+      let html = '<table><tr><th>Username</th><th>Email</th><th>Code</th><th>Phone</th><th>Password</th><th>Action</th></tr>';
       for (let [key, u] of filtered) {
         html += `<tr>
-          <td><input value="${u.username}" onchange="updateField('${key}', 'username', this.value)" /></td>
-          <td><input value="${u.email}" onchange="updateField('${key}', 'email', this.value)" /></td>
-          <td><input value="${u.countryCode}" onchange="updateField('${key}', 'countryCode', this.value)" /></td>
-          <td><input value="${u.phone}" onchange="updateField('${key}', 'phone', this.value)" /></td>
-          <td><input value="${u.password}" onchange="updateField('${key}', 'password', this.value)" /></td>
-          <td><button onclick="deleteUser('${key}')">Delete</button></td>
+          <td><input value="${u.username}" onchange="window.updateField('${key}', 'username', this.value)" /></td>
+          <td><input value="${u.email}" onchange="window.updateField('${key}', 'email', this.value)" /></td>
+          <td><input value="${u.countryCode}" onchange="window.updateField('${key}', 'countryCode', this.value)" /></td>
+          <td><input value="${u.phone}" onchange="window.updateField('${key}', 'phone', this.value)" /></td>
+          <td><input value="${u.password}" onchange="window.updateField('${key}', 'password', this.value)" /></td>
+          <td><button onclick="window.deleteUser('${key}')">Delete</button></td>
         </tr>`;
       }
       html += '</table>';
@@ -50,14 +59,15 @@
 
     window.updateField = async function(key, field, value) {
       const user = await users.read(key);
+      if (!user) return;
       user[field] = value;
       await users.save(key, user);
-    }
+    };
 
     window.deleteUser = async function(key) {
       await users.delete(key);
-      searchUser();
-    }
+      await searchUser();
+    };
   </script>
 </body>
 </html>
