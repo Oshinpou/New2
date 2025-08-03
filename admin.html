@@ -1,81 +1,95 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Admin - imacx Orders</title>
+  <meta charset="UTF-8">
+  <title>Admin Panel - IMACX</title>
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/dexie@3.2.3/dist/dexie.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dexie@3.0.3/dist/dexie.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/peerbit/dist/index.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tonic-ssr"></script>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; background: #f9f9f9; }
-    input, textarea { width: 100%; margin: 5px 0; padding: 6px; }
-    button { padding: 6px 10px; margin-top: 10px; }
-    .order-card {
-      background: white; padding: 10px; margin-bottom: 10px;
-      box-shadow: 0 0 4px rgba(0,0,0,0.1); border-radius: 4px;
-    }
+    body { font-family: sans-serif; padding: 20px; background: #f9f9f9; }
+    .order { background: #fff; border: 1px solid #ddd; margin: 10px 0; padding: 10px; border-radius: 8px; }
+    .field { margin-bottom: 5px; }
+    .status-input { width: 100px; }
+    button { padding: 6px 10px; margin-top: 10px; cursor: pointer; }
   </style>
 </head>
 <body>
 
-  <h2>🛠️ imacx Order Admin</h2>
+  <h2>🧾 IMACX Admin Orders</h2>
+  <input type="text" id="search" placeholder="Search email or name">
+  <button onclick="syncAndRender()">🔄 Manage Database</button>
+  <div id="orders"></div>
 
-  <input type="text" id="searchInput" placeholder="Search by email or name..." />
+  <script type="module">
+    import { create } from 'https://cdn.jsdelivr.net/npm/@peerbit/core@0.15.19/+esm';
 
-  <button onclick="syncAndRender()">🔄 Refresh Orders</button>
+    const peer = await create();
+    const ordersDB = await peer.open('orders');
 
-  <div id="ordersContainer"></div>
+    const gun = Gun('https://gun-manhattan.herokuapp.com/gun');
+    const gorders = gun.get('imacx_orders');
 
-  <script type="module" src="main.js"></script>
+    const db = new Dexie('localCache');
+    db.version(1).stores({ orders: 'orderId' });
 
-  <script>
-    // Expose sync & render on global window
-    window.renderOrders = function (orders) {
-      const container = document.getElementById('ordersContainer');
+    let fuse;
+
+    async function renderOrders(allOrders) {
+      const container = document.getElementById('orders');
       container.innerHTML = '';
-      orders.forEach(order => {
-        const card = document.createElement('div');
-        card.className = 'order-card';
-
-        card.innerHTML = `
-          <strong>Order ID:</strong> <input value="${order.orderId}" readonly />
-          <strong>Name:</strong> <input class="recipient" value="${order.shipping?.recipient || ''}" />
-          <strong>Email:</strong> <input class="email" value="${order.shipping?.email || ''}" />
-          <strong>Items:</strong> <textarea class="items">${JSON.stringify(order.items || [])}</textarea>
-          <strong>Status:</strong> <input class="status" value="${order.status || 'pending'}" />
-          <button onclick="updateOrder(this)">💾 Save Changes</button>
+      allOrders.forEach(order => {
+        const div = document.createElement('div');
+        div.className = 'order';
+        div.innerHTML = `
+          <div class="field"><strong>ID:</strong> ${order.orderId}</div>
+          <div class="field"><strong>Name:</strong> ${order.shipping?.recipient || 'N/A'}</div>
+          <div class="field"><strong>Email:</strong> ${order.shipping?.email || 'N/A'}</div>
+          <div class="field">
+            <strong>Status:</strong> 
+            <input type="text" value="${order.status || ''}" class="status-input" data-id="${order.orderId}">
+          </div>
         `;
-
-        card.dataset.orderId = order.orderId;
-        container.appendChild(card);
+        container.appendChild(div);
       });
-    };
 
-    // Update order in Peerbit and GunDB
-    window.updateOrder = async function (btn) {
-      const card = btn.closest('.order-card');
-      const orderId = card.dataset.orderId;
-      const updated = {
-        orderId,
-        shipping: {
-          recipient: card.querySelector('.recipient').value,
-          email: card.querySelector('.email').value,
-        },
-        items: JSON.parse(card.querySelector('.items').value),
-        status: card.querySelector('.status').value,
-      };
-      await storeOrder(updated);
-      alert('✅ Order updated!');
-    };
+      // Handle inline status changes
+      document.querySelectorAll('.status-input').forEach(input => {
+        input.addEventListener('change', async e => {
+          const orderId = e.target.dataset.id;
+          const newStatus = e.target.value;
+          const order = await db.orders.get(orderId);
+          if (order) {
+            order.status = newStatus;
+            await db.orders.put(order);
+            await ordersDB.put(order, order.orderId);
+            gorders.get(order.orderId).put(order);
+          }
+        });
+      });
+    }
 
-    // Search
-    document.getElementById('searchInput').addEventListener('input', (e) => {
-      const results = search(e.target.value);
+    async function syncAndRender() {
+      const all = await ordersDB.query.all();
+      await db.orders.bulkPut(all);
+      const allOrders = await db.orders.toArray();
+      renderOrders(allOrders);
+      fuse = new Fuse(allOrders, {
+        keys: ['shipping.email', 'shipping.recipient'],
+        threshold: 0.3
+      });
+    }
+
+    ordersDB.events.on('replicated', syncAndRender);
+    await syncAndRender();
+
+    // Search handler
+    document.getElementById('search').addEventListener('input', e => {
+      const results = fuse.search(e.target.value).map(x => x.item);
       renderOrders(results);
     });
   </script>
+
 </body>
 </html>
