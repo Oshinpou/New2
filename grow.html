@@ -4,6 +4,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>imacx Shop - Shopping Page</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+ <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+<script src="db.js"></script>
   <style>
     body {
       margin: 0;
@@ -165,42 +167,53 @@
     }
 
     
-  function addToBasket(button) {
-    const card = button.closest('.product-card');
-    const name = card.getAttribute('data-name');
-    const price = parseFloat(card.getAttribute('data-price'));
-    const qty = parseInt(card.querySelector('input').value);
-    const image = card.querySelector('img').src;
-    const category = card.getAttribute('data-category');
-    const subcategory = card.getAttribute('data-subcategory');
+function addToBasket(button) {
+  const card = button.closest('.product-card');
+  const name = card.getAttribute('data-name');
+  const price = parseFloat(card.getAttribute('data-price'));
+  const qty = parseInt(card.querySelector('input').value);
+  const image = card.querySelector('img').src;
+  const category = card.getAttribute('data-category');
+  const subcategory = card.getAttribute('data-subcategory');
 
-    if (qty > 0) {
-      let basket = JSON.parse(localStorage.getItem('basket')) || [];
-
-      // Check if product already exists
-      const existingIndex = basket.findIndex(item => item.name === name);
-      if (existingIndex > -1) {
-        basket[existingIndex].quantity += qty;
-      } else {
-        basket.push({
-          name,
-          price,
-          quantity: qty,
-          image,
-          category,
-          subcategory
-        });
-      }
-
-      localStorage.setItem('basket', JSON.stringify(basket));
-      alert(`${qty} × ${name} added to basket. Total: ₹${qty * price}`);
-    } else {
-      alert('Please select quantity before adding to basket.');
-    }
+  if (qty <= 0) {
+    alert("Please select quantity before adding to basket.");
+    return;
   }
 
+  // Load from localStorage first
+  let basket = JSON.parse(localStorage.getItem('basket')) || [];
 
-    document.getElementById('searchBar').addEventListener('input', function () {
+  const existingIndex = basket.findIndex(item => item.name === name);
+  if (existingIndex > -1) {
+    basket[existingIndex].quantity += qty;
+  } else {
+    basket.push({ name, price, quantity: qty, image, category, subcategory });
+  }
+
+  // Save to localStorage
+  localStorage.setItem('basket', JSON.stringify(basket));
+
+  // Also sync with GunDB globally
+  const userId = localStorage.getItem('userId') || generateUserId();
+  localStorage.setItem('userId', userId);
+
+  const gunBasketRef = gun.get('imacx_user_baskets').get(userId);
+  gunBasketRef.put({ updatedAt: Date.now() }); // timestamp for sync
+
+  basket.forEach((item, index) => {
+    gunBasketRef.get(item.name).put(item);
+  });
+
+  alert(`${qty} × ${name} added to basket. Total: ₹${qty * price}`);
+}
+
+function generateUserId() {
+  return 'user_' + Math.random().toString(36).substring(2, 12);
+}
+
+    
+  document.getElementById('searchBar').addEventListener('input', function () {
       const search = this.value.toLowerCase();
       document.querySelectorAll('.product-card').forEach(card => {
         const name = card.getAttribute('data-name').toLowerCase();
