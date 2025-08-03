@@ -1,93 +1,117 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Admin Panel - IMACX</title>
-  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/dexie@3.0.3/dist/dexie.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/tonic-ssr"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin - imacx Orders</title>
   <style>
-    body { font-family: sans-serif; padding: 20px; background: #f9f9f9; }
-    .order { background: #fff; border: 1px solid #ddd; margin: 10px 0; padding: 10px; border-radius: 8px; }
-    .field { margin-bottom: 5px; }
-    .status-input { width: 100px; }
-    button { padding: 6px 10px; margin-top: 10px; cursor: pointer; }
+    body {
+      font-family: 'Arial', sans-serif;
+      background: #f0f2f5;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    input, button {
+      font-size: 16px;
+      padding: 8px;
+      margin: 5px 0;
+      border-radius: 5px;
+    }
+    .order-card {
+      border: 1px solid #ccc;
+      background: #fff;
+      border-radius: 10px;
+      padding: 15px;
+      margin: 15px 0;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .status {
+      margin-top: 10px;
+    }
+    #searchInput {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 20px;
+    }
   </style>
 </head>
 <body>
 
-  <h2>🧾 IMACX Admin Orders</h2>
-  <input type="text" id="search" placeholder="Search email or name">
-  <button onclick="syncAndRender()">🔄 Manage Database</button>
-  <div id="orders"></div>
+  <h1>Admin - imacx Orders</h1>
+  <input type="text" id="searchInput" placeholder="Search Order ID..." />
 
-  <script type="module">
-    import { create } from 'https://cdn.jsdelivr.net/npm/@peerbit/core@0.15.19/+esm';
+  <div id="ordersContainer"></div>
 
-    const peer = await create();
-    const ordersDB = await peer.open('orders');
+  <!-- GUN CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
 
-    const gun = Gun('https://gun-manhattan.herokuapp.com/gun');
-    const gorders = gun.get('imacx_orders');
+  <script>
+    // Initialize GunDB with a globally distributed relay peer
+    const gun = Gun({
+      peers: ['https://gun-manhattan.herokuapp.com/gun']
+    });
 
-    const db = new Dexie('localCache');
-    db.version(1).stores({ orders: 'orderId' });
+    const ordersContainer = document.getElementById("ordersContainer");
+    const searchInput = document.getElementById("searchInput");
 
-    let fuse;
+    function displayOrder(id, data, savedStatus = "") {
+      const card = document.createElement("div");
+      card.className = "order-card";
+      card.setAttribute("data-id", id);
 
-    async function renderOrders(allOrders) {
-      const container = document.getElementById('orders');
-      container.innerHTML = '';
-      allOrders.forEach(order => {
-        const div = document.createElement('div');
-        div.className = 'order';
-        div.innerHTML = `
-          <div class="field"><strong>ID:</strong> ${order.orderId}</div>
-          <div class="field"><strong>Name:</strong> ${order.shipping?.recipient || 'N/A'}</div>
-          <div class="field"><strong>Email:</strong> ${order.shipping?.email || 'N/A'}</div>
-          <div class="field">
-            <strong>Status:</strong> 
-            <input type="text" value="${order.status || ''}" class="status-input" data-id="${order.orderId}">
-          </div>
-        `;
-        container.appendChild(div);
-      });
+      const statusInput = document.createElement("input");
+      statusInput.type = "text";
+      statusInput.value = savedStatus || "";
+      statusInput.placeholder = "Enter status";
+      statusInput.style.marginRight = "10px";
 
-      // Handle inline status changes
-      document.querySelectorAll('.status-input').forEach(input => {
-        input.addEventListener('change', async e => {
-          const orderId = e.target.dataset.id;
-          const newStatus = e.target.value;
-          const order = await db.orders.get(orderId);
-          if (order) {
-            order.status = newStatus;
-            await db.orders.put(order);
-            await ordersDB.put(order, order.orderId);
-            gorders.get(order.orderId).put(order);
-          }
-        });
-      });
+      const updateBtn = document.createElement("button");
+      updateBtn.textContent = "Update Status";
+      updateBtn.onclick = () => {
+        const newStatus = statusInput.value.trim();
+        if (newStatus) {
+          gun.get("imacx_order_status").get(id).put({ status: newStatus });
+          alert("✅ Status updated and saved globally.");
+        }
+      };
+
+      card.innerHTML = `
+        <strong>Order ID:</strong> ${id}<br>
+        <strong>Total:</strong> ₹${data.total}<br>
+        <strong>Recipient:</strong> ${data.name}<br>
+        <strong>Phone:</strong> ${data.phone1}, ${data.phone2}<br>
+        <strong>Address:</strong> ${data.address}, ${data.city}, ${data.state}, ${data.country}, ${data.pincode}<br>
+        <strong>Status:</strong>
+      `;
+
+      card.appendChild(statusInput);
+      card.appendChild(updateBtn);
+
+      ordersContainer.appendChild(card);
     }
 
-    async function syncAndRender() {
-      const all = await ordersDB.query.all();
-      await db.orders.bulkPut(all);
-      const allOrders = await db.orders.toArray();
-      renderOrders(allOrders);
-      fuse = new Fuse(allOrders, {
-        keys: ['shipping.email', 'shipping.recipient'],
-        threshold: 0.3
+    // Load all orders and fetch saved statuses
+    gun.get("imacx_orders").map().once((order, id) => {
+      if (!order || !order.data) return;
+
+      const data = order.data;
+      gun.get("imacx_order_status").get(id).once(statusObj => {
+        const status = statusObj?.status || "";
+        displayOrder(id, data, status);
       });
-    }
+    });
 
-    ordersDB.events.on('replicated', syncAndRender);
-    await syncAndRender();
-
-    // Search handler
-    document.getElementById('search').addEventListener('input', e => {
-      const results = fuse.search(e.target.value).map(x => x.item);
-      renderOrders(results);
+    // Filter orders by ID
+    searchInput.addEventListener("input", () => {
+      const search = searchInput.value.trim().toLowerCase();
+      const cards = document.querySelectorAll(".order-card");
+      cards.forEach(card => {
+        const id = card.getAttribute("data-id").toLowerCase();
+        card.style.display = id.includes(search) ? "block" : "none";
+      });
     });
   </script>
 
