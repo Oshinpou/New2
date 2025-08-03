@@ -1,128 +1,108 @@
-// db.js — Advanced GunDB Handler for imacx_orders
+// db.js – Global GunDB Manager
+import Gun from 'https://cdn.jsdelivr.net/npm/gun/gun.js';
+import 'https://cdn.jsdelivr.net/npm/gun/sea.js';
+import 'https://cdn.jsdelivr.net/npm/gun/lib/radix.js';
+import 'https://cdn.jsdelivr.net/npm/gun/lib/radisk.js';
+import 'https://cdn.jsdelivr.net/npm/gun/lib/store.js';
+import 'https://cdn.jsdelivr.net/npm/gun/lib/rindexed.js';
 
-const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
-const ordersRef = gun.get('imacx_orders');
+export const DB = (() => {
+  const gunInstances = {};
+  let gun = null;
 
-/**
- * Utility: Validates if order data has all required properties
- * @param {object} data 
- * @returns {boolean}
- */
-function isValidOrder(data) {
-  return data &&
-    typeof data.orderId === 'string' &&
-    typeof data.total === 'number' &&
-    data.shipping &&
-    data.basket &&
-    typeof data.status === 'string' &&
-    Object.keys(data.basket).length > 0;
-}
-
-/**
- * Get all fully defined, valid orders from GunDB
- * @returns {Promise<Array<{orderId: string, data: object}>>}
- */
-async function getAllOrders() {
-  return new Promise((resolve) => {
-    const orders = [];
-    ordersRef.map().once((data, key) => {
-      if (isValidOrder(data)) {
-        orders.push({ orderId: key, data });
-      }
+  const init = (relayURL = '/gun', options = {}) => {
+    gun = Gun({
+      peers: [relayURL],
+      localStorage: true,
+      radisk: true,
+      ...options,
     });
-    setTimeout(() => resolve(orders), 2000); // Wait to gather all
-  });
-}
+    console.log('GunDB Initialized at:', relayURL);
+  };
 
-/**
- * Get a specific order by ID
- * @param {string} orderId 
- * @returns {Promise<object|null>}
- */
-async function getOrder(orderId) {
-  return new Promise((resolve) => {
-    ordersRef.get(orderId).once((data) => {
-      if (isValidOrder(data)) {
-        resolve(data);
-      } else {
-        resolve(null);
-      }
-    });
-  });
-}
+  const validateData = (data) => {
+    return typeof data === 'object' && data !== null && !Array.isArray(data);
+  };
 
-/**
- * Update one or more fields of a specific order
- * @param {string} orderId 
- * @param {object} updates - nested or flat fields
- * @returns {Promise<boolean>}
- */
-async function updateOrder(orderId, updates) {
-  return new Promise((resolve) => {
-    if (!updates || typeof updates !== 'object') {
-      console.warn('⚠️ Invalid update data');
-      return resolve(false);
-    }
-    const ref = ordersRef.get(orderId);
-    const promises = [];
-
-    for (let key in updates) {
-      const value = updates[key];
-      if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-        for (let subKey in value) {
-          promises.push(new Promise((res) => {
-            ref.get(key).get(subKey).put(value[subKey], () => res());
-          }));
-        }
-      } else {
-        promises.push(new Promise((res) => {
-          ref.get(key).put(value, () => res());
-        }));
-      }
+  const use = (namespace) => {
+    if (!gun) throw new Error('GunDB not initialized. Call DB.init() first.');
+    if (!gunInstances[namespace]) {
+      gunInstances[namespace] = gun.get(namespace);
     }
 
-    Promise.all(promises).then(() => resolve(true));
-  });
-}
+    const dbRef = gunInstances[namespace];
 
-/**
- * Delete an entire order by ID
- * @param {string} orderId 
- * @returns {Promise<boolean>}
- */
-async function deleteOrder(orderId) {
-  return new Promise((resolve) => {
-    ordersRef.get(orderId).put(null, ack => {
-      resolve(!ack.err);
-    });
-  });
-}
+    return {
+      save: (key, data) => {
+        return new Promise((resolve, reject) => {
+          if (!validateData(data)) return reject('Invalid data structure');
+          dbRef.get(key).put(data, (ack) => {
+            if (ack.err) reject(ack.err);
+            else resolve(ack);
+          });
+        });
+      },
 
-/**
- * Delete all orders (Dangerous!)
- * @returns {Promise<number>} - Number of orders deleted
- */
-async function deleteAllOrders() {
-  return new Promise((resolve) => {
-    let deleted = 0;
-    ordersRef.map().once((data, key) => {
-      if (isValidOrder(data)) {
-        ordersRef.get(key).put(null);
-        deleted++;
-      }
-    });
-    setTimeout(() => resolve(deleted), 2000);
-  });
-}
+      read: (key) => {
+        return new Promise((resolve) => {
+          dbRef.get(key).once((data) => {
+            if (!data || data._) return resolve(null); // ignore metadata
+            resolve(data);
+          });
+        });
+      },
 
-/**
- * Listen to real-time changes and replicate to callback
- * @param {function} onUpdate - receives { orderId, data }
- */
-function onOrderChange(onUpdate) {
-  ordersRef.map().on((data, key) => {
-    if (isValidOrder(data)) {
-      onUpdate({ orderId: key, data });
-    }
-  });
-}
+      update: (key, changes) => {
+        return new Promise((resolve, reject) => {
+          dbRef.get(key).once((oldData) => {
+            if (!oldData) return reject('Data not found');
+            const newData = { ...oldData, ...changes };
+            dbRef.get(key).put(newData, (ack) => {
+              if (ack.err) reject(ack.err);
+              else resolve(newData);
+            });
+          });
+        });
+      },
+
+      delete: (key) => {
+        return new Promise((resolve, reject) => {
+          dbRef.get(key).put(null, (ack) => {
+            if (ack.err) reject(ack.err);
+            else resolve(true);
+          });
+        });
+      },
+
+      listAll: () => {
+        return new Promise((resolve) => {
+          const allData = {};
+          dbRef.map().once((data, key) => {
+            if (data && data !== null && !data._) {
+              allData[key] = data;
+            }
+          });
+          setTimeout(() => resolve(allData), 1000); // Allow map to finish
+        });
+      },
+
+      onChange: (callback) => {
+        dbRef.map().on((data, key) => {
+          if (data && data !== null && !data._) {
+            callback(key, data);
+          }
+        });
+      },
+
+      listenKey: (key, callback) => {
+        dbRef.get(key).on((data) => {
+          if (data && data !== null && !data._) {
+            callback(data);
+          }
+        });
+      },
+    };
+  };
+
+  return { init, use };
+})();
