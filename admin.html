@@ -4,116 +4,91 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Admin - imacx Orders</title>
+  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
   <style>
     body {
-      font-family: 'Arial', sans-serif;
-      background: #f0f2f5;
-      padding: 20px;
-    }
-    h1 {
-      text-align: center;
-      color: #333;
-    }
-    input, button {
-      font-size: 16px;
-      padding: 8px;
-      margin: 5px 0;
-      border-radius: 5px;
-    }
-    .order-card {
-      border: 1px solid #ccc;
+      font-family: 'Cursive', sans-serif;
       background: #fff;
-      border-radius: 10px;
-      padding: 15px;
-      margin: 15px 0;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      color: goldenrod;
+      padding: 1rem;
     }
-    .status {
-      margin-top: 10px;
-    }
-    #searchInput {
+    table {
       width: 100%;
-      padding: 10px;
-      margin-bottom: 20px;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+    th, td {
+      border: 1px solid goldenrod;
+      padding: 0.5rem;
+      text-align: left;
+      vertical-align: top;
+    }
+    select {
+      padding: 0.3rem;
+    }
+    button {
+      background: goldenrod;
+      color: white;
+      padding: 0.3rem 0.7rem;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    h2 {
+      color: goldenrod;
     }
   </style>
 </head>
 <body>
-
-  <h1>Admin - imacx Orders</h1>
-  <input type="text" id="searchInput" placeholder="Search Order ID..." />
-
-  <div id="ordersContainer"></div>
-
-  <!-- GUN CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+  <h2>📦 All Orders - Admin Panel</h2>
+  <div id="ordersContainer">Loading orders...</div>
 
   <script>
-    // Initialize GunDB with a globally distributed relay peer
-    const gun = Gun({
-      peers: ['https://gun-manhattan.herokuapp.com/gun']
-    });
+    const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
+    const ordersRef = gun.get('imacx_orders');
 
-    const ordersContainer = document.getElementById("ordersContainer");
-    const searchInput = document.getElementById("searchInput");
+    const ordersContainer = document.getElementById('ordersContainer');
 
-    function displayOrder(id, data, savedStatus = "") {
-      const card = document.createElement("div");
-      card.className = "order-card";
-      card.setAttribute("data-id", id);
-
-      const statusInput = document.createElement("input");
-      statusInput.type = "text";
-      statusInput.value = savedStatus || "";
-      statusInput.placeholder = "Enter status";
-      statusInput.style.marginRight = "10px";
-
-      const updateBtn = document.createElement("button");
-      updateBtn.textContent = "Update Status";
-      updateBtn.onclick = () => {
-        const newStatus = statusInput.value.trim();
-        if (newStatus) {
-          gun.get("imacx_order_status").get(id).put({ status: newStatus });
-          alert("✅ Status updated and saved globally.");
-        }
-      };
-
-      card.innerHTML = `
-        <strong>Order ID:</strong> ${id}<br>
-        <strong>Total:</strong> ₹${data.total}<br>
-        <strong>Recipient:</strong> ${data.name}<br>
-        <strong>Phone:</strong> ${data.phone1}, ${data.phone2}<br>
-        <strong>Address:</strong> ${data.address}, ${data.city}, ${data.state}, ${data.country}, ${data.pincode}<br>
-        <strong>Status:</strong>
+    function renderOrder(order, orderId) {
+      const div = document.createElement('div');
+      div.innerHTML = `
+        <table>
+          <tr><th colspan="2">🆔 Order ID: ${orderId}</th></tr>
+          <tr><td><strong>Recipient</strong></td><td>${order.shipping?.recipient || '-'}</td></tr>
+          <tr><td><strong>Email</strong></td><td>${order.shipping?.email || '-'}</td></tr>
+          <tr><td><strong>Phone</strong></td><td>${order.shipping?.countryCode || ''} ${order.shipping?.phone || '-'}</td></tr>
+          <tr><td><strong>Address</strong></td><td>${order.shipping?.address || '-'}, ${order.shipping?.area || '-'}, ${order.shipping?.city || '-'}, ${order.shipping?.state || '-'}, ${order.shipping?.country || '-'}, ${order.shipping?.zip || '-'}</td></tr>
+          <tr><td><strong>Status</strong></td>
+            <td>
+              <select onchange="updateStatus('${orderId}', this.value)">
+                <option ${order.status === 'Order Created' ? 'selected' : ''}>Order Created</option>
+                <option ${order.status === 'Payment Done' ? 'selected' : ''}>Payment Done</option>
+                <option ${order.status === 'Shipped' ? 'selected' : ''}>Shipped</option>
+                <option ${order.status === 'Delivered' ? 'selected' : ''}>Delivered</option>
+                <option ${order.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+              </select>
+            </td>
+          </tr>
+          <tr><td><strong>Total</strong></td><td>₹${order.total || 0}</td></tr>
+          <tr><td><strong>Items</strong></td><td><ul>${Object.values(order.basket || {}).map(item =>
+            `<li>${item.name} x${item.quantity} - ₹${item.price * item.quantity}</li>`).join('')}</ul></td></tr>
+        </table><br/>
       `;
-
-      card.appendChild(statusInput);
-      card.appendChild(updateBtn);
-
-      ordersContainer.appendChild(card);
+      ordersContainer.appendChild(div);
     }
 
-    // Load all orders and fetch saved statuses
-    gun.get("imacx_orders").map().once((order, id) => {
-      if (!order || !order.data) return;
+    function updateStatus(orderId, newStatus) {
+      ordersRef.get(orderId).get('status').put(newStatus);
+      alert(`✅ Order ${orderId} status updated to ${newStatus}`);
+    }
 
-      const data = order.data;
-      gun.get("imacx_order_status").get(id).once(statusObj => {
-        const status = statusObj?.status || "";
-        displayOrder(id, data, status);
-      });
-    });
-
-    // Filter orders by ID
-    searchInput.addEventListener("input", () => {
-      const search = searchInput.value.trim().toLowerCase();
-      const cards = document.querySelectorAll(".order-card");
-      cards.forEach(card => {
-        const id = card.getAttribute("data-id").toLowerCase();
-        card.style.display = id.includes(search) ? "block" : "none";
-      });
+    // Load all orders
+    ordersRef.map().on((data, key) => {
+      if (data && data.orderId) {
+        renderOrder(data, key);
+      }
     });
   </script>
-
 </body>
 </html>
