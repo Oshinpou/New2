@@ -1,0 +1,84 @@
+<!-- user.html - imacx User Account System -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://cdn.jsdelivr.net https://checkout.razorpay.com; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://checkout.razorpay.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net">
+  <title>imacx User Account</title>
+  <script type="module" src="db.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; }
+    input, button { display: block; margin: 10px 0; padding: 10px; width: 100%; }
+    .error { color: red; }
+    .success { color: green; }
+  </style>
+</head>
+<body>
+  <h2>Register Account</h2>
+  <div id="register">
+    <input type="text" id="reg_username" placeholder="Username" required />
+    <input type="email" id="reg_email" placeholder="Email" required />
+    <input type="text" id="reg_country_code" placeholder="Country Code (e.g., +91)" required />
+    <input type="text" id="reg_phone" placeholder="Phone Number" required />
+    <input type="password" id="reg_password" placeholder="Password" required />
+    <input type="password" id="reg_confirm" placeholder="Confirm Password" required />
+    <button onclick="registerUser()">Register</button>
+    <p id="register_status"></p>
+  </div>
+
+  <h2>Login</h2>
+  <div id="login">
+    <input type="text" id="login_username" placeholder="Username" required />
+    <input type="password" id="login_password" placeholder="Password" required />
+    <button onclick="loginUser()">Login</button>
+    <p id="login_status"></p>
+  </div>
+
+  <script type="module">
+    import { DB } from './db.js';
+    DB.init();
+    const users = DB.use('imacx_users');
+
+    async function registerUser() {
+      const username = reg_username.value.trim();
+      const email = reg_email.value.trim();
+      const countryCode = reg_country_code.value.trim();
+      const phone = reg_phone.value.trim();
+      const password = reg_password.value;
+      const confirm = reg_confirm.value;
+
+      if (password !== confirm) return register_status.textContent = 'Passwords do not match';
+      const userKey = `${username}_${countryCode}_${phone}`;
+
+      const allUsers = await users.listAll();
+      for (let key in allUsers) {
+        const user = allUsers[key];
+        if (user.username === username || user.email === email || (user.phone === phone && user.countryCode === countryCode)) {
+          register_status.textContent = 'Username, email, or phone number already in use';
+          return;
+        }
+      }
+
+      await users.save(userKey, { username, email, phone, countryCode, password });
+      register_status.textContent = 'Registration successful';
+      register_status.className = 'success';
+    }
+
+    async function loginUser() {
+      const username = login_username.value.trim();
+      const password = login_password.value;
+      const allUsers = await users.listAll();
+      const matched = Object.values(allUsers).find(user => user.username === username && user.password === password);
+
+      if (matched) {
+        login_status.textContent = 'Login successful';
+        login_status.className = 'success';
+      } else {
+        login_status.textContent = 'Invalid username or password';
+        login_status.className = 'error';
+      }
+    }
+  </script>
+</body>
+</html>
