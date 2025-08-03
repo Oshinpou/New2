@@ -167,7 +167,10 @@
     }
 
     
-function addToBasket(button) {
+if (!localStorage.getItem('userId')) {
+  localStorage.setItem('userId', 'user_' + Math.random().toString(36).slice(2));
+}
+    function addToBasket(button) {
   const card = button.closest('.product-card');
   const name = card.getAttribute('data-name');
   const price = parseFloat(card.getAttribute('data-price'));
