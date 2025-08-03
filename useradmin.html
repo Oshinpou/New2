@@ -1,73 +1,250 @@
-<!-- useradmin.html - imacx User Admin Page -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://cdn.jsdelivr.net; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net">
-  <title>User Admin - imacx</title>
-  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/gun/lib/radix.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/gun/lib/radisk.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/gun/lib/store.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/gun/lib/rindexed.js"></script>
-  <script type="module" src="./db.js"></script>
-  <style>
-    body { font-family: sans-serif; padding: 20px; max-width: 900px; margin: auto; }
-    input, button { margin: 8px 0; padding: 8px; width: 100%; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
-    input[type=text], input[type=password], input[type=email] { width: 100%; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://cdn.jsdelivr.net https://gun-manhattan.herokuapp.com; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline';">
+    <title>iMacX User Admin Panel</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f0f2f5; color: #333; margin: 0; padding: 1.5rem; }
+        .container { background-color: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); max-width: 1200px; margin: auto; }
+        h1 { color: #1c1e21; text-align: center; }
+        .search-bar { display: flex; gap: 1rem; margin-bottom: 2rem; align-items: center; }
+        .search-bar input, .search-bar select { padding: 0.7rem; border: 1px solid #dddfe2; border-radius: 6px; font-size: 1rem; }
+        .search-bar input { flex-grow: 1; }
+        .search-bar button { background-color: #007bff; color: white; border: none; padding: 0.7rem 1.2rem; border-radius: 6px; cursor: pointer; transition: background-color 0.3s; }
+        .search-bar button:hover { background-color: #0056b3; }
+        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        th, td { padding: 0.8rem; border: 1px solid #dee2e6; text-align: left; vertical-align: middle; word-break: break-all; }
+        th { background-color: #f8f9fa; }
+        .actions button { padding: 0.4rem 0.8rem; margin-right: 0.5rem; border: none; border-radius: 4px; cursor: pointer; }
+        .edit-btn { background-color: #28a745; color: white; }
+        .delete-btn { background-color: #dc3545; color: white; }
+        .message { text-align: center; padding: 1rem; margin-top: 1rem; border-radius: 6px; font-weight: bold; }
+        .message.success { background-color: #e4f7e4; color: #1b7a1b; }
+        .message.error { background-color: #fde0e0; color: #c82333; }
+        #edit-modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); }
+        .modal-content { background-color: #fefefe; margin: 10% auto; padding: 20px; border: 1px solid #888; width: 80%; max-width: 500px; border-radius: 8px; }
+        .modal-content form { display: flex; flex-direction: column; gap: 1rem; }
+        .modal-content input { padding: 0.8rem; border: 1px solid #dddfe2; border-radius: 6px; font-size: 1rem; }
+        .close-btn { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+    </style>
 </head>
 <body>
-  <h2>User Account Management</h2>
-  <input type="text" id="search" placeholder="Search by Username, Email or Phone" />
-  <div id="results"></div>
+    <div class="container">
+        <h1>iMacX User Admin Panel</h1>
+        <div id="message-container"></div>
+        
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="Search for users...">
+            <select id="searchBy">
+                <option value="username">By Username</option>
+                <option value="email">By Email</option>
+                <option value="phone">By Phone</option>
+            </select>
+            <button id="searchBtn">Search</button>
+            <button id="resetBtn">Show All</button>
+        </div>
 
-  <script type="module">
-    import { DB } from './db.js';
-    DB.init();
-    const users = DB.use('imacx_users');
+        <div style="overflow-x:auto;">
+            <table id="user-table">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Registered On</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="user-table-body">
+                    </tbody>
+            </table>
+        </div>
+    </div>
 
-    document.getElementById('search').oninput = searchUser;
+    <div id="edit-modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2>Edit User Account</h2>
+            <form id="edit-form">
+                <input type="hidden" id="edit-user-key">
+                <label for="edit-username">Username</label>
+                <input type="text" id="edit-username" required>
+                <label for="edit-email">Email</label>
+                <input type="email" id="edit-email" required>
+                <label for="edit-countryCode">Country Code</label>
+                <input type="text" id="edit-countryCode" required>
+                <label for="edit-phone">Phone Number</label>
+                <input type="tel" id="edit-phone" required>
+                <label for="edit-password">New Password (optional)</label>
+                <input type="password" id="edit-password" placeholder="Leave blank to keep current password">
+                <button type="submit">Save Changes</button>
+            </form>
+        </div>
+    </div>
 
-    async function searchUser() {
-      const term = document.getElementById('search').value.trim().toLowerCase();
-      const all = await users.listAll();
-      const filtered = Object.entries(all).filter(([_, u]) =>
-        u.username.toLowerCase().includes(term) ||
-        u.email.toLowerCase().includes(term) ||
-        u.phone.toLowerCase().includes(term)
-      );
+    <script type="module">
+        import { DB } from './db.js';
+        const SEA = window.Gun.SEA;
 
-      let html = '<table><tr><th>Username</th><th>Email</th><th>Code</th><th>Phone</th><th>Password</th><th>Action</th></tr>';
-      for (let [key, u] of filtered) {
-        html += `<tr>
-          <td><input value="${u.username}" onchange="window.updateField('${key}', 'username', this.value)" /></td>
-          <td><input value="${u.email}" onchange="window.updateField('${key}', 'email', this.value)" /></td>
-          <td><input value="${u.countryCode}" onchange="window.updateField('${key}', 'countryCode', this.value)" /></td>
-          <td><input value="${u.phone}" onchange="window.updateField('${key}', 'phone', this.value)" /></td>
-          <td><input value="${u.password}" onchange="window.updateField('${key}', 'password', this.value)" /></td>
-          <td><button onclick="window.deleteUser('${key}')">Delete</button></td>
-        </tr>`;
-      }
-      html += '</table>';
-      document.getElementById('results').innerHTML = html;
-    }
+        // --- CONFIGURATION ---
+        const GUN_RELAY = 'https://gun-manhattan.herokuapp.com/gun';
+        const DB_NAMESPACE = 'imacx-users-db'; // MUST be the same as in user.html
 
-    window.updateField = async function(key, field, value) {
-      const user = await users.read(key);
-      if (!user) return;
-      user[field] = value;
-      await users.save(key, user);
-    };
+        // --- INITIALIZATION ---
+        DB.init(GUN_RELAY);
+        const userDB = DB.use(DB_NAMESPACE);
+        const userTableBody = document.getElementById('user-table-body');
+        const messageContainer = document.getElementById('message-container');
+        let allUsersCache = {}; // Local cache for searching
 
-    window.deleteUser = async function(key) {
-      await users.delete(key);
-      await searchUser();
-    };
-  </script>
+        // --- HELPER FUNCTIONS ---
+        const showMessage = (text, type = 'success') => {
+            messageContainer.innerHTML = `<p class="message ${type}">${text}</p>`;
+            setTimeout(() => messageContainer.innerHTML = '', 4000);
+        };
+
+        const renderTable = (users) => {
+            userTableBody.innerHTML = '';
+            for (const key in users) {
+                const user = users[key];
+                const row = document.createElement('tr');
+                row.setAttribute('data-key', key);
+                row.innerHTML = `
+                    <td>${user.username}</td>
+                    <td>${user.email}</td>
+                    <td>${user.fullPhone}</td>
+                    <td>${new Date(user.createdAt).toLocaleString()}</td>
+                    <td class="actions">
+                        <button class="edit-btn">Edit</button>
+                        <button class="delete-btn">Delete</button>
+                    </td>
+                `;
+                userTableBody.appendChild(row);
+            }
+        };
+        
+        const loadAndRenderUsers = async () => {
+             try {
+                const users = await userDB.listAll();
+                allUsersCache = users; // Update cache
+                renderTable(users);
+             } catch(err) {
+                console.error("Failed to load users:", err);
+                showMessage("Could not load user data.", "error");
+             }
+        };
+
+        // --- EVENT LISTENERS ---
+
+        // Load users on page load
+        window.addEventListener('load', loadAndRenderUsers);
+
+        // Listen for real-time changes from GunDB and re-render
+        userDB.onChange(async (key, data) => {
+             console.log('Database changed, reloading...');
+             await loadAndRenderUsers();
+        });
+        
+        // Search functionality
+        document.getElementById('searchBtn').addEventListener('click', () => {
+            const term = document.getElementById('searchInput').value.toLowerCase();
+            const criteria = document.getElementById('searchBy').value;
+
+            if (!term) return;
+
+            const filteredUsers = {};
+            for (const key in allUsersCache) {
+                const user = allUsersCache[key];
+                if (criteria === 'phone' && user.fullPhone.includes(term)) {
+                    filteredUsers[key] = user;
+                } else if (user[criteria] && user[criteria].toLowerCase().includes(term)) {
+                    filteredUsers[key] = user;
+                }
+            }
+            renderTable(filteredUsers);
+        });
+
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            document.getElementById('searchInput').value = '';
+            renderTable(allUsersCache);
+        });
+
+        // Event delegation for Edit and Delete buttons
+        userTableBody.addEventListener('click', async (e) => {
+            const target = e.target;
+            const row = target.closest('tr');
+            if (!row) return;
+            const userKey = row.getAttribute('data-key');
+
+            // --- DELETE ---
+            if (target.classList.contains('delete-btn')) {
+                if (confirm('Are you sure you want to permanently delete this user? This cannot be undone.')) {
+                    try {
+                        await userDB.delete(userKey);
+                        // The onChange listener will automatically remove the row from the UI
+                        showMessage('User deleted successfully.', 'success');
+                    } catch (error) {
+                        console.error('Delete Error:', error);
+                        showMessage('Failed to delete user.', 'error');
+                    }
+                }
+            }
+
+            // --- EDIT (Open Modal) ---
+            if (target.classList.contains('edit-btn')) {
+                const user = allUsersCache[userKey];
+                if(user) {
+                    document.getElementById('edit-user-key').value = userKey;
+                    document.getElementById('edit-username').value = user.username;
+                    document.getElementById('edit-email').value = user.email;
+                    document.getElementById('edit-countryCode').value = user.countryCode;
+                    document.getElementById('edit-phone').value = user.phone;
+                    document.getElementById('edit-password').value = ''; // Clear password field
+                    document.getElementById('edit-modal').style.display = 'block';
+                }
+            }
+        });
+
+        // --- MODAL LOGIC ---
+        const modal = document.getElementById('edit-modal');
+        document.querySelector('.close-btn').onclick = () => modal.style.display = 'none';
+        window.onclick = (e) => { if (e.target == modal) modal.style.display = 'none'; };
+
+        document.getElementById('edit-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const userKey = document.getElementById('edit-user-key').value;
+            
+            const updatedData = {
+                username: document.getElementById('edit-username').value.trim(),
+                email: document.getElementById('edit-email').value.trim().toLowerCase(),
+                countryCode: document.getElementById('edit-countryCode').value.trim(),
+                phone: document.getElementById('edit-phone').value.trim(),
+            };
+            updatedData.fullPhone = updatedData.countryCode + updatedData.phone;
+            
+            const newPassword = document.getElementById('edit-password').value;
+
+            try {
+                // If a new password is provided, hash it and add to the update object
+                if (newPassword) {
+                    const salt = Gun.SEA.random(16).toString();
+                    const hashedPassword = await SEA.work(newPassword, salt);
+                    updatedData.password = hashedPassword;
+                    updatedData.salt = salt;
+                }
+
+                await userDB.update(userKey, updatedData);
+                showMessage('User updated successfully.', 'success');
+                modal.style.display = 'none';
+                // UI will be updated by the onChange listener
+            } catch (error) {
+                console.error('Update Error:', error);
+                showMessage('Failed to update user.', 'error');
+            }
+        });
+
+    </script>
 </body>
 </html>
