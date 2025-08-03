@@ -79,21 +79,24 @@
 
   
    <script>
-  // Ensure userId is always set early
-  if (!localStorage.getItem('userId')) {
-    localStorage.setItem('userId', 'user_' + Math.random().toString(36).slice(2));
-  }
+  // Ensure userId exists
+if (!localStorage.getItem('userId')) {
+  localStorage.setItem('userId', 'user_' + Math.random().toString(36).slice(2));
+}
 
-  // Your other script functions like addToBasket() or GunDB logic follow here..
-    
-    const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
-    const globalOrders = gun.get('imacx_orders');
+const userId = localStorage.getItem('userId');
+const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
+const gorders = gun.get('imacx_orders');
 
-    let orderId = '';
-    let shipping = {};
-    let newOrder = {};
-    let total = 0;
+// Call this function when placing an order
+function storeOrder(order) {
+  const orderId = order.orderId || 'IMX-' + Date.now().toString(36);
+  order.orderId = orderId;
+  order.userId = userId;
+  order.createdAt = new Date().toISOString();
 
+  gorders.get(orderId).put(order); // Store in GunDB
+}
    
     if (!localStorage.getItem('userId')) {
   localStorage.setItem('userId', 'user_' + Math.random().toString(36).slice(2));
