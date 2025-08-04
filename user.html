@@ -3,171 +3,520 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://cdn.jsdelivr.net https://gun-manhattan.herokuapp.com; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline';">
-    <title>iMacX User Account</title>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'">
+    <title>User Account Management</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .container { background-color: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); width: 100%; max-width: 400px; }
-        h1, h2 { text-align: center; color: #1c1e21; }
-        form { display: flex; flex-direction: column; gap: 1rem; }
-        .input-group { display: flex; gap: 0.5rem; }
-        .input-group input:first-child { flex-basis: 30%; }
-        .input-group input:last-child { flex-basis: 70%; }
-        input { padding: 0.8rem; border: 1px solid #dddfe2; border-radius: 6px; font-size: 1rem; }
-        button { background-color: #1877f2; color: white; border: none; padding: 0.8rem; border-radius: 6px; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: background-color 0.3s; }
-        button:hover { background-color: #166fe5; }
-        .message { text-align: center; padding: 1rem; margin-top: 1rem; border-radius: 6px; font-weight: bold; }
-        .message.success { background-color: #e4f7e4; color: #1b7a1b; }
-        .message.error { background-color: #fde0e0; color: #c82333; }
-        .divider { border-top: 1px solid #dddfe2; margin: 1.5rem 0; }
+        /* General Body Styling */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h1, h2, h3 {
+            color: #0056b3;
+        }
+
+        h1 {
+            text-align: center;
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            border-bottom: 1px solid #e9ecef;
+            padding-bottom: 10px;
+            margin-top: 40px;
+        }
+        
+        h3 {
+            color: #007bff;
+            margin-top: 25px;
+        }
+
+        /* Section Styling */
+        .section, .sub-section {
+            margin-bottom: 25px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #fdfdfd;
+        }
+
+        /* Input and Form Styling */
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="tel"],
+        input[type="password"],
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box; /* Important for padding and width */
+        }
+
+        .input-group {
+            display: flex;
+            gap: 15px;
+        }
+
+        .input-group > div {
+            flex: 1;
+        }
+
+        /* Button Styling */
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+        
+        .btn-danger {
+            background-color: #dc3545;
+        }
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+
+        /* Message Output Styling */
+        .message-output {
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 4px;
+            background-color: #e9ecef;
+            border: 1px solid #ced4da;
+            color: #495057;
+            min-height: 20px;
+            text-align: center;
+        }
+        
+        /* Checkbox Styling for Deletion Confirmation */
+        .confirmation-group label {
+            font-weight: normal;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .confirmation-group input[type="checkbox"] {
+            width: auto;
+            margin-bottom: 0;
+        }
+
+        /* Account Data Section Specifics */
+        #account-data-note {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border: 1px solid #ffeeba;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .saved-products-container, .orders-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .product-card, .order-item {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            flex-basis: calc(50% - 20px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .product-card img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
+
     <div class="container">
-        <h1>iMacX Account System</h1>
-        
-        <div id="register-section">
-            <h2>Create Account</h2>
-            <form id="register-form">
-                <input type="text" id="username" placeholder="Username" required>
-                <input type="email" id="email" placeholder="Email Address" required>
+        <h1>User Account and Management System</h1>
+
+        <div class="section" id="registration">
+            <h2>User Registration</h2>
+            <form action="#- " onsubmit="return false;">
+                <label for="reg-username">Username</label>
+                <input type="text" id="reg-username" name="username" placeholder="Choose a username" required>
+                
+                <label for="reg-email">Email</label>
+                <input type="email" id="reg-email" name="email" placeholder="your.email@example.com" required>
+
                 <div class="input-group">
-                    <input type="text" id="countryCode" placeholder="Code (+91)" required>
-                    <input type="tel" id="phone" placeholder="Phone Number" required>
+                    <div>
+                        <label for="reg-country-code">Country Code</label>
+                        <input type="text" id="reg-country-code" name="country_code" placeholder="+91" required>
+                    </div>
+                    <div>
+                        <label for="reg-phone">Phone Number</label>
+                        <input type="tel" id="reg-phone" name="phone" placeholder="9876543210" required>
+                    </div>
                 </div>
-                <input type="password" id="password" placeholder="Password" required>
-                <input type="password" id="confirmPassword" placeholder="Confirm Password" required>
+
+                <label for="reg-password">Password</label>
+                <input type="password" id="reg-password" name="password" placeholder="Create a strong password" required>
+
                 <button type="submit">Register</button>
+                <div class="message-output" id="reg-message">Registration status will appear here.</div>
             </form>
         </div>
 
-        <div class="divider"></div>
-
-        <div id="login-section">
+        <div class="section" id="login">
             <h2>Login</h2>
-            <form id="login-form">
-                <input type="text" id="loginUsername" placeholder="Username" required>
-                <input type="password" id="loginPassword" placeholder="Password" required>
+            <form action="#- " onsubmit="return false;">
+                <label for="login-username">Username</label>
+                <input type="text" id="login-username" name="username" placeholder="Enter your username" required>
+
+                <label for="login-password">Password</label>
+                <input type="password" id="login-password" name="password" placeholder="Enter your password" required>
+
                 <button type="submit">Login</button>
+                <div class="message-output" id="login-message">Login status will appear here.</div>
             </form>
         </div>
 
-        <div id="message-container"></div>
+        <div class="section" id="status-nav">
+            <h2>Session Status & Navigation</h2>
+            <p><strong>Login Status:</strong> <span style="color: #dc3545;">Not Logged In (This is a static example)</span></p>
+            <div class="input-group">
+                <button type="button" class="btn-danger">Logout</button>
+                <button type="button" class="btn-secondary" onclick="window.history.back();">Go Back</button>
+            </div>
+        </div>
+
+        <div class="section" id="recovery-system">
+            <h2>Account Recovery System</h2>
+
+            <div class="sub-section">
+                <h3>Recover Email Address</h3>
+                <form action="#-" onsubmit="return false;">
+                    <label for="rec-email-username">Registered Username</label>
+                    <input type="text" id="rec-email-username" name="username" required>
+                    <div class="input-group">
+                        <div>
+                            <label for="rec-email-cc">Country Code</label>
+                            <input type="text" id="rec-email-cc" name="country_code" required>
+                        </div>
+                        <div>
+                            <label for="rec-email-phone">Phone Number</label>
+                            <input type="tel" id="rec-email-phone" name="phone" required>
+                        </div>
+                    </div>
+                    <label for="rec-email-password">Password</label>
+                    <input type="password" id="rec-email-password" name="password" required>
+                    <button type="submit">Recover Email</button>
+                    <div class="message-output">Recovery instructions for your email will be shown here.</div>
+                </form>
+            </div>
+
+            <div class="sub-section">
+                <h3>Recover Username</h3>
+                <form action="#-" onsubmit="return false;">
+                    <label for="rec-user-email">Registered Email</label>
+                    <input type="email" id="rec-user-email" name="email" required>
+                     <div class="input-group">
+                        <div>
+                            <label for="rec-user-cc">Country Code</label>
+                            <input type="text" id="rec-user-cc" name="country_code" required>
+                        </div>
+                        <div>
+                            <label for="rec-user-phone">Phone Number</label>
+                            <input type="tel" id="rec-user-phone" name="phone" required>
+                        </div>
+                    </div>
+                    <label for="rec-user-password">Password</label>
+                    <input type="password" id="rec-user-password" name="password" required>
+                    <button type="submit">Recover Username</button>
+                    <div class="message-output">Your username will be shown here after verification.</div>
+                </form>
+            </div>
+
+            <div class="sub-section">
+                <h3>Recover Password</h3>
+                 <form action="#-" onsubmit="return false;">
+                    <label for="rec-pass-username">Registered Username</label>
+                    <input type="text" id="rec-pass-username" name="username" required>
+                    <label for="rec-pass-email">Registered Email</label>
+                    <input type="email" id="rec-pass-email" name="email" required>
+                     <div class="input-group">
+                        <div>
+                            <label for="rec-pass-cc">Country Code</label>
+                            <input type="text" id="rec-pass-cc" name="country_code" required>
+                        </div>
+                        <div>
+                            <label for="rec-pass-phone">Phone Number</label>
+                            <input type="tel" id="rec-pass-phone" name="phone" required>
+                        </div>
+                    </div>
+                    <button type="submit">Recover Password</button>
+                    <div class="message-output">Password recovery link will be sent to your email/phone.</div>
+                </form>
+            </div>
+        </div>
+
+        <div class="section" id="change-credentials">
+            <h2>Change Account Credentials (Permanent)</h2>
+            <p><strong>Note:</strong> To change any credential, you must provide all current account details for security verification.</p>
+
+            <div class="sub-section">
+                <h3>Change Username</h3>
+                <form action="#-" onsubmit="return false;">
+                     <label>Current Username:</label><input type="text" name="current_username" required>
+                     <label>Current Password:</label><input type="password" name="current_password" required>
+                     <label>Current Email:</label><input type="email" name="current_email" required>
+                     <div class="input-group">
+                         <div><label>Country Code:</label><input type="text" name="current_cc" required></div>
+                         <div><label>Phone Number:</label><input type="tel" name="current_phone" required></div>
+                     </div>
+                     <hr style="margin: 20px 0;">
+                     <label for="new-username"><strong>New Username</strong></label>
+                     <input type="text" id="new-username" name="new_username" required>
+                     <button type="submit">Change Username</button>
+                     <div class="message-output">Username change status will appear here.</div>
+                </form>
+            </div>
+            
+            <div class="sub-section">
+                <h3>Change Email</h3>
+                <form action="#-" onsubmit="return false;">
+                     <label>Current Username:</label><input type="text" name="current_username" required>
+                     <label>Current Password:</label><input type="password" name="current_password" required>
+                     <label>Current Email:</label><input type="email" name="current_email" required>
+                     <div class="input-group">
+                         <div><label>Country Code:</label><input type="text" name="current_cc" required></div>
+                         <div><label>Phone Number:</label><input type="tel" name="current_phone" required></div>
+                     </div>
+                     <hr style="margin: 20px 0;">
+                     <label for="new-email"><strong>New Email</strong></label>
+                     <input type="email" id="new-email" name="new_email" required>
+                     <button type="submit">Change Email</button>
+                     <div class="message-output">Email change status will appear here.</div>
+                </form>
+            </div>
+
+            <div class="sub-section">
+                <h3>Change Password</h3>
+                <form action="#-" onsubmit="return false;">
+                     <label>Current Username:</label><input type="text" name="current_username" required>
+                     <label>Current Password:</label><input type="password" name="current_password" required>
+                     <label>Current Email:</label><input type="email" name="current_email" required>
+                     <div class="input-group">
+                         <div><label>Country Code:</label><input type="text" name="current_cc" required></div>
+                         <div><label>Phone Number:</label><input type="tel" name="current_phone" required></div>
+                     </div>
+                     <hr style="margin: 20px 0;">
+                     <label for="new-password"><strong>New Password</strong></label>
+                     <input type="password" id="new-password" name="new_password" required>
+                     <button type="submit">Change Password</button>
+                     <div class="message-output">Password change status will appear here.</div>
+                </form>
+            </div>
+            
+            <div class="sub-section">
+                <h3>Change Phone Number</h3>
+                <form action="#-" onsubmit="return false;">
+                     <label>Current Username:</label><input type="text" name="current_username" required>
+                     <label>Current Password:</label><input type="password" name="current_password" required>
+                     <label>Current Email:</label><input type="email" name="current_email" required>
+                     <div class="input-group">
+                         <div><label>Country Code:</label><input type="text" name="current_cc" required></div>
+                         <div><label>Phone Number:</label><input type="tel" name="current_phone" required></div>
+                     </div>
+                     <hr style="margin: 20px 0;">
+                     <label for="new-phone"><strong>New Phone Number</strong></label>
+                     <input type="tel" id="new-phone" name="new_phone" required>
+                     <button type="submit">Change Phone Number</button>
+                     <div class="message-output">Phone number change status will appear here.</div>
+                </form>
+            </div>
+            
+            <div class="sub-section">
+                <h3>Change Country Code</h3>
+                <form action="#-" onsubmit="return false;">
+                     <label>Current Username:</label><input type="text" name="current_username" required>
+                     <label>Current Password:</label><input type="password" name="current_password" required>
+                     <label>Current Email:</label><input type="email" name="current_email" required>
+                     <div class="input-group">
+                         <div><label>Country Code:</label><input type="text" name="current_cc" required></div>
+                         <div><label>Phone Number:</label><input type="tel" name="current_phone" required></div>
+                     </div>
+                     <hr style="margin: 20px 0;">
+                     <label for="new-cc"><strong>New Country Code</strong></label>
+                     <input type="text" id="new-cc" name="new_cc" required>
+                     <button type="submit">Change Country Code</button>
+                     <div class="message-output">Country code change status will appear here.</div>
+                </form>
+            </div>
+        </div>
+
+        <div class="section" id="delete-account">
+            <h2>Delete Account Permanently</h2>
+             <form action="#-" onsubmit="return false;">
+                <label>Username:</label><input type="text" name="del_username" required>
+                <label>Password:</label><input type="password" name="del_password" required>
+                <label>Email:</label><input type="email" name="del_email" required>
+                <div class="input-group">
+                    <div><label>Country Code:</label><input type="text" name="del_cc" required></div>
+                    <div><label>Phone Number:</label><input type="tel" name="del_phone" required></div>
+                </div>
+
+                <div class="confirmation-group">
+                    <h3>Confirm Deletion</h3>
+                    <label><input type="checkbox" required> I understand that all my data, including orders and saved items, will be permanently deleted.</label>
+                    <label><input type="checkbox" required> I understand that this action is irreversible and I cannot recover my account.</label>
+                    <label><input type="checkbox" required> I confirm I want to proceed with deleting my account.</label>
+                </div>
+
+                <button type="submit" class="btn-danger">Delete Account Permanently</button>
+                <div class="message-output">Account deletion status will appear here.</div>
+            </form>
+        </div>
+        
+        <div class="section" id="account-data">
+            <div id="account-data-note">
+                <strong>NOTE:</strong> In a real application, this entire 'Account Data' section would be hidden using JavaScript if the user is not logged in. This is a static HTML/CSS example demonstrating the layout for a logged-in user.
+            </div>
+            
+            <h2>Account Data</h2>
+
+            <div class="sub-section">
+                <h3>Account Shipping Address</h3>
+                <form action="#-" onsubmit="return false;">
+                    <label for="ship-name">Recipient Name</label>
+                    <input type="text" id="ship-name" name="recipient_name">
+                    
+                    <label for="ship-location">Location (Street, Landmark)</label>
+                    <input type="text" id="ship-location" name="location">
+
+                    <label for="ship-apartment">Apartment, Flat, or Plot Number</label>
+                    <input type="text" id="ship-apartment" name="apartment">
+                    
+                    <div class="input-group">
+                        <div><label for="ship-area">Area</label><input type="text" id="ship-area" name="area"></div>
+                        <div><label for="ship-city">City</label><input type="text" id="ship-city" name="city"></div>
+                    </div>
+                     <div class="input-group">
+                        <div><label for="ship-state">State</label><input type="text" id="ship-state" name="state"></div>
+                        <div><label for="ship-pincode">Pincode</label><input type="number" id="ship-pincode" name="pincode"></div>
+                        <div><label for="ship-country">Country</label><input type="text" id="ship-country" name="country"></div>
+                    </div>
+
+                    <label for="ship-email">Shipping Contact Email</label>
+                    <input type="email" id="ship-email" name="shipping_email">
+                    
+                    <div class="input-group">
+                        <div><label for="ship-cc">Country Code</label><input type="text" id="ship-cc" name="shipping_cc"></div>
+                        <div><label for="ship-phone">Shipping Contact Phone</label><input type="tel" id="ship-phone" name="shipping_phone"></div>
+                    </div>
+
+                    <button type="submit">Save or Update Shipping Details</button>
+                </form>
+                
+                <h4>Saved Shipping Details</h4>
+                <div class="message-output" id="saved-shipping-output">
+                    <strong>John Doe</strong><br>
+                    123, Tech Park, Silicon Valley, Apt 5B<br>
+                    Electronic City, Bengaluru, Karnataka, 560100<br>
+                    India<br>
+                    Contact: +91 9988776655
+                </div>
+            </div>
+
+            <div class="sub-section">
+                <h3>Orders Created</h3>
+                <div class="orders-container">
+                    <div class="order-item">
+                        <strong>Order #ORD-2025-A1B2</strong><br>
+                        Date: 01-Aug-2025 | Status: Shipped<br>
+                        Items: 3 | Total: $150.00<br>
+                        <div class="input-group" style="margin-top: 10px;">
+                            <button class="btn-secondary" type="button">Delay Delivery</button>
+                            <button class="btn-danger" type="button">Cancel Order</button>
+                        </div>
+                    </div>
+                     <div class="order-item">
+                        <strong>Order #ORD-2025-C3D4</strong><br>
+                        Date: 03-Aug-2025 | Status: Cancelled<br>
+                        Items: 1 | Total: $25.00<br>
+                        <div class="input-group" style="margin-top: 10px;">
+                           <button class="btn-secondary" type="button">Delete from History</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sub-section">
+                <h3>Saved Products for Later</h3>
+                <div class="saved-products-container">
+                    <div class="product-card">
+                        <img src="https://via.placeholder.com/300x200.png?text=Product+Image" alt="Product Image">
+                        <h4>Wireless Bluetooth Headphones</h4>
+                        <p>Price: $75.00</p>
+                        <button class="btn-secondary" type="button">Move to Cart</button>
+                        <button class="btn-danger" type="button">Remove</button>
+                    </div>
+                    <div class="product-card">
+                        <img src="https://via.placeholder.com/300x200.png?text=Product+Image" alt="Product Image">
+                        <h4>Smart Fitness Watch</h4>
+                        <p>Price: $120.00</p>
+                        <button class="btn-secondary" type="button">Move to Cart</button>
+                        <button class="btn-danger" type="button">Remove</button>
+                    </div>
+                </div>
+                 <div class="message-output" style="margin-top: 20px;">
+                    No other saved products.
+                </div>
+            </div>
+
+        </div>
+
     </div>
 
-    <script type="module">
-        import { DB } from './db.js';
-        // The SEA library is imported in db.js, but we need to access the global Gun object to use it.
-        // This is a common pattern when using modules that attach to a global object.
-        const SEA = window.Gun.SEA;
-
-        // --- CONFIGURATION ---
-        const GUN_RELAY = 'https://gun-manhattan.herokuapp.com/gun';
-        const DB_NAMESPACE = 'imacx-users-db'; // Unique key for the user database
-
-        // --- INITIALIZATION ---
-        DB.init(GUN_RELAY);
-        const userDB = DB.use(DB_NAMESPACE);
-        const messageContainer = document.getElementById('message-container');
-
-        // --- HELPER FUNCTIONS ---
-        const showMessage = (text, type = 'error') => {
-            messageContainer.innerHTML = `<p class="message ${type}">${text}</p>`;
-            setTimeout(() => messageContainer.innerHTML = '', 4000);
-        };
-
-        // --- REGISTRATION LOGIC ---
-        document.getElementById('register-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const username = document.getElementById('username').value.trim();
-            const email = document.getElementById('email').value.trim().toLowerCase();
-            const countryCode = document.getElementById('countryCode').value.trim();
-            const phone = document.getElementById('phone').value.trim();
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-
-            if (password !== confirmPassword) {
-                return showMessage('Passwords do not match.', 'error');
-            }
-            if (!countryCode.startsWith('+')) {
-                return showMessage('Country code must start with +', 'error');
-            }
-
-            const fullPhone = countryCode + phone;
-
-            // Check for uniqueness
-            try {
-                const allUsers = await userDB.listAll();
-                for (const key in allUsers) {
-                    const user = allUsers[key];
-                    if (user.username === username) return showMessage('Username is already taken.', 'error');
-                    if (user.email === email) return showMessage('Email is already in use.', 'error');
-                    if (user.fullPhone === fullPhone) return showMessage('This phone number is already registered.', 'error');
-                }
-
-                // All checks passed, proceed to create user
-                const pair = await SEA.pair(); // Generate a unique key pair for the user
-                const salt = Gun.SEA.random(16).toString();
-                const hashedPassword = await SEA.work(password, salt);
-
-                const newUser = {
-                    username,
-                    email,
-                    countryCode,
-                    phone,
-                    fullPhone,
-                    password: hashedPassword,
-                    salt,
-                    createdAt: new Date().toISOString()
-                };
-
-                // Save user data under their public key
-                await userDB.save(pair.pub, newUser);
-                showMessage('Registration successful! You can now log in.', 'success');
-                e.target.reset();
-
-            } catch (error) {
-                console.error('Registration Error:', error);
-                showMessage('An error occurred during registration. Please try again.', 'error');
-            }
-        });
-        
-        // --- LOGIN LOGIC ---
-        document.getElementById('login-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const loginUsername = document.getElementById('loginUsername').value.trim();
-            const loginPassword = document.getElementById('loginPassword').value;
-
-            try {
-                const allUsers = await userDB.listAll();
-                let foundUser = null;
-                let userKey = null;
-
-                for (const key in allUsers) {
-                    if (allUsers[key].username === loginUsername) {
-                        foundUser = allUsers[key];
-                        userKey = key;
-                        break;
-                    }
-                }
-
-                if (!foundUser) {
-                    return showMessage('Invalid username or password.', 'error');
-                }
-
-                // Verify password
-                const hashedPassword = await SEA.work(loginPassword, foundUser.salt);
-                if (hashedPassword === foundUser.password) {
-                    showMessage(`Welcome back, ${foundUser.username}! Login successful.`, 'success');
-                } else {
-                    showMessage('Invalid username or password.', 'error');
-                }
-
-            } catch (error) {
-                console.error('Login Error:', error);
-                showMessage('An error occurred during login. Please try again.', 'error');
-            }
-        });
-    </script>
 </body>
 </html>
