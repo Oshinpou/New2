@@ -9,6 +9,8 @@
         font-src 'self' https://fonts.gstatic.com;
         img-src 'self' https://via.placeholder.com;
     ">
+   <script type="module" src="db_core.js"></script>
+   <script src="app_main.js"></script>
     <title>User Account Management</title>
     <style>
         /* Import elegant fonts from Google Fonts */
@@ -251,6 +253,11 @@
     <div class="container">
         <h1>User Account and Management System</h1>
 
+
+    <div class="message-output" id="app-status" style="margin-bottom: 20px;">Initializing application...</div>
+    <!-- ... rest of your HTML content ... -->
+
+        
         <div class="section" id="registration">
             <h2>User Registration</h2>
             <form action="#- " onsubmit="return false;">
