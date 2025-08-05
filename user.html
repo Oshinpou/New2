@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Updated Content Security Policy (CSP) to allow Gun.js CDNs and WebSocket connections -->
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self';
+        script-src 'self' https://cdn.jsdelivr.net https://gun-manhattan.herokuapp.com https://gundb-webrtc.herokuapp.com https://gun-us.herokuapp.com https://peer.walled.city;
+        style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+        font-src 'self' https://fonts.gstatic.com;
+        img-src 'self' https://via.placeholder.com;
+        connect-src 'self' ws://localhost:8765 https://gun-manhattan.herokuapp.com https://gundb-webrtc.herokuapp.com https://gun-us.herokuapp.com https://peer.walled.city;
+    ">
+    <title>User Account Management</title>
+    <style>
+        /* Import elegant fonts from Google Fonts */
+        @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Lato:wght@300;400&display=swap');
+
+        /* Define Metallic Gold Gradient and other theme colors */
+        :root {
+            --gold-gradient: linear-gradient(145deg, #b38728, #fcf6ba, #b38728);
+            --gold-text-color: #d4af37;
+            --dark-bg: #1a1a1a;
+            --section-bg: #242424;
+            --border-color: rgba(212, 175, 55, 0.3);
+            --text-color: #f0f0f0;
+            --input-bg: #333;
+            --input-text-color: #fff;
+            --danger-color: #ff4d4d;
+            --danger-hover: #e60000;
+        }
+
+        /* General Body Styling */
+        body {
+            font-family: 'Lato', Arial, sans-serif; /* A clean font for readability */
+            background-color: var(--dark-bg);
+            background-image: url('https://www.transparenttextures.com/patterns/dark-denim-3.png'); /* Subtle texture */
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            background-color: var(--section-bg);
+            padding: 20px 40px;
+            border-radius: 15px;
+            border: 2px solid transparent;
+            border-image: var(--gold-gradient) 1;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 25px rgba(212, 175, 55, 0.2);
+        }
+
+        /* --- Cursive & Metallic Headings --- */
+        h1, h2, h3 {
+            font-family: 'Great Vibes', cursive; /* Elegant cursive font */
+            font-weight: normal;
+            letter-spacing: 2px;
+            text-align: center;
+            /* Metallic Gold Gradient Text */
+            background: var(--gold-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+            border-bottom: 1px solid;
+            border-image: var(--gold-gradient) 1;
+        }
+
+        h1 {
+            font-size: 4.5em; /* Larger and more prominent */
+        }
+
+        h2 {
+            font-size: 3.5em;
+            margin-top: 40px;
+        }
+
+        h3 {
+            font-size: 2.8em;
+            margin-top: 25px;
+            border-bottom: none; /* Sub-headings don't need a line */
+            padding-bottom: 5px;
+        }
+
+        /* Section Styling */
+        .section, .sub-section {
+            margin-bottom: 30px;
+            padding: 25px;
+            border-radius: 10px;
+            background: rgba(0,0,0,0.2);
+            border: 1px solid var(--border-color);
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.5);
+        }
+
+        /* Input and Form Styling */
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 300; /* Lighter font weight */
+            color: var(--gold-text-color);
+            font-size: 1.1em;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="tel"],
+        input[type="password"],
+        input[type="number"] {
+            width: 100%;
+            padding: 14px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            box-sizing: border-box;
+            background-color: var(--input-bg);
+            color: var(--input-text-color);
+            font-family: 'Lato', sans-serif;
+            font-size: 1em;
+            transition: all 0.3s ease-in-out;
+        }
+
+        input[type="text"]:focus,
+        input[type="email"]:focus,
+        input[type="tel"]:focus,
+        input[type="password"]:focus,
+        input[type="number"]:focus {
+            outline: none;
+            border-color: var(--gold-text-color);
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.5);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 20px;
+        }
+
+        .input-group > div {
+            flex: 1;
+        }
+
+        /* --- Luxury Button Styling --- */
+        button {
+            background: var(--gold-gradient);
+            color: #1a1a1a; /* Dark text for contrast on gold */
+            padding: 15px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.2em;
+            font-weight: bold;
+            width: 100%;
+            margin-top: 10px;
+            transition: all 0.3s ease-in-out;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+        }
+
+        .btn-danger {
+            background: var(--danger-color);
+            color: white;
+        }
+        .btn-danger:hover {
+            background: var(--danger-hover);
+            box-shadow: 0 6px 20px rgba(255, 77, 77, 0.4);
+        }
+        .btn-secondary {
+            background-color: #555; /* A neutral grey for secondary actions */
+            color: white;
+            border: 1px solid #777;
+        }
+        .btn-secondary:hover {
+            background-color: #666;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+        }
+
+
+        /* Message Output Styling */
+        .message-output {
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 5px;
+            background-color: rgba(0,0,0,0.2);
+            border: 1px solid var(--border-color);
+            color: #ccc;
+            text-align: center;
+            font-style: italic;
+        }
+
+        /* Checkbox Styling */
+        .confirmation-group label {
+            font-weight: 300;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: var(--text-color);
+            margin-bottom: 15px;
+        }
+
+        .confirmation-group input[type="checkbox"] {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border: 1px solid var(--gold-text-color);
+            border-radius: 3px;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s;
+        }
+
+        .confirmation-group input[type="checkbox"]:checked {
+            background: var(--gold-gradient);
+        }
+
+        .confirmation-group input[type="checkbox"]:checked::after {
+            content: '✔';
+            color: var(--dark-bg);
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+
+        /* Account Data Section Specifics */
+        #account-data-note, .order-item, .product-card {
+            border: 1px solid;
+            border-image: var(--gold-gradient) 1;
+            background: rgba(0,0,0,0.2);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+        }
+
+        .saved-products-container, .orders-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .product-card, .order-item {
+            padding: 20px;
+            flex-basis: calc(50% - 22px); /* Adjust for border */
+        }
+
+        .product-card img {
+            max-width: 100%;
+            border-radius: 5px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 15px;
+        }
+
+        /* Styles for .loading-spinner */
+        .loading-spinner {
+            position: relative;
+            pointer-events: none; /* Disable clicks during loading */
+        }
+        .loading-spinner::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            top: 50%;
+            left: 50%;
+            margin: -8px 0 0 -8px;
+            border: 2px solid #fff;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        /* Styles for form-error-message and input-error-state */
+        .form-error-message {
+            color: var(--danger-color);
+            font-size: 0.85em;
+            display: block;
+            margin-top: -15px;
+            margin-bottom: 10px;
+        }
+        .input-error-state {
+            border-color: var(--danger-color) !important;
+            box-shadow: 0 0 5px rgba(255, 77, 77, 0.5) !important;
+        }
+        .input-valid-state {
+            border-color: #28a745 !important;
+            box-shadow: 0 0 5px rgba(40, 167, 69, 0.5) !important;
+        }
+        /* Styles for notification area */
+        #app-notification-area {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #333;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            z-index: 1000;
+            display: none;
+            min-width: 200px;
+            text-align: center;
+        }
+        #app-notification-area.success { background-color: #28a745; }
+        #app-notification-area.error { background-color: var(--danger-color); }
+        #app-notification-area.info { background-color: #007bff; }
+        #app-notification-area.warning { background-color: #ffc107; color: #333; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>User Account and Management System</h1>
+
+        <div class="message-output" id="app-status" style="margin-bottom: 20px;">Initializing application...</div>
+        <div id="app-notification-area"></div> <!-- Added for temporary notifications -->
+
+        <div class="section" id="registration">
+            <h2>User Registration</h2>
+            <form action="#-" onsubmit="return false;" id="reg-form">
+                <label for="reg-username">Username</label>
+                <input type="text" id="reg-username" name="username" placeholder="Choose a username" required>
+                
+                <label for="reg-email">Email</label>
+                <input type="email" id="reg-email" name="email" placeholder="your.email@example.com" required>
+
+                <div class="input-group">
+                    <div>
+                        <label for="reg-country-code">Country Code</label>
+                        <input type="text" id="reg-country-code" name="country_code" placeholder="+91" required>
+                    </div>
+                    <div>
+                        <label for="reg-phone">Phone Number</label>
+                        <input type="tel" id="reg-phone" name="phone" placeholder="9876543210" required>
+                    </div>
+                </div>
+
+                <label for="reg-password">Password</label>
+                <input type="password" id="reg-password" name="password" placeholder="Create a strong password" required>
+
+                <button type="submit">Register</button>
+                <div class="message-output" id="reg-message">Registration status will appear here.</div>
+            </form>
+        </div>
+
+        <div class="section" id="login">
+            <h2>Login</h2>
+            <form action="#-" onsubmit="return false;" id="login-form">
+                <label for="login-username">Username</label>
+                <input type="text" id="login-username" name="username" placeholder="Enter your username" required>
+
+                <label for="login-password">Password</label>
+                <input type="password" id="login-password" name="password" placeholder="Enter your password" required>
+
+                <button type="submit">Login</button>
+                <div class="message-output" id="login-message">Login status will appear here.</div>
+            </form>
+        </div>
+
+        <div class="section" id="status-nav">
+            <h2>Session Status & Navigation</h2>
+            <p><strong>Login Status:</strong> <span id="login-status-placeholder" style="color: #dc3545;">Not Logged In (This is a static example)</span></p>
+            <div class="input-group">
+                <button type="button" class="btn-danger">Logout</button>
+                <button type="button" class="btn-secondary">Go Back</button>
+            </div>
+        </div>
+
+        <div class="section" id="recovery-system">
+            <h2>Account Recovery System</h2>
+
+            <div class="sub-section">
+                <h3>Recover Email Address</h3>
+                <form action="#-" onsubmit="return false;" id="rec-email-form">
+                    <label for="rec-email-username">Registered Username</label>
+                    <input type="text" id="rec-email-username" name="username" required>
+                    <div class="input-group">
+                        <div>
+                            <label for="rec-email-cc">Country Code</label>
+                            <input type="text" id="rec-email-cc" name="country_code" required>
+                        </div>
+                        <div>
+                            <label for="rec-email-phone">Phone Number</label>
+                            <input type="tel" id="rec-email-phone" name="phone" required>
+                        </div>
+                    </div>
+                    <label for="rec-email-password">Password</label>
+                    <input type="password" id="rec-email-password" name="password" required>
+                    <button type="submit">Recover Email</button>
+                    <div class="message-output" id="rec-email-message">Recovery instructions for your email will be shown here.</div>
+                </form>
+            </div>
+
+            <div class="sub-section">
+                <h3>Recover Username</h3>
+                <form action="#-" onsubmit="return false;" id="rec-user-form">
+                    <label for="rec-user-email">Registered Email</label>
+                    <input type="email" id="rec-user-email" name="email" required>
+                    <div class="input-group">
+                        <div>
+                            <label for="rec-user-cc">Country Code</label>
+                            <input type="text" id="rec-user-cc" name="country_code" required>
+                        </div>
+                        <div>
+                            <label for="rec-user-phone">Phone Number</label>
+                            <input type="tel" id="rec-user-phone" name="phone" required>
+                        </div>
+                    </div>
+                    <label for="rec-user-password">Password</label>
+                    <input type="password" id="rec-user-password" name="password" required>
+                    <button type="submit">Recover Username</button>
+                    <div class="message-output" id="rec-user-message">Your username will be shown here after verification.</div>
+                </form>
+            </div>
+
+            <div class="sub-section">
+                <h3>Recover Password</h3>
+                <form action="#-" onsubmit="return false;" id="rec-pass-form">
+                    <label for="rec-pass-username">Registered Username</label>
+                    <input type="text" id="rec-pass-username" name="username" required>
+                    <label for="rec-pass-email">Registered Email</label>
+                    <input type="email" id="rec-pass-email" name="email" required>
+                    <div class="input-group">
+                        <div>
+                            <label for="rec-pass-cc">Country Code</label>
+                            <input type="text" id="rec-pass-cc" name="country_code" required>
+                        </div>
+                        <div>
+                            <label for="rec-pass-phone">Phone Number</label>
+                            <input type="tel" id="rec-pass-phone" name="phone" required>
+                        </div>
+                    </div>
+                    <button type="submit">Recover Password</button>
+                    <div class="message-output" id="rec-pass-message">Password recovery link will be sent to your email/phone.</div>
+                </form>
+            </div>
+
+            <div class="sub-section">
+                <h3>Recover Phone Number</h3>
+                <form action="#-" onsubmit="return false;" id="rec-phone-form">
+                    <label for="rec-phone-username">Registered Username</label>
+                    <input type="text" id="rec-phone-username" name="username" required>
+                    <label for="rec-phone-email">Registered Email</label>
+                    <input type="email" id="rec-phone-email" name="email" required>
+                    <label for="rec-phone-password">Password</label>
+                    <input type="password" id="rec-phone-password" name="password" required>
+                    <button type="submit">Recover Phone Number</button>
+                    <div class="message-output" id="rec-phone-message">Your registered phone number will be shown here.</div>
+                </form>
+            </div>
+
+            <div class="sub-section">
+                <h3>Recover Country Code</h3>
+                <form action="#-" onsubmit="return false;" id="rec-cc-form">
+                    <label for="rec-cc-username">Registered Username</label>
+                    <input type="text" id="rec-cc-username" name="username" required>
+                    <label for="rec-cc-email">Registered Email</label>
+                    <input type="email" id="rec-cc-email" name="email" required>
+                    <label for="rec-cc-password">Password</label>
+                    <input type="password" id="rec-cc-password" name="password" required>
+                    <button type="submit">Recover Country Code</button>
+                    <div class="message-output" id="rec-cc-message">Your registered country code will be shown here.</div>
+                </form>
+            </div>
+        </div>
+
+        <div class="section" id="change-credentials">
+            <h2>Change Account Credentials (Permanent)</h2>
+            <p><strong>Note:</strong> To change any credential, you must provide all current account details for security verification.</p>
+
+            <div class="sub-section">
+                <h3>Change Username</h3>
+                <form action="#-" onsubmit="return false;" id="change-username-form">
+                    <label>Current Username:</label><input type="text" name="current_username" required>
+                    <label>Current Password:</label><input type="password" name="current_password" required>
+                    <label>Current Email:</label><input type="email" name="current_email" required>
+                    <div class="input-group">
+                        <div><label>Country Code:</label><input type="text" name="current_cc" required></div>
+                        <div><label>Phone Number:</label><input type="tel" name="current_phone" required></div>
+                    </div>
+                    <hr style="margin: 20px 0;">
+                    <label for="new-username"><strong>New Username</strong></label>
+                    <input type="text" id="new-username" name="new_username" required>
+                    <button type="submit">Change Username</button>
+                    <div class="message-output" id="change-username-message">Username change status will appear here.</div>
+                </form>
+            </div>
+            
+            <div class="sub-section">
+                <h3>Change Email</h3>
+                <form action="#-" onsubmit="return false;" id="change-email-form">
+                    <label>Current Username:</label><input type="text" name="current_username" required>
+                    <label>Current Password:</label><input type="password" name="current_password" required>
+                    <label>Current Email:</label><input type="email" name="current_email" required>
+                    <div class="input-group">
+                        <div><label>Country Code:</label><input type="text" name="current_cc" required></div>
+                        <div><label>Phone Number:</label><input type="tel" name="current_phone" required></div>
+                    </div>
+                    <hr style="margin: 20px 0;">
+                    <label for="new-email"><strong>New Email</strong></label>
+                    <input type="email" id="new-email" name="new_email" required>
+                    <button type="submit">Change Email</button>
+                    <div class="message-output" id="change-email-message">Email change status will appear here.</div>
+                </form>
+            </div>
+
+            <div class="sub-section">
+                <h3>Change Password</h3>
+                <form action="#-" onsubmit="return false;" id="change-password-form">
+                    <label>Current Username:</label><input type="text" name="current_username" required>
+                    <label>Current Password:</label><input type="password" name="current_password" required>
+                    <label>Current Email:</label><input type="email" name="current_email" required>
+                    <div class="input-group">
+                        <div><label>Country Code:</label><input type="text" name="current_cc" required></div>
+                        <div><label>Phone Number:</label><input type="tel" name="current_phone" required></div>
+                    </div>
+                    <hr style="margin: 20px 0;">
+                    <label for="new-password"><strong>New Password</strong></label>
+                    <input type="password" id="new-password" name="new_password" required>
+                    <button type="submit">Change Password</button>
+                    <div class="message-output" id="change-password-message">Password change status will appear here.</div>
+                </form>
+            </div>
+            
+            <div class="sub-section">
+                <h3>Change Phone Number</h3>
+                <form action="#-" onsubmit="return false;" id="change-phone-form">
+                    <label>Current Username:</label><input type="text" name="current_username" required>
+                    <label>Current Password:</label><input type="password" name="current_password" required>
+                    <label>Current Email:</label><input type="email" name="current_email" required>
+                    <div class="input-group">
+                        <div><label>Country Code:</label><input type="text" name="current_cc" required></div>
+                        <div><label>Phone Number:</label><input type="tel" name="current_phone" required></div>
+                    </div>
+                    <hr style="margin: 20px 0;">
+                    <label for="new-phone"><strong>New Phone Number</strong></label>
+                    <input type="tel" id="new-phone" name="new_phone" required>
+                    <button type="submit">Change Phone Number</button>
+                    <div class="message-output" id="change-phone-message">Phone number change status will appear here.</div>
+                </form>
+            </div>
+            
+            <div class="sub-section">
+                <h3>Change Country Code</h3>
+                <form action="#-" onsubmit="return false;" id="change-cc-form">
+                    <label>Current Username:</label><input type="text" name="current_username" required>
+                    <label>Current Password:</label><input type="password" name="current_password" required>
+                    <label>Current Email:</label><input type="email" name="current_email" required>
+                    <div class="input-group">
+                        <div><label>Country Code:</label><input type="text" name="current_cc" required></div>
+                        <div><label>Phone Number:</label><input type="tel" name="current_phone" required></div>
+                    </div>
+                    <hr style="margin: 20px 0;">
+                    <label for="new-cc"><strong>New Country Code</strong></label>
+                    <input type="text" id="new-cc" name="new_cc" required>
+                    <button type="submit">Change Country Code</button>
+                    <div class="message-output" id="change-cc-message">Country code change status will appear here.</div>
+                </form>
+            </div>
+        </div>
+
+        <div class="section" id="delete-account">
+            <h2>Delete Account Permanently</h2>
+            <form action="#-" onsubmit="return false;" id="delete-account-form">
+                <label>Username:</label><input type="text" name="del_username" required>
+                <label>Password:</label><input type="password" name="del_password" required>
+                <label>Email:</label><input type="email" name="del_email" required>
+                <div class="input-group">
+                    <div><label>Country Code:</label><input type="text" name="del_cc" required></div>
+                    <div><label>Phone Number:</label><input type="tel" name="del_phone" required></div>
+                </div>
+
+                <div class="confirmation-group">
+                    <h3>Confirm Deletion</h3>
+                    <label><input type="checkbox" id="confirm-data-deletion" required> I understand that all my data, including orders and saved items, will be permanently deleted.</label>
+                    <label><input type="checkbox" id="confirm-irreversible" required> I understand that this action is irreversible and I cannot recover my account.</label>
+                    <label><input type="checkbox" id="confirm-proceed" required> I confirm I want to proceed with deleting my account.</label>
+                </div>
+
+                <button type="submit" class="btn-danger">Delete Account Permanently</button>
+                <div class="message-output" id="delete-account-message">Account deletion status will appear here.</div>
+            </form>
+        </div>
+        
+        <div class="section" id="account-data">
+            <div id="account-data-note">
+                <strong>NOTE:</strong> In a real application, this entire 'Account Data' section would be hidden using JavaScript if the user is not logged in. This is a static HTML/CSS example demonstrating the layout for a logged-in user.
+            </div>
+            
+            <h2>Account Data</h2>
+
+            <div class="sub-section">
+                <h3>Account Shipping Address</h3>
+                <form action="#-" onsubmit="return false;" id="ship-address-form">
+                    <label for="ship-name">Recipient Name</label>
+                    <input type="text" id="ship-name" name="recipientName">
+                    
+                    <label for="ship-location">Location (Street, Landmark)</label>
+                    <input type="text" id="ship-location" name="location">
+
+                    <label for="ship-apartment">Apartment, Flat, or Plot Number</label>
+                    <input type="text" id="ship-apartment" name="apartment">
+                    
+                    <div class="input-group">
+                        <div><label for="ship-area">Area</label><input type="text" id="ship-area" name="area"></div>
+                        <div><label for="ship-city">City</label><input type="text" id="ship-city" name="city"></div>
+                    </div>
+                    <div class="input-group">
+                        <div><label for="ship-state">State</label><input type="text" id="ship-state" name="state"></div>
+                        <div><label for="ship-pincode">Pincode</label><input type="number" id="ship-pincode" name="pincode"></div>
+                        <div><label for="ship-country">Country</label><input type="text" id="ship-country" name="country"></div>
+                    </div>
+
+                    <label for="ship-email">Shipping Contact Email</label>
+                    <input type="email" id="ship-email" name="shipping_email">
+                    
+                    <div class="input-group">
+                        <div><label for="ship-cc">Country Code</label><input type="text" id="ship-cc" name="shipping_cc"></div>
+                        <div><label for="ship-phone">Shipping Contact Phone</label><input type="tel" id="ship-phone" name="shipping_phone"></div>
+                    </div>
+
+                    <button type="submit">Save or Update Shipping Details</button>
+                </form>
+                
+                <h4>Saved Shipping Details</h4>
+                <div class="message-output" id="saved-shipping-output">
+                    <!-- This content will be dynamically updated by JavaScript -->
+                    <strong>John Doe</strong><br>
+                    123, Tech Park, Silicon Valley, Apt 5B<br>
+                    Electronic City, Bengaluru, Karnataka, 560100<br>
+                    India<br>
+                    Contact: +91 9988776655
+                </div>
+            </div>
+
+            <div class="sub-section">
+                <h3>Orders Created</h3>
+                <div class="orders-container">
+                    <!-- Order items will be dynamically added here by JavaScript -->
+                    <div class="order-item" id="order-item-ORD-2025-A1B2">
+                        <strong>Order #ORD-2025-A1B2</strong><br>
+                        Date: 01-Aug-2025 | Status: Shipped<br>
+                        Items: 3 | Total: $150.00<br>
+                        <div class="input-group" style="margin-top: 10px;">
+                            <button class="btn-secondary delay-delivery-btn" type="button">Delay Delivery</button>
+                            <button class="btn-danger cancel-order-btn" type="button">Cancel Order</button>
+                            <button class="btn-secondary delete-history-btn" type="button">Delete from History</button>
+                        </div>
+                        <div class="message-output" id="order-item-ORD-2025-A1B2-message" style="margin-top: 10px;"></div>
+                    </div>
+                    <div class="order-item" id="order-item-ORD-2025-C3D4">
+                        <strong>Order #ORD-2025-C3D4</strong><br>
+                        Date: 03-Aug-2025 | Status: Cancelled<br>
+                        Items: 1 | Total: $25.00<br>
+                        <div class="input-group" style="margin-top: 10px;">
+                            <button class="btn-secondary delete-history-btn" type="button">Delete from History</button>
+                        </div>
+                        <div class="message-output" id="order-item-ORD-2025-C3D4-message" style="margin-top: 10px;"></div>
+                    </div>
+                </div>
+                <div class="message-output" id="orders-container-message" style="margin-top: 20px;">
+                    <!-- This will be dynamically updated by JavaScript -->
+                </div>
+            </div>
+
+            <div class="sub-section">
+                <h3>Saved Products for Later</h3>
+                <div class="saved-products-container">
+                    <!-- Product cards will be dynamically added here by JavaScript -->
+                    <div class="product-card" id="product-card-PROD-HEADPHONES">
+                        <img src="https://via.placeholder.com/300x200.png?text=Wireless+Headphones" alt="Wireless Bluetooth Headphones" onerror="this.onerror=null;this.src='https://placehold.co/300x200/333/fff?text=Image+Missing';" style="border-radius: 5px; border: 1px solid rgba(212, 175, 55, 0.3); margin-bottom: 15px;">
+                        <h4>Wireless Bluetooth Headphones</h4>
+                        <p>Price: $75.00</p>
+                        <div class="input-group" style="margin-top: 10px;">
+                            <button class="btn-secondary move-to-cart-btn" type="button">Move to Cart</button>
+                            <button class="btn-danger remove-saved-product-btn" type="button">Remove</button>
+                        </div>
+                        <div class="message-output" id="product-card-PROD-HEADPHONES-message" style="margin-top: 10px;"></div>
+                    </div>
+                    <div class="product-card" id="product-card-PROD-WATCH">
+                        <img src="https://via.placeholder.com/300x200.png?text=Smart+Watch" alt="Smart Fitness Watch" onerror="this.onerror=null;this.src='https://placehold.co/300x200/333/fff?text=Image+Missing';" style="border-radius: 5px; border: 1px solid rgba(212, 175, 55, 0.3); margin-bottom: 15px;">
+                        <h4>Smart Fitness Watch</h4>
+                        <p>Price: $120.00</p>
+                        <div class="input-group" style="margin-top: 10px;">
+                            <button class="btn-secondary move-to-cart-btn" type="button">Move to Cart</button>
+                            <button class="btn-danger remove-saved-product-btn" type="button">Remove</button>
+                        </div>
+                        <div class="message-output" id="product-card-PROD-WATCH-message" style="margin-top: 10px;"></div>
+                    </div>
+                </div>
+                <div class="message-output" id="saved-products-container-message" style="margin-top: 20px;">
+                    <!-- This will be dynamically updated by JavaScript -->
+                    No other saved products.
+                </div>
+            </div>
+
+        </div>
+
+        <p id="app-version-display" style="text-align: center; font-size: 0.8em; color: #777; margin-top: 40px;">Version: 1.0.0</p>
+
+    </div>
+
+    <!-- Load the main application script as an ES Module -->
+    <script type="module" src="app_main.js"></script>
+
+</body>
+</html>
