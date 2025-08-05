@@ -3,627 +3,363 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="
-        default-src 'self';
-        style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-        font-src 'self' https://fonts.gstatic.com;
-        img-src 'self' https://via.placeholder.com;
-    ">
-   <script type="module" src="app_main.js"></script>
-
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://checkout.razorpay.com; script-src 'self' https://checkout.razorpay.com https://cdn.jsdelivr.net https://gun-manhattan.herokuapp.com https://gundb-webrtc.herokuapp.com https://gun-us.herokuapp.com https://peer.walled.city; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' https://via.placeholder.com data:; connect-src 'self' ws://localhost:8765 https://gun-manhattan.herokuapp.com https://gundb-webrtc.herokuapp.com https://gun-us.herokuapp.com https://peer.walled.city;">
     <title>User Account Management</title>
+    <script type="module" src="userdb.js"></script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <style>
-        /* Import elegant fonts from Google Fonts */
         @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Lato:wght@300;400&display=swap');
-
-        /* Define Metallic Gold Gradient and other theme colors */
-        :root {
-            --gold-gradient: linear-gradient(145deg, #b38728, #fcf6ba, #b38728);
-            --gold-text-color: #d4af37;
-            --dark-bg: #1a1a1a;
-            --section-bg: #242424;
-            --border-color: rgba(212, 175, 55, 0.3);
-            --text-color: #f0f0f0;
-            --input-bg: #333;
-            --input-text-color: #fff;
-            --danger-color: #ff4d4d;
-            --danger-hover: #e60000;
-        }
-
-        /* General Body Styling */
-        body {
-            font-family: 'Lato', Arial, sans-serif; /* A clean font for readability */
-            background-color: var(--dark-bg);
-            background-image: url('https://www.transparenttextures.com/patterns/dark-denim-3.png'); /* Subtle texture */
-            color: var(--text-color);
-            margin: 0;
-            padding: 20px;
-        }
-
-        /* Main Container */
-        .container {
-            max-width: 900px;
-            margin: 40px auto;
-            background-color: var(--section-bg);
-            padding: 20px 40px;
-            border-radius: 15px;
-            border: 2px solid transparent;
-            border-image: var(--gold-gradient) 1;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 25px rgba(212, 175, 55, 0.2);
-        }
-
-        /* --- Cursive & Metallic Headings --- */
-        h1, h2, h3 {
-            font-family: 'Great Vibes', cursive; /* Elegant cursive font */
-            font-weight: normal;
-            letter-spacing: 2px;
-            text-align: center;
-            /* Metallic Gold Gradient Text */
-            background: var(--gold-gradient);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            padding-bottom: 15px;
-            margin-bottom: 30px;
-            border-bottom: 1px solid;
-            border-image: var(--gold-gradient) 1;
-        }
-
-        h1 {
-            font-size: 4.5em; /* Larger and more prominent */
-        }
-
-        h2 {
-            font-size: 3.5em;
-            margin-top: 40px;
-        }
-
-        h3 {
-            font-size: 2.8em;
-            margin-top: 25px;
-            border-bottom: none; /* Sub-headings don't need a line */
-            padding-bottom: 5px;
-        }
-
-        /* Section Styling */
-        .section, .sub-section {
-            margin-bottom: 30px;
-            padding: 25px;
-            border-radius: 10px;
-            background: rgba(0,0,0,0.2);
-            border: 1px solid var(--border-color);
-            box-shadow: inset 0 0 15px rgba(0,0,0,0.5);
-        }
-
-        /* Input and Form Styling */
-        label {
-            display: block;
-            margin-bottom: 10px;
-            font-weight: 300; /* Lighter font weight */
-            color: var(--gold-text-color);
-            font-size: 1.1em;
-        }
-
-        input[type="text"],
-        input[type="email"],
-        input[type="tel"],
-        input[type="password"],
-        input[type="number"] {
-            width: 100%;
-            padding: 14px;
-            margin-bottom: 20px;
-            border: 1px solid var(--border-color);
-            border-radius: 5px;
-            box-sizing: border-box;
-            background-color: var(--input-bg);
-            color: var(--input-text-color);
-            font-family: 'Lato', sans-serif;
-            font-size: 1em;
-            transition: all 0.3s ease-in-out;
-        }
-
-        input[type="text"]:focus,
-        input[type="email"]:focus,
-        input[type="tel"]:focus,
-        input[type="password"]:focus,
-        input[type="number"]:focus {
-            outline: none;
-            border-color: var(--gold-text-color);
-            box-shadow: 0 0 15px rgba(212, 175, 55, 0.5);
-        }
-
-        .input-group {
-            display: flex;
-            gap: 20px;
-        }
-
-        .input-group > div {
-            flex: 1;
-        }
-
-        /* --- Luxury Button Styling --- */
-        button {
-            background: var(--gold-gradient);
-            color: #1a1a1a; /* Dark text for contrast on gold */
-            padding: 15px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 1.2em;
-            font-weight: bold;
-            width: 100%;
-            margin-top: 10px;
-            transition: all 0.3s ease-in-out;
-            letter-spacing: 1px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-        }
-
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
-        }
-
-        .btn-danger {
-            background: var(--danger-color);
-            color: white;
-        }
-        .btn-danger:hover {
-            background: var(--danger-hover);
-            box-shadow: 0 6px 20px rgba(255, 77, 77, 0.4);
-        }
-
-        /* Message Output Styling */
-        .message-output {
-            padding: 15px;
-            margin-top: 20px;
-            border-radius: 5px;
-            background-color: rgba(0,0,0,0.2);
-            border: 1px solid var(--border-color);
-            color: #ccc;
-            text-align: center;
-            font-style: italic;
-        }
-
-        /* Checkbox Styling */
-        .confirmation-group label {
-            font-weight: 300;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            color: var(--text-color);
-            margin-bottom: 15px;
-        }
-
-        .confirmation-group input[type="checkbox"] {
-            appearance: none;
-            width: 20px;
-            height: 20px;
-            border: 1px solid var(--gold-text-color);
-            border-radius: 3px;
-            cursor: pointer;
-            position: relative;
-            transition: all 0.2s;
-        }
-
-        .confirmation-group input[type="checkbox"]:checked {
-            background: var(--gold-gradient);
-        }
-
-        .confirmation-group input[type="checkbox"]:checked::after {
-            content: '✔';
-            color: var(--dark-bg);
-            position: absolute;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 14px;
-            font-weight: bold;
-        }
-
-
-        /* Account Data Section Specifics */
-        #account-data-note, .order-item, .product-card {
-            border: 1px solid;
-            border-image: var(--gold-gradient) 1;
-            background: rgba(0,0,0,0.2);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
-        }
-
-        .saved-products-container, .orders-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-        }
-
-        .product-card, .order-item {
-            padding: 20px;
-            flex-basis: calc(50% - 22px); /* Adjust for border */
-        }
-
-        .product-card img {
-            max-width: 100%;
-            border-radius: 5px;
-            border: 1px solid var(--border-color);
-            margin-bottom: 15px;
-        }
+        :root { --gold-gradient: linear-gradient(145deg, #b38728, #fcf6ba, #b38728); --gold-text-color: #d4af37; --dark-bg: #1a1a1a; --section-bg: #242424; --border-color: rgba(212, 175, 55, 0.3); --text-color: #f0f0f0; --input-bg: #333; --input-text-color: #fff; --danger-color: #ff4d4d; --danger-hover: #e60000; --success-color: #28a745; }
+        body { font-family: 'Lato', Arial, sans-serif; background-color: var(--dark-bg); background-image: url('https://www.transparenttextures.com/patterns/dark-denim-3.png'); color: var(--text-color); margin: 0; padding: 20px; }
+        .container { max-width: 900px; margin: 40px auto; background-color: var(--section-bg); padding: 20px 40px; border-radius: 15px; border: 2px solid transparent; border-image: var(--gold-gradient) 1; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 25px rgba(212, 175, 55, 0.2); }
+        h1, h2, h3 { font-family: 'Great Vibes', cursive; font-weight: normal; letter-spacing: 2px; text-align: center; background: var(--gold-gradient); -webkit-background-clip: text; background-clip: text; color: transparent; padding-bottom: 15px; margin-bottom: 30px; border-bottom: 1px solid; border-image: var(--gold-gradient) 1; }
+        h1 { font-size: 4.5em; } h2 { font-size: 3.5em; margin-top: 40px; } h3 { font-size: 2.8em; margin-top: 25px; border-bottom: none; padding-bottom: 5px; } h4 { font-family: 'Lato', sans-serif; font-weight: 400; font-size:1.3em; color: var(--gold-text-color); margin-bottom: 5px; text-align: left; }
+        .section, .sub-section { margin-bottom: 30px; padding: 25px; border-radius: 10px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); box-shadow: inset 0 0 15px rgba(0,0,0,0.5); }
+        label { display: block; margin-bottom: 10px; font-weight: 300; color: var(--gold-text-color); font-size: 1.1em; }
+        input[type="text"], input[type="email"], input[type="tel"], input[type="password"], input[type="number"], textarea { width: 100%; padding: 14px; margin-bottom: 20px; border: 1px solid var(--border-color); border-radius: 5px; box-sizing: border-box; background-color: var(--input-bg); color: var(--input-text-color); font-family: 'Lato', sans-serif; font-size: 1em; transition: all 0.3s ease-in-out; }
+        input[type="text"]:focus, input[type="email"]:focus, input[type="tel"]:focus, input[type="password"]:focus, input[type="number"]:focus, textarea:focus { outline: none; border-color: var(--gold-text-color); box-shadow: 0 0 15px rgba(212, 175, 55, 0.5); }
+        .input-group { display: flex; gap: 20px; } .input-group > div { flex: 1; }
+        button { background: var(--gold-gradient); color: #1a1a1a; padding: 15px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 1.2em; font-weight: bold; width: 100%; margin-top: 10px; transition: all 0.3s ease-in-out; letter-spacing: 1px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); }
+        button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4); }
+        button:disabled { background: #555; cursor: not-allowed; transform: none; box-shadow: none; }
+        .btn-danger { background: var(--danger-color); color: white; } .btn-danger:hover { background: var(--danger-hover); box-shadow: 0 6px 20px rgba(255, 77, 77, 0.4); }
+        .btn-secondary { background-color: #555; color: white; border: 1px solid #777; } .btn-secondary:hover { background-color: #666; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4); }
+        .btn-success { background-color: var(--success-color); color: white; } .btn-success:hover { background-color: #218838; }
+        .message-output { padding: 15px; margin-top: 20px; border-radius: 5px; background-color: rgba(0,0,0,0.2); border: 1px solid var(--border-color); color: #ccc; text-align: center; font-style: italic; }
+        .confirmation-group label { font-weight: 300; display: flex; align-items: center; gap: 15px; color: var(--text-color); margin-bottom: 15px; }
+        .confirmation-group input[type="checkbox"] { appearance: none; width: 20px; height: 20px; border: 1px solid var(--gold-text-color); border-radius: 3px; cursor: pointer; position: relative; transition: all 0.2s; }
+        .confirmation-group input[type="checkbox"]:checked { background: var(--gold-gradient); }
+        .confirmation-group input[type="checkbox"]:checked::after { content: '✔'; color: var(--dark-bg); position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-size: 14px; font-weight: bold; }
+        #account-data-note, .order-item, .product-card { border: 1px solid; border-image: var(--gold-gradient) 1; background: rgba(0,0,0,0.2); box-shadow: 0 4px 10px rgba(0,0,0,0.4); }
+        .saved-products-container, .orders-container, .cart-items-container { display: flex; flex-wrap: wrap; gap: 20px; }
+        .product-card, .order-item, .cart-item { padding: 20px; flex-basis: calc(50% - 22px); border-radius: 10px; }
+        .product-card img, .cart-item img { max-width: 100%; border-radius: 5px; border: 1px solid var(--border-color); margin-bottom: 15px; }
+        .loading-spinner { position: relative; pointer-events: none; } .loading-spinner::after { content: ''; position: absolute; width: 16px; height: 16px; top: 50%; left: 50%; margin: -8px 0 0 -8px; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite; } @keyframes spin { to { transform: rotate(360deg); } }
+        /* New Styles for Added Sections */
+        .notification-item, .activity-item { background: var(--input-bg); padding: 10px 15px; margin-bottom: 10px; border-left: 3px solid var(--gold-text-color); border-radius: 3px; font-size: 0.9em; display: flex; justify-content: space-between; align-items: center; }
+        .notification-item span, .activity-item span { color: #aaa; font-size: 0.9em; }
+        .chat-container { border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; }
+        .chat-window { height: 250px; overflow-y: auto; padding: 15px; background: rgba(0,0,0,0.1); }
+        .chat-message { margin-bottom: 15px; display: flex; flex-direction: column; }
+        .chat-message.user { align-items: flex-end; } .chat-message.admin { align-items: flex-start; }
+        .chat-message p { max-width: 70%; padding: 10px 15px; border-radius: 12px; margin: 0; }
+        .chat-message.user p { background: var(--gold-text-color); color: var(--dark-bg); border-bottom-right-radius: 0; }
+        .chat-message.admin p { background: #555; color: var(--text-color); border-bottom-left-radius: 0; }
+        .chat-message p a { color: inherit; text-decoration: underline; }
+        .chat-input-area { display: flex; border-top: 1px solid var(--border-color); }
+        .chat-input-area textarea { border: none; border-radius: 0; margin-bottom: 0; resize: none; flex-grow: 1; }
+        .chat-input-area button { width: auto; border-radius: 0; margin: 0; font-size: 1em; padding: 10px 15px; }
+        .cart-item { flex-basis: 100%; display: flex; gap: 20px; align-items: center; padding: 15px;}
+        .cart-item img { max-width: 100px; margin: 0; } .cart-item-details { flex-grow: 1; }
+        .cart-total-section { text-align: right; margin-top: 20px; padding-top: 20px; border-top: 1px solid; border-image: var(--gold-gradient) 1;}
+        .cart-total-section h3 { text-align: right; border: none; padding: 0; margin: 0 0 15px 0; }
+        .checkout-modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.8); }
+        .checkout-modal-content { background-color: var(--section-bg); margin: 5% auto; padding: 30px; border: 1px solid; border-image: var(--gold-gradient) 1; width: 80%; max-width: 700px; border-radius: 15px; position: relative; }
+        .close-modal { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .order-summary-table { width: 100%; margin-top: 20px; border-collapse: collapse; }
+        .order-summary-table td { padding: 10px; border-bottom: 1px solid var(--border-color); }
+        .order-summary-table tr:last-child td { border-bottom: none; }
+        .order-summary-table td:last-child { text-align: right; }
+        .order-summary-table .total-row td { font-weight: bold; color: var(--gold-text-color); font-size: 1.2em; border-top: 1px solid var(--gold-text-color); }
     </style>
 </head>
 <body>
-
     <div class="container">
         <h1>User Account and Management System</h1>
-
-
-    <div class="message-output" id="app-status" style="margin-bottom: 20px;">Initializing application...</div>
-    <!-- ... rest of your HTML content ... -->
-
-        
-        <div class="section" id="registration">
-            <h2>User Registration</h2>
-            <form action="#- " onsubmit="return false;">
-                <label for="reg-username">Username</label>
-                <input type="text" id="reg-username" name="username" placeholder="Choose a username" required>
-                
-                <label for="reg-email">Email</label>
-                <input type="email" id="reg-email" name="email" placeholder="your.email@example.com" required>
-
-                <div class="input-group">
-                    <div>
-                        <label for="reg-country-code">Country Code</label>
-                        <input type="text" id="reg-country-code" name="country_code" placeholder="+91" required>
-                    </div>
-                    <div>
-                        <label for="reg-phone">Phone Number</label>
-                        <input type="tel" id="reg-phone" name="phone" placeholder="9876543210" required>
-                    </div>
-                </div>
-
-                <label for="reg-password">Password</label>
-                <input type="password" id="reg-password" name="password" placeholder="Create a strong password" required>
-
-                <button type="submit">Register</button>
-                <div class="message-output" id="reg-message">Registration status will appear here.</div>
-            </form>
-        </div>
-
-        <div class="section" id="login">
-            <h2>Login</h2>
-            <form action="#- " onsubmit="return false;">
-                <label for="login-username">Username</label>
-                <input type="text" id="login-username" name="username" placeholder="Enter your username" required>
-
-                <label for="login-password">Password</label>
-                <input type="password" id="login-password" name="password" placeholder="Enter your password" required>
-
-                <button type="submit">Login</button>
-                <div class="message-output" id="login-message">Login status will appear here.</div>
-            </form>
-        </div>
-
-        <div class="section" id="status-nav">
-            <h2>Session Status & Navigation</h2>
-            <p><strong>Login Status:</strong> <span style="color: #dc3545;">Not Logged In (This is a static example)</span></p>
-            <div class="input-group">
-                <button type="button" class="btn-danger">Logout</button>
-                <button type="button" class="btn-secondary" onclick="window.history.back();">Go Back</button>
-            </div>
-        </div>
-
-        <div class="section" id="recovery-system">
-            <h2>Account Recovery System</h2>
-
-            <div class="sub-section">
-                <h3>Recover Email Address</h3>
-                <form action="#-" onsubmit="return false;">
-                    <label for="rec-email-username">Registered Username</label>
-                    <input type="text" id="rec-email-username" name="username" required>
-                    <div class="input-group">
-                        <div>
-                            <label for="rec-email-cc">Country Code</label>
-                            <input type="text" id="rec-email-cc" name="country_code" required>
-                        </div>
-                        <div>
-                            <label for="rec-email-phone">Phone Number</label>
-                            <input type="tel" id="rec-email-phone" name="phone" required>
-                        </div>
-                    </div>
-                    <label for="rec-email-password">Password</label>
-                    <input type="password" id="rec-email-password" name="password" required>
-                    <button type="submit">Recover Email</button>
-                    <div class="message-output">Recovery instructions for your email will be shown here.</div>
-                </form>
-            </div>
-
-            <div class="sub-section">
-                <h3>Recover Username</h3>
-                <form action="#-" onsubmit="return false;">
-                    <label for="rec-user-email">Registered Email</label>
-                    <input type="email" id="rec-user-email" name="email" required>
-                     <div class="input-group">
-                        <div>
-                            <label for="rec-user-cc">Country Code</label>
-                            <input type="text" id="rec-user-cc" name="country_code" required>
-                        </div>
-                        <div>
-                            <label for="rec-user-phone">Phone Number</label>
-                            <input type="tel" id="rec-user-phone" name="phone" required>
-                        </div>
-                    </div>
-                    <label for="rec-user-password">Password</label>
-                    <input type="password" id="rec-user-password" name="password" required>
-                    <button type="submit">Recover Username</button>
-                    <div class="message-output">Your username will be shown here after verification.</div>
-                </form>
-            </div>
-
-            <div class="sub-section">
-                <h3>Recover Password</h3>
-                 <form action="#-" onsubmit="return false;">
-                    <label for="rec-pass-username">Registered Username</label>
-                    <input type="text" id="rec-pass-username" name="username" required>
-                    <label for="rec-pass-email">Registered Email</label>
-                    <input type="email" id="rec-pass-email" name="email" required>
-                     <div class="input-group">
-                        <div>
-                            <label for="rec-pass-cc">Country Code</label>
-                            <input type="text" id="rec-pass-cc" name="country_code" required>
-                        </div>
-                        <div>
-                            <label for="rec-pass-phone">Phone Number</label>
-                            <input type="tel" id="rec-pass-phone" name="phone" required>
-                        </div>
-                    </div>
-                    <button type="submit">Recover Password</button>
-                    <div class="message-output">Password recovery link will be sent to your email/phone.</div>
-                </form>
-            </div>
-
-            <div class="sub-section">
-                <h3>Recover Phone Number</h3>
-                <form action="#-" onsubmit="return false;">
-                    <label for="rec-phone-username">Registered Username</label>
-                    <input type="text" id="rec-phone-username" name="username" required>
-                    <label for="rec-phone-email">Registered Email</label>
-                    <input type="email" id="rec-phone-email" name="email" required>
-                    <label for="rec-phone-password">Password</label>
-                    <input type="password" id="rec-phone-password" name="password" required>
-                    <button type="submit">Recover Phone Number</button>
-                    <div class="message-output">Your registered phone number will be shown here.</div>
-                </form>
-            </div>
-
-            <div class="sub-section">
-                <h3>Recover Country Code</h3>
-                <form action="#-" onsubmit="return false;">
-                    <label for="rec-cc-username">Registered Username</label>
-                    <input type="text" id="rec-cc-username" name="username" required>
-                    <label for="rec-cc-email">Registered Email</label>
-                    <input type="email" id="rec-cc-email" name="email" required>
-                    <label for="rec-cc-password">Password</label>
-                    <input type="password" id="rec-cc-password" name="password" required>
-                    <button type="submit">Recover Country Code</button>
-                    <div class="message-output">Your registered country code will be shown here.</div>
-                </form>
-            </div>
-        </div>
-
-        <div class="section" id="change-credentials">
-            <h2>Change Account Credentials (Permanent)</h2>
-            <p><strong>Note:</strong> To change any credential, you must provide all current account details for security verification.</p>
-
-            <div class="sub-section">
-                <h3>Change Username</h3>
-                <form action="#-" onsubmit="return false;">
-                     <label>Current Username:</label><input type="text" name="current_username" required>
-                     <label>Current Password:</label><input type="password" name="current_password" required>
-                     <label>Current Email:</label><input type="email" name="current_email" required>
-                     <div class="input-group">
-                         <div><label>Country Code:</label><input type="text" name="current_cc" required></div>
-                         <div><label>Phone Number:</label><input type="tel" name="current_phone" required></div>
-                     </div>
-                     <hr style="margin: 20px 0;">
-                     <label for="new-username"><strong>New Username</strong></label>
-                     <input type="text" id="new-username" name="new_username" required>
-                     <button type="submit">Change Username</button>
-                     <div class="message-output">Username change status will appear here.</div>
-                </form>
-            </div>
-            
-            <div class="sub-section">
-                <h3>Change Email</h3>
-                <form action="#-" onsubmit="return false;">
-                     <label>Current Username:</label><input type="text" name="current_username" required>
-                     <label>Current Password:</label><input type="password" name="current_password" required>
-                     <label>Current Email:</label><input type="email" name="current_email" required>
-                     <div class="input-group">
-                         <div><label>Country Code:</label><input type="text" name="current_cc" required></div>
-                         <div><label>Phone Number:</label><input type="tel" name="current_phone" required></div>
-                     </div>
-                     <hr style="margin: 20px 0;">
-                     <label for="new-email"><strong>New Email</strong></label>
-                     <input type="email" id="new-email" name="new_email" required>
-                     <button type="submit">Change Email</button>
-                     <div class="message-output">Email change status will appear here.</div>
-                </form>
-            </div>
-
-            <div class="sub-section">
-                <h3>Change Password</h3>
-                <form action="#-" onsubmit="return false;">
-                     <label>Current Username:</label><input type="text" name="current_username" required>
-                     <label>Current Password:</label><input type="password" name="current_password" required>
-                     <label>Current Email:</label><input type="email" name="current_email" required>
-                     <div class="input-group">
-                         <div><label>Country Code:</label><input type="text" name="current_cc" required></div>
-                         <div><label>Phone Number:</label><input type="tel" name="current_phone" required></div>
-                     </div>
-                     <hr style="margin: 20px 0;">
-                     <label for="new-password"><strong>New Password</strong></label>
-                     <input type="password" id="new-password" name="new_password" required>
-                     <button type="submit">Change Password</button>
-                     <div class="message-output">Password change status will appear here.</div>
-                </form>
-            </div>
-            
-            <div class="sub-section">
-                <h3>Change Phone Number</h3>
-                <form action="#-" onsubmit="return false;">
-                     <label>Current Username:</label><input type="text" name="current_username" required>
-                     <label>Current Password:</label><input type="password" name="current_password" required>
-                     <label>Current Email:</label><input type="email" name="current_email" required>
-                     <div class="input-group">
-                         <div><label>Country Code:</label><input type="text" name="current_cc" required></div>
-                         <div><label>Phone Number:</label><input type="tel" name="current_phone" required></div>
-                     </div>
-                     <hr style="margin: 20px 0;">
-                     <label for="new-phone"><strong>New Phone Number</strong></label>
-                     <input type="tel" id="new-phone" name="new_phone" required>
-                     <button type="submit">Change Phone Number</button>
-                     <div class="message-output">Phone number change status will appear here.</div>
-                </form>
-            </div>
-            
-            <div class="sub-section">
-                <h3>Change Country Code</h3>
-                <form action="#-" onsubmit="return false;">
-                     <label>Current Username:</label><input type="text" name="current_username" required>
-                     <label>Current Password:</label><input type="password" name="current_password" required>
-                     <label>Current Email:</label><input type="email" name="current_email" required>
-                     <div class="input-group">
-                         <div><label>Country Code:</label><input type="text" name="current_cc" required></div>
-                         <div><label>Phone Number:</label><input type="tel" name="current_phone" required></div>
-                     </div>
-                     <hr style="margin: 20px 0;">
-                     <label for="new-cc"><strong>New Country Code</strong></label>
-                     <input type="text" id="new-cc" name="new_cc" required>
-                     <button type="submit">Change Country Code</button>
-                     <div class="message-output">Country code change status will appear here.</div>
-                </form>
-            </div>
-        </div>
-
-        <div class="section" id="delete-account">
-            <h2>Delete Account Permanently</h2>
-             <form action="#-" onsubmit="return false;">
-                <label>Username:</label><input type="text" name="del_username" required>
-                <label>Password:</label><input type="password" name="del_password" required>
-                <label>Email:</label><input type="email" name="del_email" required>
-                <div class="input-group">
-                    <div><label>Country Code:</label><input type="text" name="del_cc" required></div>
-                    <div><label>Phone Number:</label><input type="tel" name="del_phone" required></div>
-                </div>
-
-                <div class="confirmation-group">
-                    <h3>Confirm Deletion</h3>
-                    <label><input type="checkbox" required> I understand that all my data, including orders and saved items, will be permanently deleted.</label>
-                    <label><input type="checkbox" required> I understand that this action is irreversible and I cannot recover my account.</label>
-                    <label><input type="checkbox" required> I confirm I want to proceed with deleting my account.</label>
-                </div>
-
-                <button type="submit" class="btn-danger">Delete Account Permanently</button>
-                <div class="message-output">Account deletion status will appear here.</div>
-            </form>
-        </div>
-        
         <div class="section" id="account-data">
-            <div id="account-data-note">
-                <strong>NOTE:</strong> In a real application, this entire 'Account Data' section would be hidden using JavaScript if the user is not logged in. This is a static HTML/CSS example demonstrating the layout for a logged-in user.
-            </div>
-            
+            <div id="account-data-note"><strong>NOTE:</strong> In a real application, this entire 'Account Data' section would be hidden using JavaScript if the user is not logged in. This is a static HTML/CSS example demonstrating the layout for a logged-in user.</div>
             <h2>Account Data</h2>
-
             <div class="sub-section">
-                <h3>Account Shipping Address</h3>
-                <form action="#-" onsubmit="return false;">
-                    <label for="ship-name">Recipient Name</label>
-                    <input type="text" id="ship-name" name="recipient_name">
-                    
-                    <label for="ship-location">Location (Street, Landmark)</label>
-                    <input type="text" id="ship-location" name="location">
-
-                    <label for="ship-apartment">Apartment, Flat, or Plot Number</label>
-                    <input type="text" id="ship-apartment" name="apartment">
-                    
-                    <div class="input-group">
-                        <div><label for="ship-area">Area</label><input type="text" id="ship-area" name="area"></div>
-                        <div><label for="ship-city">City</label><input type="text" id="ship-city" name="city"></div>
-                    </div>
-                     <div class="input-group">
-                        <div><label for="ship-state">State</label><input type="text" id="ship-state" name="state"></div>
-                        <div><label for="ship-pincode">Pincode</label><input type="number" id="ship-pincode" name="pincode"></div>
-                        <div><label for="ship-country">Country</label><input type="text" id="ship-country" name="country"></div>
-                    </div>
-
-                    <label for="ship-email">Shipping Contact Email</label>
-                    <input type="email" id="ship-email" name="shipping_email">
-                    
-                    <div class="input-group">
-                        <div><label for="ship-cc">Country Code</label><input type="text" id="ship-cc" name="shipping_cc"></div>
-                        <div><label for="ship-phone">Shipping Contact Phone</label><input type="tel" id="ship-phone" name="shipping_phone"></div>
-                    </div>
-
-                    <button type="submit">Save or Update Shipping Details</button>
-                </form>
-                
-                <h4>Saved Shipping Details</h4>
-                <div class="message-output" id="saved-shipping-output">
-                    <strong>John Doe</strong><br>
-                    123, Tech Park, Silicon Valley, Apt 5B<br>
-                    Electronic City, Bengaluru, Karnataka, 560100<br>
-                    India<br>
-                    Contact: +91 9988776655
                 </div>
-            </div>
-
-            <div class="sub-section">
-                <h3>Orders Created</h3>
-                <div class="orders-container">
-                    <div class="order-item">
-                        <strong>Order #ORD-2025-A1B2</strong><br>
-                        Date: 01-Aug-2025 | Status: Shipped<br>
-                        Items: 3 | Total: $150.00<br>
-                        <div class="input-group" style="margin-top: 10px;">
-                            <button class="btn-secondary" type="button">Delay Delivery</button>
-                            <button class="btn-danger" type="button">Cancel Order</button>
-                        </div>
-                    </div>
-                     <div class="order-item">
-                        <strong>Order #ORD-2025-C3D4</strong><br>
-                        Date: 03-Aug-2025 | Status: Cancelled<br>
-                        Items: 1 | Total: $25.00<br>
-                        <div class="input-group" style="margin-top: 10px;">
-                            <button class="btn-secondary" type="button">Delete from History</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <div class="sub-section">
                 <h3>Saved Products for Later</h3>
                 <div class="saved-products-container">
-                    <div class="product-card">
-                        <img src="https://via.placeholder.com/300x200.png?text=Product+Image" alt="Product Image">
-                        <h4>Wireless Bluetooth Headphones</h4>
-                        <p>Price: $75.00</p>
-                        <button class="btn-secondary" type="button">Move to Cart</button>
-                        <button class="btn-danger" type="button">Remove</button>
                     </div>
-                    <div class="product-card">
-                        <img src="https://via.placeholder.com/300x200.png?text=Product+Image" alt="Product Image">
-                        <h4>Smart Fitness Watch</h4>
-                        <p>Price: $120.00</p>
-                        <button class="btn-secondary" type="button">Move to Cart</button>
-                        <button class="btn-danger" type="button">Remove</button>
-                    </div>
-                </div>
-                 <div class="message-output" style="margin-top: 20px;">
-                    No other saved products.
-                </div>
+                <div class="message-output" id="saved-products-container-message" style="margin-top: 20px;">No other saved products.</div>
             </div>
 
+            <div class="sub-section" id="notifications-section">
+                <h3>User Notifications</h3>
+                <div id="notifications-list">
+                    <div class="notification-item">Your order #ORD-2025-A1B2 has been shipped. <span>2 days ago</span></div>
+                    <div class="notification-item">A new login to your account was detected. <span>3 days ago</span></div>
+                    <div class="notification-item">Your shipping address has been updated. <span>5 days ago</span></div>
+                </div>
+                <div class="message-output" id="notifications-message" style="display: none;"></div>
+                <button class="btn-danger" id="delete-all-notifications-btn" onclick="deleteAllNotifications()">Delete All Notifications</button>
+            </div>
+
+            <div class="sub-section" id="activity-section">
+                <h3>Your Activity</h3>
+                <div id="activity-list">
+                    <div class="activity-item">Viewed product: Smart Fitness Watch <span>1 hour ago</span></div>
+                    <div class="activity-item">Logged In from new device. <span>3 days ago</span></div>
+                    <div class="activity-item">Changed password. <span>1 week ago</span></div>
+                </div>
+                <div class="message-output" id="activity-message" style="display: none;"></div>
+                <button class="btn-danger" id="delete-all-activity-btn" onclick="deleteAllActivity()">Delete All Activity History</button>
+            </div>
+
+            <div class="sub-section" id="support-chat-section">
+                <h3>Message Support Agent</h3>
+                <div id="start-chat-container">
+                    <p>Have a question? Start a chat with one of our support agents.</p>
+                    <button id="start-chat-btn" onclick="startChat()">Start New Chat</button>
+                </div>
+                <div id="active-chat-container" style="display: none;">
+                    <div class="chat-container">
+                        <div class="chat-window" id="chat-window">
+                            <div class="chat-message admin"><p>Hello! How can I help you today?</p></div>
+                            <div class="chat-message user"><p>I have a question about my order #ORD-2025-A1B2.</p></div>
+                            <div class="chat-message user"><p>Can you tell me the tracking link? The one I found is not working: <a href="#" target="_blank">http://example.com/track</a></p></div>
+                        </div>
+                        <div class="chat-input-area">
+                            <textarea id="chat-message-input" placeholder="Type your message..." rows="2"></textarea>
+                            <button onclick="sendChatMessage()">Send</button>
+                        </div>
+                    </div>
+                    <button class="btn-danger" id="end-chat-btn" onclick="endChat()" style="margin-top: 20px;">End Chat & Delete History</button>
+                </div>
+                 <div class="message-output" id="support-chat-message" style="display: none;"></div>
+            </div>
+
+            <div class="sub-section" id="orders-saved-payment-pending">
+                <h3>Orders Saved (Payment Pending)</h3>
+                <div id="cart-output-section">
+                    <div class="message-output">No pending orders.</div>
+                </div>
+            </div>
         </div>
 
+        <div class="section" id="user-cart-section">
+            <h2>Your Cart</h2>
+            <div class="cart-items-container" id="cart-items-container">
+                <div class="cart-item">
+                    <img src="https://via.placeholder.com/100x100.png?text=Product+1" alt="Product 1">
+                    <div class="cart-item-details">
+                        <h4>Premium Wireless Earbuds</h4>
+                        <p>Quantity: 1</p>
+                        <p>Price: $95.00</p>
+                    </div>
+                </div>
+                <div class="cart-item">
+                    <img src="https://via.placeholder.com/100x100.png?text=Product+2" alt="Product 2">
+                    <div class="cart-item-details">
+                        <h4>Leather-bound Journal</h4>
+                        <p>Quantity: 2</p>
+                        <p>Price: $25.00 each</p>
+                    </div>
+                </div>
+            </div>
+            <div class="cart-total-section">
+                <h3>Grand Total: <span id="cart-grand-total">$145.00</span></h3>
+                <button class="btn-success" id="cart-proceed-btn" onclick="showShippingStep()">Proceed</button>
+            </div>
+            <div class="message-output" id="cart-message" style="margin-top:20px; display: none;"></div>
+        </div>
+
+        <div id="shipping-modal" class="checkout-modal">
+            <div class="checkout-modal-content">
+                <span class="close-modal" onclick="closeAllModals()">&times;</span>
+                <h2>Step 1: Shipping Details</h2>
+                <div class="sub-section">
+                    <h4>Use Saved Shipping Address?</h4>
+                    <p>Would you like to use the address we have on file? (This is optional)</p>
+                    <div id="modal-saved-shipping-output" class="message-output">
+                        <strong>John Doe</strong><br>123, Tech Park, Silicon Valley, Apt 5B<br>Electronic City, Bengaluru, Karnataka, 560100<br>India
+                    </div>
+                    <button onclick="useSavedAddress(true)">Yes, Use This Address</button>
+                </div>
+                <div class="sub-section" id="modal-shipping-form-container">
+                    <h4>Or, Enter a New Address</h4>
+                    <form action="#-" onsubmit="return false;" id="modal-ship-address-form">
+                        <label for="modal-ship-name">Recipient Name</label><input type="text" id="modal-ship-name">
+                        <label for="modal-ship-location">Location (Street, Landmark)</label><input type="text" id="modal-ship-location">
+                        <label for="modal-ship-city">City</label><input type="text" id="modal-ship-city">
+                        <label for="modal-ship-state">State</label><input type="text" id="modal-ship-state">
+                        <label for="modal-ship-pincode">Pincode</label><input type="number" id="modal-ship-pincode">
+                        <label for="modal-ship-country">Country</label><input type="text" id="modal-ship-country">
+                    </form>
+                </div>
+                <button class="btn-success" onclick="generateOrderSummary()">Proceed to Order Summary</button>
+            </div>
+        </div>
+
+        <div id="summary-modal" class="checkout-modal">
+            <div class="checkout-modal-content">
+                 <span class="close-modal" onclick="closeAllModals()">&times;</span>
+                <h2>Step 2: Confirm Order & Payment</h2>
+                <div id="order-summary-output">
+                    </div>
+                <div class="message-output" id="payment-status-message">Status: Awaiting payment.</div>
+                <button class="btn-success" id="proceed-to-razorpay-btn" onclick="initiateRazorpayPayment()">Proceed to Checkout</button>
+            </div>
+        </div>
+
+        <div id="confirmation-modal" class="checkout-modal">
+            <div class="checkout-modal-content">
+                <span class="close-modal" onclick="closeAllModals()">&times;</span>
+                <h2 style="color:var(--success-color); background: none; -webkit-background-clip: unset; background-clip: unset;">Order Placed Successfully!</h2>
+                <p>Thank you for your purchase. Your order has been created and saved to your account.</p>
+                <div id="final-order-confirmation-details">
+                    </div>
+                <button onclick="closeAllModals()">Close</button>
+            </div>
+        </div>
+
+        <p id="app-version-display" style="text-align: center; font-size: 0.8em; color: #777; margin-top: 40px;">Version: 1.0.0</p>
     </div>
 
+    <script>
+    // Placeholder for short, manageable JS functions to power the new sections
+    // This script would be in userdb.js or a separate file.
+
+    function deleteAllNotifications() {
+        document.getElementById('notifications-list').innerHTML = '';
+        document.getElementById('notifications-message').textContent = 'All notifications have been deleted.';
+        document.getElementById('notifications-message').style.display = 'block';
+    }
+
+    function deleteAllActivity() {
+        document.getElementById('activity-list').innerHTML = '';
+        document.getElementById('activity-message').textContent = 'All activity history has been deleted.';
+        document.getElementById('activity-message').style.display = 'block';
+    }
+
+    function startChat() {
+        document.getElementById('start-chat-container').style.display = 'none';
+        document.getElementById('active-chat-container').style.display = 'block';
+    }
+
+    function endChat() {
+        document.getElementById('active-chat-container').style.display = 'none';
+        document.getElementById('start-chat-container').style.display = 'block';
+        // In a real app, you'd clear the chat window content and send a "chat ended" event to the server.
+        document.getElementById('chat-window').innerHTML = '<div class="chat-message admin"><p>Hello! How can I help you today?</p></div>';
+        document.getElementById('support-chat-message').textContent = 'Chat ended and history has been deleted.';
+        document.getElementById('support-chat-message').style.display = 'block';
+        setTimeout(() => document.getElementById('support-chat-message').style.display = 'none', 3000);
+    }
+
+    function sendChatMessage() {
+        const input = document.getElementById('chat-message-input');
+        if (input.value.trim() === '') return;
+        const chatWindow = document.getElementById('chat-window');
+        const newMessage = document.createElement('div');
+        newMessage.className = 'chat-message user';
+        // Basic link and image detection for display
+        let messageContent = input.value.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank">$1</a>');
+        newMessage.innerHTML = `<p>${messageContent}</p>`;
+        chatWindow.appendChild(newMessage);
+        input.value = '';
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+
+    function showShippingStep() { document.getElementById('shipping-modal').style.display = 'block'; }
+    function closeAllModals() {
+        document.querySelectorAll('.checkout-modal').forEach(modal => modal.style.display = 'none');
+    }
+
+    function useSavedAddress(use) {
+        if (use) {
+            // In a real app, this would fetch and populate data. Here we just show a message.
+            document.getElementById('modal-shipping-form-container').style.opacity = '0.5';
+            alert('Saved address selected. Proceeding...');
+            generateOrderSummary(); // Auto-proceed for simplicity
+        }
+    }
+
+    function generateOrderSummary() {
+        const orderId = `ORD-${Date.now()}`;
+        const cartTotal = 145.00; // Hardcoded from example
+        const shippingCost = 5.00;
+        const gstRate = 0.18; // 18% GST
+        const gstAmount = cartTotal * gstRate;
+        const finalTotal = cartTotal + shippingCost + gstAmount;
+
+        const summaryHTML = `
+            <h4>Order Summary (ID: ${orderId})</h4>
+            <p><strong>Shipping To:</strong> John Doe, Bengaluru, Karnataka</p>
+            <table class="order-summary-table">
+                <tr><td>Subtotal</td><td>$${cartTotal.toFixed(2)}</td></tr>
+                <tr><td>Shipping Fee</td><td>$${shippingCost.toFixed(2)}</td></tr>
+                <tr><td>GST (18%)</td><td>$${gstAmount.toFixed(2)}</td></tr>
+                <tr class="total-row"><td>Grand Total</td><td>$${finalTotal.toFixed(2)}</td></tr>
+            </table>
+            <div id="razorpay-data-store" style="display:none;"
+                 data-order-id="${orderId}"
+                 data-amount="${finalTotal * 100}"
+                 data-name="John Doe"
+                 data-email="john.doe@example.com"
+                 data-phone="9988776655">
+            </div>`;
+
+        // Display in modal
+        document.getElementById('order-summary-output').innerHTML = summaryHTML;
+        closeAllModals();
+        document.getElementById('summary-modal').style.display = 'block';
+
+        // Save output to "Payment Pending" section
+        const cartOutputContainer = document.getElementById('cart-output-section');
+        if(cartOutputContainer.querySelector('.message-output')) {
+            cartOutputContainer.innerHTML = ''; // Clear "No pending orders" message
+        }
+        const pendingOrderEl = document.createElement('div');
+        pendingOrderEl.className = 'order-item';
+        pendingOrderEl.id = `pending-${orderId}`;
+        pendingOrderEl.innerHTML = summaryHTML + `<p style="color:orange; font-size:0.9em; text-align:right;">Status: Awaiting Payment</p>`;
+        cartOutputContainer.appendChild(pendingOrderEl);
+    }
+
+    function initiateRazorpayPayment() {
+        const dataStore = document.getElementById('razorpay-data-store');
+        document.getElementById('payment-status-message').textContent = 'Redirecting to payment gateway...';
+        document.getElementById('proceed-to-razorpay-btn').disabled = true;
+
+        // Simulate API call and success after 2 seconds
+        setTimeout(() => {
+            // This is where Razorpay's checkout.open() would be called in a real app
+            // For this example, we'll simulate a successful payment response.
+            const fakePaymentResponse = { razorpay_payment_id: `pay_${Date.now()}` };
+            onPaymentSuccess(fakePaymentResponse);
+        }, 2000);
+    }
+
+    function onPaymentSuccess(response) {
+        document.getElementById('payment-status-message').textContent = `Payment Successful! ID: ${response.razorpay_payment_id}. Creating order...`;
+        document.getElementById('payment-status-message').style.color = 'var(--success-color)';
+
+        const dataStore = document.getElementById('razorpay-data-store');
+        const orderId = dataStore.dataset.orderId;
+
+        // Create the final order confirmation display
+        const finalDetails = document.getElementById(`pending-${orderId}`).innerHTML;
+        document.getElementById('final-order-confirmation-details').innerHTML = finalDetails;
+        document.querySelector('#final-order-confirmation-details p').remove(); // remove pending status
+
+        // Add the order to the main "Orders Created" list
+        const newOrderItem = document.createElement('div');
+        newOrderItem.className = 'order-item';
+        newOrderItem.id = `order-item-${orderId}`;
+        newOrderItem.innerHTML = `<strong>Order #${orderId}</strong><br>
+                                 Date: ${new Date().toLocaleDateString('en-GB')} | Status: Processing<br>
+                                 Total: $${(parseFloat(dataStore.dataset.amount)/100).toFixed(2)}<br>
+                                 <p style="color:var(--success-color); font-size:0.9em;">Payment Complete</p>`;
+        document.querySelector('.orders-container').appendChild(newOrderItem);
+
+        // Cleanup
+        document.getElementById(`pending-${orderId}`).remove(); // Remove from pending
+        if(document.getElementById('cart-output-section').children.length === 0){
+             document.getElementById('cart-output-section').innerHTML = '<div class="message-output">No pending orders.</div>';
+        }
+
+        // Show final confirmation modal
+        closeAllModals();
+        document.getElementById('confirmation-modal').style.display = 'block';
+        document.getElementById('cart-items-container').innerHTML = '<div class="message-output">Your cart is empty.</div>';
+        document.getElementById('cart-grand-total').textContent = '$0.00';
+        document.getElementById('cart-proceed-btn').disabled = true;
+    }
+    </script>
 </body>
 </html>
