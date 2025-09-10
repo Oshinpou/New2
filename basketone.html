@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Basket - imacx Shop</title>
 
   <!-- Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/radash"></script>
   <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2"></script>
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
@@ -48,30 +49,18 @@
       padding: 1rem;
       margin-top: 1rem;
     }
-    img.small {
-      width: 50px;
-      height: auto;
-      object-fit: cover;
-    }
-    .controls {
-      display:flex;
-      gap:0.5rem;
-      flex-wrap:wrap;
-    }
   </style>
 </head>
 <body>
   <h2>🛒 Basket</h2>
-  <!-- Replaced tonic-input with a standard input for reliable events -->
-  <input id="searchBox" placeholder="Search basket..." style="width:100%; padding:0.6rem;">
-
+  <input type="text" id="searchBox" placeholder="Search basket...">
   <div id="basket-table"></div>
 
   <h2>Shipping Details</h2>
-  <form id="shippingForm" onsubmit="return false;">
+  <form id="shippingForm">
     <label>Recipient Name: <input type="text" id="recipient" required></label><br>
     <label>Email: <input type="email" id="email" required></label><br>
-    <label>Country Code: <input type="text" id="countryCode" placeholder="+91" required></label>
+    <label>Country Code: <input type="text" id="countryCode" required></label>
     <label>Phone: <input type="text" id="phone" required></label><br>
     <label>Address: <textarea id="address" required></textarea></label><br>
     <label>Area: <input type="text" id="area" required></label>
@@ -79,53 +68,40 @@
     <label>State: <input type="text" id="state" required></label>
     <label>Country: <input type="text" id="country" required></label>
     <label>Zip Code: <input type="text" id="zip" required></label><br>
-
-    <div class="controls">
-      <button type="button" onclick="collectOrderDetails()">📋 Collect Order Info</button>
-      <button type="button" onclick="generateOrderId()">🔐 Generate Order ID</button>
-      <button type="button" onclick="storeToAdmin()">💾 Save Order</button>
-      <button type="button" onclick="startPaymentFlow()">💳 Pay Now</button>
-    </div>
+    <button type="button" onclick="collectOrderDetails()">📋 Collect Order Info</button>
+    <button type="button" onclick="generateOrderId()">🔐 Generate Order ID</button>
+    <button type="button" onclick="storeToAdmin()">💾 Save Order</button>
+    <button type="button" onclick="startPaymentFlow()">💳 Pay Now</button>
   </form>
 
   <div id="orderOutput"></div>
 
   <script>
-    // ---------------------------
-    // Basic setup
-    // ---------------------------
-    // Use a public Gun peer (replace with your own if you have one)
+    // --- GunDB Setup ---
     const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
     const globalOrders = gun.get('imacx_orders');
 
+    // --- Globals ---
     let orderId = '';
     let shipping = {};
     let newOrder = {};
     let total = 0;
 
-    // Fuse options (search within basket items)
+    // --- Search Setup ---
     const fuseOptions = {
       keys: ['name', 'category', 'subcategory'],
       threshold: 0.3
     };
     let fuse = null;
 
-    // ---------------------------
-    // Basket helpers
-    // ---------------------------
+    // --- Basket Functions ---
     function getBasket() {
       return JSON.parse(localStorage.getItem('basket')) || [];
     }
 
-    function saveBasket(basket) {
-      localStorage.setItem('basket', JSON.stringify(basket));
-      // refresh fuse collection if exists
-      if (fuse) fuse.setCollection(basket);
-    }
-
     function renderBasket(filtered = null) {
       const basket = filtered || getBasket();
-      if (!Array.isArray(basket) || basket.length === 0) {
+      if (basket.length === 0) {
         document.getElementById('basket-table').innerHTML = '<p>No items in basket.</p>';
         return;
       }
@@ -138,18 +114,16 @@
         </tr>`;
 
       basket.forEach((item, index) => {
-        const qty = Number(item.quantity) || 0;
-        const price = Number(item.price) || 0;
-        const itemTotal = price * qty;
+        const itemTotal = item.price * item.quantity;
         total += itemTotal;
         html += `<tr>
-          <td><img class="small" src="${item.image || ''}" alt=""></td>
-          <td>${escapeHtml(item.name)}</td>
-          <td>${escapeHtml(String(qty))}</td>
-          <td>₹${escapeHtml(String(price))}</td>
-          <td>₹${escapeHtml(String(itemTotal))}</td>
-          <td>${escapeHtml(item.category || '')}</td>
-          <td>${escapeHtml(item.subcategory || '')}</td>
+          <td><img src="${item.image}" width="50"></td>
+          <td>${item.name}</td>
+          <td>${item.quantity}</td>
+          <td>₹${item.price}</td>
+          <td>₹${itemTotal}</td>
+          <td>${item.category || ''}</td>
+          <td>${item.subcategory || ''}</td>
           <td><button onclick="deleteItem(${index})">Delete</button></td>
         </tr>`;
       });
@@ -158,59 +132,33 @@
       document.getElementById('basket-table').innerHTML = html;
     }
 
-    // Escape to avoid accidental HTML injection when rendering content
-    function escapeHtml(str) {
-      if (!str) return '';
-      return String(str)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-    }
-
     function deleteItem(index) {
       const basket = getBasket();
-      if (index < 0 || index >= basket.length) return;
-      if (!confirm("Remove this item from basket?")) return;
-
-      basket.splice(index, 1);
-      saveBasket(basket);
-      renderBasket(basket);
-      // update fuse
-      if (fuse) fuse.setCollection(basket);
+      if (confirm("Remove this item from basket?")) {
+        basket.splice(index, 1);
+        localStorage.setItem('basket', JSON.stringify(basket));
+        renderBasket();
+        fuse.setCollection(getBasket());
+      }
     }
 
-    // ---------------------------
-    // Order collection & id
-    // ---------------------------
+    // --- Order Functions ---
     function collectOrderDetails() {
       const basket = getBasket();
-      if (!basket || basket.length === 0) {
-        alert("Your basket is empty. Add items before collecting order details.");
-        return;
-      }
-
       shipping = {
-        recipient: document.getElementById('recipient').value.trim(),
-        email: document.getElementById('email').value.trim(),
-        countryCode: document.getElementById('countryCode').value.trim(),
-        phone: document.getElementById('phone').value.trim(),
-        address: document.getElementById('address').value.trim(),
-        area: document.getElementById('area').value.trim(),
-        city: document.getElementById('city').value.trim(),
-        state: document.getElementById('state').value.trim(),
-        country: document.getElementById('country').value.trim(),
-        zip: document.getElementById('zip').value.trim()
+        recipient: document.getElementById('recipient').value,
+        email: document.getElementById('email').value,
+        countryCode: document.getElementById('countryCode').value,
+        phone: document.getElementById('phone').value,
+        address: document.getElementById('address').value,
+        area: document.getElementById('area').value,
+        city: document.getElementById('city').value,
+        state: document.getElementById('state').value,
+        country: document.getElementById('country').value,
+        zip: document.getElementById('zip').value
       };
 
-      // Basic validation
-      if (!shipping.recipient || !shipping.email || !shipping.phone) {
-        alert("Please fill in recipient name, email and phone.");
-        return;
-      }
-
-      total = basket.reduce((acc, i) => acc + (Number(i.price || 0) * Number(i.quantity || 0)), 0);
+      total = radash.sum(basket.map(i => i.price * i.quantity));
 
       document.getElementById('orderOutput').textContent = JSON.stringify({
         orderId,
@@ -218,96 +166,21 @@
         basket,
         total
       }, null, 2);
-
-      alert("Order details collected. Please Generate Order ID and Save Order before payment.");
     }
 
     function generateOrderId() {
       orderId = 'IMX' + Math.random().toString(36).substr(2, 9).toUpperCase();
       alert("Order ID: " + orderId);
-      // show in orderOutput if there is already collected data
-      const basket = getBasket();
-      document.getElementById('orderOutput').textContent = JSON.stringify({
-        orderId,
-        shipping,
-        basket,
-        total
-      }, null, 2);
     }
 
-    // ---------------------------
-    // Save to GunDB / local admin storage
-function storeToAdmin() {
-  const basket = getBasket();
-  if (!orderId || Object.keys(shipping).length === 0 || basket.length === 0) {
-    alert("❗ Please collect shipping info, generate order ID, and add items.");
-    return;
-  }
-
-  total = radash.sum(basket.map(i => i.price * i.quantity));
-  newOrder = {
-    orderId,
-    basket: JSON.parse(JSON.stringify(basket)),
-    shipping: JSON.parse(JSON.stringify(shipping)),
-    total,
-    status: "Order Created",
-    timestamp: Date.now()
-  };
-
-  // ✅ Save to GunDB (global distributed)
-  globalOrders.get(orderId).put(newOrder);
-
-  // ✅ Also add into the set for global listing
-  globalOrders.set(newOrder);
-
-  // ✅ Local backup for admin usage
-  const existingOrders = JSON.parse(localStorage.getItem('admin_orders')) || [];
-  existingOrders.push(newOrder);
-  localStorage.setItem('admin_orders', JSON.stringify(existingOrders));
-
-  alert("✅ Order saved to GunDB.");
-  document.getElementById('orderOutput').textContent = JSON.stringify(newOrder, null, 2);
-}
-      
-      
-
-      // Save to GunDB under the orderId node
-      globalOrders.get(orderId).put(newOrder, ack => {
-        if (ack && ack.err) {
-          console.error("GunDB save error:", ack.err);
-          alert("Error saving order to GunDB. See console for details.");
-        } else {
-          // Also persist locally for admin reference
-          const existingOrders = JSON.parse(localStorage.getItem('admin_orders') || '[]');
-          existingOrders.push(newOrder);
-          localStorage.setItem('admin_orders', JSON.stringify(existingOrders));
-
-          alert("✅ Order saved to GunDB.");
-          document.getElementById('orderOutput').textContent = JSON.stringify(newOrder, null, 2);
-        }
-      });
-    }
-
-    // ---------------------------
-    // Payment (Razorpay)
-    // ---------------------------
-    function startPaymentFlow() {
+    function storeToAdmin() {
       const basket = getBasket();
-      if (!orderId) {
-        alert("Please generate an order ID before payment.");
-        return;
-      }
-      if (!shipping || !shipping.recipient) {
-        alert("Please collect shipping info before payment.");
-        return;
-      }
-      if (!basket || basket.length === 0) {
-        alert("Your basket is empty.");
+      if (!orderId || Object.keys(shipping).length === 0 || basket.length === 0) {
+        alert("❗ Please collect shipping info, generate order ID, and add items.");
         return;
       }
 
-      total = basket.reduce((acc, i) => acc + (Number(i.price || 0) * Number(i.quantity || 0)), 0);
-
+      total = radash.sum(basket.map(i => i.price * i.quantity));
       newOrder = {
         orderId,
         basket: JSON.parse(JSON.stringify(basket)),
@@ -317,13 +190,42 @@ function storeToAdmin() {
         timestamp: Date.now()
       };
 
-      // Save order state before opening payment
+      // ✅ Save order in GunDB
       globalOrders.get(orderId).put(newOrder);
+      globalOrders.set(newOrder);
 
-      // Razorpay options
+      // ✅ Local backup
+      const existingOrders = JSON.parse(localStorage.getItem('admin_orders')) || [];
+      existingOrders.push(newOrder);
+      localStorage.setItem('admin_orders', JSON.stringify(existingOrders));
+
+      alert("✅ Order saved to GunDB.");
+      document.getElementById('orderOutput').textContent = JSON.stringify(newOrder, null, 2);
+    }
+
+    function startPaymentFlow() {
+      const basket = getBasket();
+      if (!orderId || Object.keys(shipping).length === 0 || basket.length === 0) {
+        alert("Please save the order first.");
+        return;
+      }
+
+      total = radash.sum(basket.map(i => i.price * i.quantity));
+      newOrder = {
+        orderId,
+        basket,
+        shipping,
+        total,
+        status: "Order Created",
+        timestamp: Date.now()
+      };
+
+      globalOrders.get(orderId).put(newOrder);
+      globalOrders.set(newOrder);
+
       const options = {
-        key: "rzp_live_ozWo08bXwqssx3", // <--- replace with your test key while testing if needed
-        amount: Math.round(total * 100), // paise
+        key: "rzp_live_ozWo08bXwqssx3", // ⚠️ replace with your live/test Razorpay key
+        amount: Math.round(total * 100),
         currency: "INR",
         name: "imacx Shop",
         description: `Order ID: ${orderId}`,
@@ -331,81 +233,53 @@ function storeToAdmin() {
           orderId,
           ...shipping,
           grandTotal: `₹${total}`,
-          items: basket.map(i => `${i.name} x${i.quantity} = ₹${i.price * i.quantity}`).join('; ')
+          items: basket.map(i => `${i.name} x${i.quantity} = ₹${i.price * i.quantity}`).join(', ')
         },
         handler: function (response) {
-          try {
-            alert("✅ Payment Successful! Razorpay ID: " + response.razorpay_payment_id);
-            globalOrders.get(orderId).get('status').put('Payment Done');
-            const finalOrder = {
-              ...newOrder,
-              status: 'Payment Done',
-              razorpay_payment_id: response.razorpay_payment_id
-            };
+          alert("✅ Payment Successful! Razorpay ID: " + response.razorpay_payment_id);
 
-            localStorage.setItem('orderData', JSON.stringify(finalOrder));
+          // ✅ Update order status globally
+          globalOrders.get(orderId).get('status').put('Payment Done');
+          globalOrders.set({ ...newOrder, status: 'Payment Done' });
 
-            // clear basket on successful payment
-            localStorage.removeItem('basket');
-            // update render and fuse
-            renderBasket([]);
-            if (fuse) fuse.setCollection([]);
-            window.location.href = "thankyou.html";
-          } catch (err) {
-            console.error("After-payment error:", err);
-            alert("Payment succeeded but an error occurred. Check console.");
-          }
+          // ✅ Save locally
+          localStorage.setItem('orderData', JSON.stringify({
+            ...newOrder,
+            status: 'Payment Done',
+            razorpay_payment_id: response.razorpay_payment_id
+          }));
+
+          localStorage.removeItem('basket');
+          window.location.href = "thankyou.html";
         },
         prefill: {
           name: shipping.recipient,
           email: shipping.email,
-          contact: (shipping.countryCode || '') + (shipping.phone || '')
+          contact: shipping.countryCode + shipping.phone
         },
-        theme: { color: "#bfa046" }
+        theme: {
+          color: "#bfa046"
+        }
       };
 
-      try {
-        new Razorpay(options).open();
-      } catch (err) {
-        console.error("Razorpay error:", err);
-        alert("Unable to open payment gateway. See console for details.");
-      }
+      new Razorpay(options).open();
     }
 
-    // ---------------------------
-    // Search (Fuse)
-    // ---------------------------
+    // --- Search ---
     document.getElementById('searchBox').addEventListener('input', e => {
       const query = e.target.value.trim();
       if (!query) {
         renderBasket();
         return;
       }
-      if (!fuse) return;
       const results = fuse.search(query).map(r => r.item);
       renderBasket(results);
     });
 
-    // ---------------------------
-    // Initialization
-    // ---------------------------
-    (function init() {
-      const basketItems = getBasket();
-      renderBasket(basketItems);
-      // initialize Fuse with the current basket collection
-      fuse = new Fuse(basketItems, fuseOptions);
-    })();
-
-    // Optional: expose helper functions to the console for debugging
-    window._imacx = {
-      getBasket,
-      renderBasket,
-      saveBasket,
-      collectOrderDetails,
-      generateOrderId,
-      storeToAdmin,
-      startPaymentFlow
-    };
+    // --- Init ---
+    const basketItems = getBasket();
+    renderBasket(basketItems);
+    fuse = new Fuse(basketItems, fuseOptions);
   </script>
 </body>
 </html>
