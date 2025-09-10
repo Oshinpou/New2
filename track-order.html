@@ -2,98 +2,87 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Search Order - imacx Admin</title>
+  <title>Order Tracking - Imacx</title>
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.min.js"></script>
   <style>
-    body {
-      font-family: sans-serif;
-      padding: 2rem;
-      background-color: #fffff0;
-      color: #333;
-    }
-    h1 {
-      color: goldenrod;
-    }
-    input {
-      padding: 0.6rem;
-      width: 300px;
-      font-size: 16px;
-      margin-right: 10px;
-      border: 1px solid goldenrod;
-      border-radius: 4px;
-    }
-    button {
-      padding: 0.6rem 1rem;
-      background-color: goldenrod;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    .result {
-      margin-top: 2rem;
-      border: 1px solid #ccc;
-      background: #fff;
-      padding: 1rem;
-      border-radius: 5px;
-    }
-    select {
-      margin-top: 1rem;
-      padding: 0.5rem;
-    }
+    body { font-family: Arial, sans-serif; margin: 20px; background: #fafafa; }
+    h1 { text-align: center; color: #333; }
+    #searchBar { width: 100%; padding: 10px; font-size: 16px; margin: 20px 0; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #fff; }
+    th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
+    th { background: #eee; }
+    .hidden { display: none; }
   </style>
 </head>
 <body>
-
-  <h1>🔍 Search Order by ID</h1>
-
-  <input type="text" id="orderIdInput" placeholder="Enter Order ID (e.g., IMX...)">
-  <button onclick="searchOrder()">Search</button>
-
-  <div id="result" class="result" style="display: none;"></div>
+  <h1>Track Your Order</h1>
+  <input type="text" id="searchBar" placeholder="Enter your Order ID...">
+  
+  <table id="ordersTable">
+    <thead>
+      <tr>
+        <th>Order ID</th>
+        <th>Items</th>
+        <th>Total (₹)</th>
+        <th>Shipping</th>
+        <th>Payment Status</th>
+        <th>Order Status</th>
+      </tr>
+    </thead>
+    <tbody id="ordersBody"></tbody>
+  </table>
 
   <script>
+    // Connect to GunDB peer
     const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
-    const globalOrders = gun.get('imacx_orders');
+    const globalOrders = gun.get('orders');
 
-    const STATUS_LIST = [
-      'Order Created', 'Payment Done', 'Order Cancelled',
-      'Order Processing', 'Out for Shipping', 'Shipped',
-      'Out for Delivery', 'Delivered'
-    ];
+    const orders = [];
+    const fuse = new Fuse(orders, { keys: ['id'], threshold: 0.3 });
 
-     function searchOrder() {
-  const orderId = document.getElementById('orderIdInput').value.trim().toUpperCase();
-  if (!orderId.startsWith('IMX')) {
-    alert('⚠️ Please enter a valid Order ID starting with "IMX".');
-    return;
-  }
+    const searchBar = document.getElementById('searchBar');
+    const ordersBody = document.getElementById('ordersBody');
 
-  globalOrders.get(orderId).once(order => {
-    const resultBox = document.getElementById('result');
-    if (!order || !order.orderId) {
-      resultBox.innerHTML = `<p style="color:red">❌ Order not found.</p>`;
-      resultBox.style.display = 'block';
-      return;
+    function renderOrders(filteredOrders) {
+      ordersBody.innerHTML = "";
+      filteredOrders.forEach(order => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${order.id}</td>
+          <td>${order.items.map(i => `${i.name} (x${i.quantity})`).join(", ")}</td>
+          <td>${order.total}</td>
+          <td>${order.shipping.name}, ${order.shipping.address}, ${order.shipping.city}</td>
+          <td>${order.paymentStatus}</td>
+          <td>${order.status}</td>
+        `;
+        ordersBody.appendChild(row);
+      });
     }
 
-    // Display order (hide update button, keep status select)
-    resultBox.innerHTML = `
-      <pre>${JSON.stringify(order, null, 2)}</pre>
-      <label for="statusSelect">Status: </label>
-      <select id="statusSelect" disabled>
-        ${STATUS_LIST.map(s => `<option value="${s}" ${s === order.status ? 'selected' : ''}>${s}</option>`).join('')}
-      </select>
-    `;
-    resultBox.style.display = 'block';
-  });
-}   
+    // Listen for all orders
+    globalOrders.map().on(order => {
+      if (!order || !order.id) return;
+      const existingIndex = orders.findIndex(o => o.id === order.id);
+      if (existingIndex > -1) {
+        orders[existingIndex] = order;
+      } else {
+        orders.push(order);
+      }
+      fuse.setCollection(orders);
+      renderOrders(orders);
+    });
 
-    function updateStatus(orderId) {
-      const newStatus = document.getElementById('statusSelect').value;
-      globalOrders.get(orderId).get('status').put(newStatus);
-      alert('✅ Status updated to: ' + newStatus);
-    }
+    // Search functionality
+    searchBar.addEventListener("input", e => {
+      const term = e.target.value.trim();
+      if (!term) {
+        renderOrders(orders);
+        return;
+      }
+      const results = fuse.search(term).map(r => r.item);
+      renderOrders(results);
+    });
   </script>
 </body>
 </html>
