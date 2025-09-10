@@ -1,285 +1,325 @@
-<!DOCTYPE html>
+<!doctype html>
+
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Basket - imacx Shop</title>
-
-  <!-- Libraries -->
-  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/radash"></script>
-  <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2"></script>
-  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-
-  <style>
-    body {
-      font-family: 'Cursive', sans-serif;
-      background-color: #fff;
-      color: goldenrod;
-      padding: 1rem;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 2rem;
-    }
-    th, td {
-      border: 1px solid goldenrod;
-      padding: 0.5rem;
-      text-align: center;
-    }
-    input, select, textarea, button {
-      font-family: 'Cursive', sans-serif;
-      padding: 0.5rem;
-      margin: 0.5rem 0;
-      border: 1px solid goldenrod;
-    }
-    button {
-      background: goldenrod;
-      color: white;
-      cursor: pointer;
-      border-radius: 5px;
-    }
-    h2 {
-      color: goldenrod;
-    }
-    #orderOutput {
-      white-space: pre-wrap;
-      border: 1px solid goldenrod;
-      padding: 1rem;
-      margin-top: 1rem;
-    }
-  </style>
-</head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Basket - imacx Shop (Debugged)</title>  <!-- Minimal libraries: Gun (P2P DB), Fuse (search), Razorpay -->  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>  <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2"></script>  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>  <style>
+    :root{--accent:#bfa046}
+    body{font-family: 'Cursive',sans-serif;background:#fff;color:var(--accent);padding:16px}
+    h2{color:var(--accent)}
+    .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+    input,textarea,select,button{font-family:inherit;padding:8px;border:1px solid var(--accent)}
+    button{background:var(--accent);color:white;border-radius:6px;cursor:pointer}
+    table{width:100%;border-collapse:collapse;margin-top:12px}
+    th,td{border:1px solid var(--accent);padding:8px;text-align:center}
+    img.small{width:60px;height:60px;object-fit:cover;border-radius:6px}
+    .controls{display:flex;gap:8px;flex-wrap:wrap}
+    #orderOutput{white-space:pre-wrap;border:1px solid var(--accent);padding:12px;margin-top:12px}
+    .muted{color:#666;font-size:0.9rem}
+  </style></head>
 <body>
-  <h2>🛒 Basket</h2>
-  <input type="text" id="searchBox" placeholder="Search basket...">
-  <div id="basket-table"></div>
+  <h2>🛒 Basket (Debugged)</h2>  <div class="row">
+    <input id="searchBox" placeholder="Search items in basket (name, category, subcategory)" style="flex:1">
+    <button id="clearBasketBtn">Clear Basket</button>
+  </div>  <div id="basket-table" style="margin-top:12px"></div>  <h2>Shipping & Order</h2>
+  <form id="shippingForm" onsubmit="return false;">
+    <div class="row">
+      <label style="flex:1">Recipient Name<br><input id="recipient" required></label>
+      <label style="flex:1">Email<br><input id="email" type="email" required></label>
+    </div>
+    <div class="row">
+      <label>Country Code<br><input id="countryCode" placeholder="+91"></label>
+      <label>Phone<br><input id="phone" required></label>
+      <label style="flex:1">Address<br><textarea id="address" rows="2" required></textarea></label>
+    </div>
+    <div class="row">
+      <label>Area<br><input id="area"></label>
+      <label>City<br><input id="city"></label>
+      <label>State<br><input id="state"></label>
+      <label>Country<br><input id="country"></label>
+      <label>Zip<br><input id="zip"></label>
+    </div><div class="controls" style="margin-top:8px">
+  <button type="button" onclick="collectOrderDetails()">📋 Collect Order Info</button>
+  <button type="button" onclick="generateOrderId()">🔐 Generate Order ID</button>
+  <button type="button" onclick="storeToAdmin()">💾 Save Order</button>
+  <button type="button" onclick="startPaymentFlow()">💳 Pay Now</button>
+</div>
 
-  <h2>Shipping Details</h2>
-  <form id="shippingForm">
-    <label>Recipient Name: <input type="text" id="recipient" required></label><br>
-    <label>Email: <input type="email" id="email" required></label><br>
-    <label>Country Code: <input type="text" id="countryCode" required></label>
-    <label>Phone: <input type="text" id="phone" required></label><br>
-    <label>Address: <textarea id="address" required></textarea></label><br>
-    <label>Area: <input type="text" id="area" required></label>
-    <label>City: <input type="text" id="city" required></label><br>
-    <label>State: <input type="text" id="state" required></label>
-    <label>Country: <input type="text" id="country" required></label>
-    <label>Zip Code: <input type="text" id="zip" required></label><br>
-    <button type="button" onclick="collectOrderDetails()">📋 Collect Order Info</button>
-    <button type="button" onclick="generateOrderId()">🔐 Generate Order ID</button>
-    <button type="button" onclick="storeToAdmin()">💾 Save Order</button>
-    <button type="button" onclick="startPaymentFlow()">💳 Pay Now</button>
-  </form>
-
-  <div id="orderOutput"></div>
-
-  <script>
-    // --- GunDB Setup ---
+  </form>  <div id="orderOutput" aria-live="polite"></div>  <script>
+  (function(){
+    // --------------------
+    // Config / Globals
+    // --------------------
+    // Replace peer with your own Gun peer(s) if available
     const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
     const globalOrders = gun.get('imacx_orders');
 
-    // --- Globals ---
     let orderId = '';
     let shipping = {};
-    let newOrder = {};
+    let newOrder = null;
     let total = 0;
 
-    // --- Search Setup ---
-    const fuseOptions = {
-      keys: ['name', 'category', 'subcategory'],
-      threshold: 0.3
-    };
+    // Fuse search config
+    const fuseOptions = { keys: ['name','category','subcategory'], threshold: 0.3 };
     let fuse = null;
 
-    // --- Basket Functions ---
-    function getBasket() {
-      return JSON.parse(localStorage.getItem('basket')) || [];
+    // --------------------
+    // Helpers
+    // --------------------
+    function getBasket(){
+      try { return JSON.parse(localStorage.getItem('basket')) || []; } catch(e){ return []; }
     }
+    function saveBasket(b){ localStorage.setItem('basket', JSON.stringify(b)); if(fuse) fuse.setCollection(b); }
 
-    function renderBasket(filtered = null) {
+    function formatCurrency(n){ return '₹' + Number(n||0).toFixed(2); }
+
+    function escapeHtml(s){ if(!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
+
+    // --------------------
+    // Render basket table
+    // --------------------
+    function renderBasket(filtered=null){
       const basket = filtered || getBasket();
-      if (basket.length === 0) {
-        document.getElementById('basket-table').innerHTML = '<p>No items in basket.</p>';
+      const container = document.getElementById('basket-table');
+      if(!basket || basket.length === 0){
+        container.innerHTML = '<p class="muted">Your basket is empty.</p>';
+        updateOrderOutput();
         return;
       }
 
       total = 0;
-      let html = `<table>
-        <tr>
-          <th>Image</th><th>Name</th><th>Qty</th><th>Price</th>
-          <th>Total</th><th>Category</th><th>Subcategory</th><th>Action</th>
-        </tr>`;
+      let html = '<table><thead><tr>' +
+                 '<th>Image</th><th>Name</th><th>Unit</th><th>Qty</th><th>Subtotal</th><th>Category</th><th>Subcategory</th><th>Actions</th>' +
+                 '</tr></thead><tbody>';
 
-      basket.forEach((item, index) => {
-        const itemTotal = item.price * item.quantity;
-        total += itemTotal;
-        html += `<tr>
-          <td><img src="${item.image}" width="50"></td>
-          <td>${item.name}</td>
-          <td>${item.quantity}</td>
-          <td>₹${item.price}</td>
-          <td>₹${itemTotal}</td>
-          <td>${item.category || ''}</td>
-          <td>${item.subcategory || ''}</td>
-          <td><button onclick="deleteItem(${index})">Delete</button></td>
-        </tr>`;
+      basket.forEach((item, idx)=>{
+        const qty = Number(item.quantity) || 0;
+        const price = Number(item.price) || 0;
+        const subtotal = qty * price;
+        total += subtotal;
+        html += `<tr data-idx="${idx}">` +
+                `<td><img class="small" src="${escapeHtml(item.image||'')}" alt=""></td>` +
+                `<td>${escapeHtml(item.name)}</td>` +
+                `<td>${formatCurrency(price)}</td>` +
+                `<td>` +
+                  `<div style="display:flex;gap:6px;align-items:center;justify-content:center">` +
+                    `<button class="qty-minus" data-idx="${idx}">-</button>` +
+                    `<input class="qty-input" data-idx="${idx}" value="${qty}" style="width:60px;text-align:center">` +
+                    `<button class="qty-plus" data-idx="${idx}">+</button>` +
+                    `<button class="qty-update" data-idx="${idx}">Update</button>` +
+                  `</div>` +
+                `</td>` +
+                `<td>${formatCurrency(subtotal)}</td>` +
+                `<td>${escapeHtml(item.category||'')}</td>` +
+                `<td>${escapeHtml(item.subcategory||'')}</td>` +
+                `<td><button class="delete-btn" data-idx="${idx}">Delete</button></td>` +
+                `</tr>`;
       });
 
-      html += `<tr><td colspan="4"><strong>Grand Total</strong></td><td colspan="4"><strong>₹${total}</strong></td></tr></table>`;
-      document.getElementById('basket-table').innerHTML = html;
+      html += `</tbody><tfoot><tr><td colspan="4"><strong>Grand Total</strong></td><td colspan="4"><strong>${formatCurrency(total)}</strong></td></tr></tfoot></table>`;
+      container.innerHTML = html;
+
+      // attach listeners
+      container.querySelectorAll('.qty-minus').forEach(b=>b.addEventListener('click', onQtyMinus));
+      container.querySelectorAll('.qty-plus').forEach(b=>b.addEventListener('click', onQtyPlus));
+      container.querySelectorAll('.qty-update').forEach(b=>b.addEventListener('click', onQtyUpdate));
+      container.querySelectorAll('.qty-input').forEach(i=>i.addEventListener('change', onQtyInputChange));
+      container.querySelectorAll('.delete-btn').forEach(b=>b.addEventListener('click', onDelete));
+
+      updateOrderOutput();
     }
 
-    function deleteItem(index) {
-      const basket = getBasket();
-      if (confirm("Remove this item from basket?")) {
-        basket.splice(index, 1);
-        localStorage.setItem('basket', JSON.stringify(basket));
-        renderBasket();
-        fuse.setCollection(getBasket());
-      }
+    // --------------------
+    // Qty handlers
+    // --------------------
+    function onQtyMinus(e){ const idx = Number(e.currentTarget.dataset.idx); changeQuantity(idx, -1); }
+    function onQtyPlus(e){ const idx = Number(e.currentTarget.dataset.idx); changeQuantity(idx, +1); }
+    function onQtyUpdate(e){ const idx = Number(e.currentTarget.dataset.idx); const input = document.querySelector('.qty-input[data-idx="'+idx+'"]'); const val = Number(input.value||0); setQuantity(idx, val); }
+    function onQtyInputChange(e){ const idx = Number(e.currentTarget.dataset.idx); const val = Number(e.currentTarget.value||0); if(val<0) e.currentTarget.value = 0; }
+
+    function changeQuantity(idx, delta){
+      const b = getBasket();
+      if(!b[idx]) return;
+      let q = Number(b[idx].quantity||0) + delta;
+      if(q < 0) q = 0;
+      b[idx].quantity = q;
+      saveBasket(b);
+      renderBasket();
     }
 
-    // --- Order Functions ---
-    function collectOrderDetails() {
+    function setQuantity(idx, val){
+      const b = getBasket();
+      if(!b[idx]) return;
+      b[idx].quantity = Math.max(0, Number(val||0));
+      saveBasket(b);
+      renderBasket();
+    }
+
+    function onDelete(e){ const idx = Number(e.currentTarget.dataset.idx); deleteItem(idx); }
+
+    function deleteItem(idx){
+      const b = getBasket();
+      if(!b[idx]) return;
+      if(!confirm('Remove this item from basket?')) return;
+      b.splice(idx,1);
+      saveBasket(b);
+      renderBasket();
+    }
+
+    // --------------------
+    // Order collection / ID / saving
+    // --------------------
+    function collectOrderDetails(){
       const basket = getBasket();
+      if(!basket || basket.length===0){ alert('Basket empty. Add items first.'); return; }
+
       shipping = {
-        recipient: document.getElementById('recipient').value,
-        email: document.getElementById('email').value,
-        countryCode: document.getElementById('countryCode').value,
-        phone: document.getElementById('phone').value,
-        address: document.getElementById('address').value,
-        area: document.getElementById('area').value,
-        city: document.getElementById('city').value,
-        state: document.getElementById('state').value,
-        country: document.getElementById('country').value,
-        zip: document.getElementById('zip').value
+        recipient: document.getElementById('recipient').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        countryCode: document.getElementById('countryCode').value.trim(),
+        phone: document.getElementById('phone').value.trim(),
+        address: document.getElementById('address').value.trim(),
+        area: document.getElementById('area').value.trim(),
+        city: document.getElementById('city').value.trim(),
+        state: document.getElementById('state').value.trim(),
+        country: document.getElementById('country').value.trim(),
+        zip: document.getElementById('zip').value.trim()
       };
 
-      total = radash.sum(basket.map(i => i.price * i.quantity));
+      if(!shipping.recipient || !shipping.email || !shipping.phone){ alert('Please fill recipient name, email and phone.'); return; }
 
-      document.getElementById('orderOutput').textContent = JSON.stringify({
-        orderId,
-        shipping,
-        basket,
-        total
-      }, null, 2);
+      total = basket.reduce((acc,i)=>acc + (Number(i.price||0) * Number(i.quantity||0)), 0);
+
+      updateOrderOutput();
+      alert('Order details collected. Generate Order ID and Save Order when ready.');
     }
 
-    function generateOrderId() {
-      orderId = 'IMX' + Math.random().toString(36).substr(2, 9).toUpperCase();
-      alert("Order ID: " + orderId);
-    }
+    function generateOrderId(){ orderId = 'IMX' + Math.random().toString(36).substr(2,9).toUpperCase(); updateOrderOutput(); alert('Order ID: ' + orderId); }
 
-    function storeToAdmin() {
+    function storeToAdmin(){
       const basket = getBasket();
-      if (!orderId || Object.keys(shipping).length === 0 || basket.length === 0) {
-        alert("❗ Please collect shipping info, generate order ID, and add items.");
-        return;
-      }
+      if(!basket || basket.length===0){ alert('Basket empty.'); return; }
+      if(Object.keys(shipping).length === 0){ alert('Collect shipping info first.'); return; }
+      if(!orderId) generateOrderId();
 
-      total = radash.sum(basket.map(i => i.price * i.quantity));
+      total = basket.reduce((acc,i)=>acc + (Number(i.price||0) * Number(i.quantity||0)), 0);
       newOrder = {
         orderId,
         basket: JSON.parse(JSON.stringify(basket)),
         shipping: JSON.parse(JSON.stringify(shipping)),
         total,
-        status: "Order Created",
+        status: 'Order Created',
         timestamp: Date.now()
       };
 
-      // ✅ Save order in GunDB
-      globalOrders.get(orderId).put(newOrder);
-      globalOrders.set(newOrder);
+      // Save by id and also add to set for global listing
+      globalOrders.get(orderId).put(newOrder, ack => {
+        if(ack && ack.err){ console.error('Gun put error', ack.err); alert('Error saving order to GunDB (see console)'); return; }
 
-      // ✅ Local backup
-      const existingOrders = JSON.parse(localStorage.getItem('admin_orders')) || [];
-      existingOrders.push(newOrder);
-      localStorage.setItem('admin_orders', JSON.stringify(existingOrders));
+        // add to set for listing
+        try{ globalOrders.set(newOrder); } catch(e){ console.warn('globalOrders.set failed', e); }
 
-      alert("✅ Order saved to GunDB.");
-      document.getElementById('orderOutput').textContent = JSON.stringify(newOrder, null, 2);
+        // local backup
+        const existing = JSON.parse(localStorage.getItem('admin_orders')||'[]'); existing.push(newOrder); localStorage.setItem('admin_orders', JSON.stringify(existing));
+
+        updateOrderOutput();
+        alert('✅ Order saved to GunDB');
+      });
     }
 
-    function startPaymentFlow() {
+    // --------------------
+    // Payment (Razorpay)
+    // --------------------
+    function startPaymentFlow(){
       const basket = getBasket();
-      if (!orderId || Object.keys(shipping).length === 0 || basket.length === 0) {
-        alert("Please save the order first.");
-        return;
-      }
+      if(!basket || basket.length===0){ alert('Basket empty.'); return; }
+      if(Object.keys(shipping).length === 0){ alert('Collect shipping info first.'); return; }
+      if(!orderId) generateOrderId();
 
-      total = radash.sum(basket.map(i => i.price * i.quantity));
-      newOrder = {
-        orderId,
-        basket,
-        shipping,
-        total,
-        status: "Order Created",
-        timestamp: Date.now()
-      };
+      total = basket.reduce((acc,i)=>acc + (Number(i.price||0) * Number(i.quantity||0)), 0);
+      newOrder = { orderId, basket: JSON.parse(JSON.stringify(basket)), shipping: JSON.parse(JSON.stringify(shipping)), total, status:'Order Created', timestamp: Date.now() };
 
+      // Save before payment
       globalOrders.get(orderId).put(newOrder);
-      globalOrders.set(newOrder);
+      try{ globalOrders.set(newOrder); } catch(e){}
 
       const options = {
-        key: "rzp_live_ozWo08bXwqssx3", // ⚠️ replace with your live/test Razorpay key
+        key: 'rzp_live_ozWo08bXwqssx3', // replace with test key while testing
         amount: Math.round(total * 100),
-        currency: "INR",
-        name: "imacx Shop",
+        currency: 'INR',
+        name: 'imacx Shop',
         description: `Order ID: ${orderId}`,
-        notes: {
-          orderId,
-          ...shipping,
-          grandTotal: `₹${total}`,
-          items: basket.map(i => `${i.name} x${i.quantity} = ₹${i.price * i.quantity}`).join(', ')
-        },
-        handler: function (response) {
-          alert("✅ Payment Successful! Razorpay ID: " + response.razorpay_payment_id);
+        notes: { orderId, grandTotal: formatCurrency(total) },
+        handler: function(resp){
+          try{
+            alert('Payment complete: ' + resp.razorpay_payment_id);
+            // Update status
+            globalOrders.get(orderId).get('status').put('Payment Done');
+            globalOrders.set(Object.assign({}, newOrder, { status: 'Payment Done' }));
 
-          // ✅ Update order status globally
-          globalOrders.get(orderId).get('status').put('Payment Done');
-          globalOrders.set({ ...newOrder, status: 'Payment Done' });
+            // save orderData locally
+            const finalOrder = Object.assign({}, newOrder, { status: 'Payment Done', razorpay_payment_id: resp.razorpay_payment_id });
+            localStorage.setItem('orderData', JSON.stringify(finalOrder));
 
-          // ✅ Save locally
-          localStorage.setItem('orderData', JSON.stringify({
-            ...newOrder,
-            status: 'Payment Done',
-            razorpay_payment_id: response.razorpay_payment_id
-          }));
+            // clear basket
+            localStorage.removeItem('basket');
+            renderBasket();
 
-          localStorage.removeItem('basket');
-          window.location.href = "thankyou.html";
+            // redirect to thank you
+            window.location.href = 'thankyou.html';
+          } catch(err){ console.error('post-payment error', err); alert('Payment succeeded but post-processing failed. See console.'); }
         },
-        prefill: {
-          name: shipping.recipient,
-          email: shipping.email,
-          contact: shipping.countryCode + shipping.phone
-        },
-        theme: {
-          color: "#bfa046"
-        }
+        prefill: { name: shipping.recipient || '', email: shipping.email || '', contact: (shipping.countryCode||'') + (shipping.phone||'') },
+        theme: { color: '#bfa046' }
       };
 
-      new Razorpay(options).open();
+      try{ new Razorpay(options).open(); } catch(err){ console.error('Razorpay open error', err); alert('Unable to open payment gateway.'); }
     }
 
-    // --- Search ---
-    document.getElementById('searchBox').addEventListener('input', e => {
-      const query = e.target.value.trim();
-      if (!query) {
-        renderBasket();
-        return;
-      }
-      const results = fuse.search(query).map(r => r.item);
-      renderBasket(results);
+    // --------------------
+    // Order output UI
+    // --------------------
+    function updateOrderOutput(){
+      const basket = getBasket();
+      const out = { orderId, shipping, basket, total };
+      document.getElementById('orderOutput').textContent = JSON.stringify(out, null, 2);
+    }
+
+    // --------------------
+    // Search & Clear
+    // --------------------
+    document.getElementById('searchBox').addEventListener('input', function(e){
+      const q = (e.target.value||'').trim();
+      const items = getBasket();
+      if(!q){ renderBasket(items); return; }
+      if(!fuse){ fuse = new Fuse(items, fuseOptions); }
+      const res = fuse.search(q).map(r=>r.item);
+      renderBasket(res);
     });
 
-    // --- Init ---
-    const basketItems = getBasket();
-    renderBasket(basketItems);
-    fuse = new Fuse(basketItems, fuseOptions);
-  </script>
-</body>
+    document.getElementById('clearBasketBtn').addEventListener('click', function(){
+      if(!confirm('Clear entire basket?')) return;
+      localStorage.removeItem('basket');
+      renderBasket();
+      if(fuse) fuse.setCollection([]);
+    });
+
+    // --------------------
+    // Init
+    // --------------------
+    function init(){
+      const items = getBasket();
+      renderBasket(items);
+      fuse = new Fuse(items, fuseOptions);
+      updateOrderOutput();
+
+      // Expose for debugging
+      window._imacx = { getBasket, saveBasket, renderBasket, collectOrderDetails, generateOrderId, storeToAdmin, startPaymentFlow };
+    }
+
+    init();
+
+  })();
+  </script></body>
 </html>
