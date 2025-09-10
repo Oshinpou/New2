@@ -5,7 +5,6 @@
   <title>imacx Shop - Shopping Page</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-<script src="db.js"></script>
   <style>
     body {
       margin: 0;
@@ -255,6 +254,7 @@ function generateUserId() {
   </script>
 <script src="products-data.js"></script>
 <script>
+
   function renderProducts(products) {
   const container = document.getElementById("products");
   container.innerHTML = "";
@@ -265,23 +265,29 @@ function generateUserId() {
     card.setAttribute("data-price", p.price);
     card.setAttribute("data-category", p.category);
     card.setAttribute("data-subcategory", p.subcategory);
+
     card.innerHTML = `
-      <img src="${p.image}" alt="${p.name}" onclick='openPopup(${JSON.stringify(p)})' style="cursor:pointer;">
-      <div onclick='openPopup(${JSON.stringify(p)})' style="cursor:pointer;">${p.name}</div>
+      <img src="${p.image}" alt="${p.name}" class="product-image" style="cursor:pointer;">
+      <div class="product-name" style="cursor:pointer;">${p.name}</div>
       <div>₹${p.price}</div>
       <div class="quantity-controls">
-        <button onclick="updateQty(this, -1)">-</button>
+        <button class="qty-minus">-</button>
         <input type="number" value="0" readonly>
-        <button onclick="updateQty(this, 1)">+</button>
+        <button class="qty-plus">+</button>
       </div>
-      <button class="add-to-basket-btn" onclick="addToBasket(this)">Add to Basket</button>
+      <button class="add-to-basket-btn">Add to Basket</button>
     `;
+
     container.appendChild(card);
+
+    // Listeners
+    card.querySelector(".product-image").addEventListener("click", () => openPopup(p));
+    card.querySelector(".product-name").addEventListener("click", () => openPopup(p));
+    card.querySelector(".qty-minus").addEventListener("click", e => updateQty(e.target, -1));
+    card.querySelector(".qty-plus").addEventListener("click", e => updateQty(e.target, 1));
+    card.querySelector(".add-to-basket-btn").addEventListener("click", e => addToBasket(e.target));
   });
 }
-
-  // Initial render
-  renderProducts(allProducts);
 
   // Search by product name
   document.getElementById('searchBar').addEventListener('input', function () {
@@ -335,42 +341,58 @@ function generateUserId() {
   let selectedProduct = null;
 
   function openPopup(product) {
-    selectedProduct = product;
-    document.getElementById("popupImage").src = product.image;
-    document.getElementById("popupTitle").textContent = product.name;
-    document.getElementById("popupDescription").textContent = product.description || "No description available.";
-    document.getElementById("popupPrice").textContent = `₹${product.price}`;
-    document.querySelector("#productPopup input").value = 1;
-    document.getElementById("productPopup").style.display = "flex";
-  }
+  selectedProduct = product;
+  document.getElementById("popupImage").src = product.image;
+  document.getElementById("popupTitle").textContent = product.name;
+  document.getElementById("popupDescription").textContent = product.description || "No description available.";
+  document.getElementById("popupPrice").textContent = `₹${product.price}`;
+  document.querySelector("#productPopup input").value = 1;
+  document.getElementById("productPopup").style.display = "flex";
 
-  function closePopup() {
-    document.getElementById("productPopup").style.display = "none";
-  }
+  // Update URL without reload
+  history.pushState({ product: product.name }, "", `?product=${encodeURIComponent(product.name)}`);
+}
+  
+function addToBasketFromPopup() {
+  const qty = parseInt(document.querySelector("#productPopup input").value);
+  const product = selectedProduct;
+  if (!product || qty <= 0) return;
 
-  function addToBasketFromPopup() {
-    const qty = parseInt(document.querySelector("#productPopup input").value);
-    const product = selectedProduct;
-    if (!product || qty <= 0) return;
-
-    let basket = JSON.parse(localStorage.getItem('basket')) || [];
-    const existingIndex = basket.findIndex(item => item.name === product.name);
-    if (existingIndex > -1) {
-      basket[existingIndex].quantity += qty;
-    } else {
-      basket.push({
-        name: product.name,
-        price: product.price,
-        quantity: qty,
-        image: product.image,
-        category: product.category,
-        subcategory: product.subcategory
-      });
-    }
-    localStorage.setItem('basket', JSON.stringify(basket));
-    alert(`${qty} × ${product.name} added to basket.`);
-    closePopup();
+  let basket = JSON.parse(localStorage.getItem('basket')) || [];
+  const existingIndex = basket.findIndex(item => item.name === product.name);
+  if (existingIndex > -1) {
+    basket[existingIndex].quantity += qty;
+  } else {
+    basket.push({
+      name: product.name,
+      price: product.price,
+      quantity: qty,
+      image: product.image,
+      category: product.category,
+      subcategory: product.subcategory
+    });
   }
+  localStorage.setItem('basket', JSON.stringify(basket));
+
+  // Also sync to GunDB globally
+  const userId = localStorage.getItem('userId') || generateUserId();
+  localStorage.setItem('userId', userId);
+  const gunBasketRef = gun.get('imacx_user_baskets').get(userId);
+  gunBasketRef.put({ updatedAt: Date.now() });
+  basket.forEach(item => {
+    gunBasketRef.get(item.name).put(item);
+  });
+
+  alert(`${qty} × ${product.name} added to basket. Total: ₹${qty * product.price}`);
+  closePopup();
+}
+
+const productParam = new URLSearchParams(window.location.search).get("product");
+if (productParam) {
+  const product = allProducts.find(p => p.name === productParam);
+  if (product) openPopup(product);
+}
+
 </script>
 
 
