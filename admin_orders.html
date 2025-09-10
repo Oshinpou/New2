@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Admin Orders - imacx Shop</title>
+  <title>Admin Panel - imacx Shop</title>
 
   <!-- Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
@@ -12,15 +12,12 @@
   <style>
     body {
       font-family: 'Cursive', sans-serif;
-      background-color: #fff;
+      background: #fff;
       color: goldenrod;
       padding: 1rem;
     }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 2rem;
-    }
+    h2 { color: goldenrod; }
+    table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
     th, td {
       border: 1px solid goldenrod;
       padding: 0.5rem;
@@ -29,69 +26,68 @@
     input, select, button {
       font-family: 'Cursive', sans-serif;
       padding: 0.5rem;
-      margin: 0.5rem;
       border: 1px solid goldenrod;
+      margin: 0.3rem;
     }
     button {
       background: goldenrod;
-      color: white;
-      cursor: pointer;
+      color: #fff;
       border-radius: 5px;
+      cursor: pointer;
     }
-    h2 {
-      color: goldenrod;
+    #searchBox {
+      width: 100%;
+      padding: 0.5rem;
+      margin-bottom: 1rem;
+      border: 1px solid goldenrod;
+    }
+    .status {
+      font-weight: bold;
     }
   </style>
 </head>
 <body>
-  <h2>📦 Admin Orders Dashboard</h2>
-
-  <input type="text" id="searchBox" placeholder="Search Order ID...">
+  <h2>📦 Admin Orders</h2>
+  <input type="text" id="searchBox" placeholder="Search orders by ID, name, email, phone...">
   <div id="ordersTable"></div>
 
   <script>
+    // GunDB setup
     const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
     const globalOrders = gun.get('imacx_orders');
+
     let allOrders = [];
-    let fuse = null;
+    let fuse;
 
-    const fuseOptions = {
-      keys: ['orderId', 'shipping.recipient', 'shipping.email'],
-      threshold: 0.3
-    };
-
-    function renderOrders(filtered = null) {
-      const orders = filtered || allOrders;
-      if (orders.length === 0) {
+    // Render orders
+    function renderOrders(orders) {
+      if (!orders.length) {
         document.getElementById('ordersTable').innerHTML = '<p>No orders found.</p>';
         return;
       }
 
       let html = `<table>
         <tr>
-          <th>Order ID</th>
-          <th>Customer</th>
-          <th>Email</th>
-          <th>Total</th>
-          <th>Status</th>
-          <th>Actions</th>
+          <th>Order ID</th><th>Recipient</th><th>Email</th><th>Phone</th>
+          <th>Total</th><th>Status</th><th>Actions</th>
         </tr>`;
 
-      orders.forEach(order => {
+      orders.forEach((order, index) => {
         html += `<tr>
           <td>${order.orderId}</td>
-          <td>${order.shipping?.recipient || 'N/A'}</td>
-          <td>${order.shipping?.email || 'N/A'}</td>
+          <td>${order.shipping.recipient}</td>
+          <td>${order.shipping.email}</td>
+          <td>${order.shipping.countryCode || ''}${order.shipping.phone}</td>
           <td>₹${order.total}</td>
+          <td class="status">${order.status}</td>
           <td>
             <select onchange="updateStatus('${order.orderId}', this.value)">
-              <option value="Order Created" ${order.status === 'Order Created' ? 'selected' : ''}>Order Created</option>
-              <option value="Shipped" ${order.status === 'Shipped' ? 'selected' : ''}>Shipped</option>
-              <option value="Delivered" ${order.status === 'Delivered' ? 'selected' : ''}>Delivered</option>
-              <option value="Cancelled" ${order.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+              <option ${order.status === 'Order Created' ? 'selected':''}>Order Created</option>
+              <option ${order.status === 'Payment Done' ? 'selected':''}>Payment Done</option>
+              <option ${order.status === 'Shipped' ? 'selected':''}>Shipped</option>
+              <option ${order.status === 'Delivered' ? 'selected':''}>Delivered</option>
+              <option ${order.status === 'Cancelled' ? 'selected':''}>Cancelled</option>
             </select>
-          </td>
-          <td>
             <button onclick="deleteOrder('${order.orderId}')">🗑 Delete</button>
           </td>
         </tr>`;
@@ -101,44 +97,74 @@
       document.getElementById('ordersTable').innerHTML = html;
     }
 
+    // Update order status
     function updateStatus(orderId, status) {
-      globalOrders.get(orderId).get('status').put(status);
       const order = allOrders.find(o => o.orderId === orderId);
-      if (order) order.status = status;
-      renderOrders();
-      alert(`✅ Status updated for ${orderId}: ${status}`);
+      if (!order) return alert("Order not found!");
+
+      order.status = status;
+      globalOrders.get(orderId).get('status').put(status);
+
+      const localOrders = JSON.parse(localStorage.getItem('admin_orders')) || [];
+      const idx = localOrders.findIndex(o => o.orderId === orderId);
+      if (idx !== -1) localOrders[idx].status = status;
+      localStorage.setItem('admin_orders', JSON.stringify(localOrders));
+
+      renderOrders(allOrders);
+      alert("✅ Status updated for " + orderId);
     }
 
+    // Delete order
     function deleteOrder(orderId) {
-      if (!confirm(`Delete order ${orderId}?`)) return;
+      if (!confirm("Delete order " + orderId + "?")) return;
+
       globalOrders.get(orderId).put(null);
+
       allOrders = allOrders.filter(o => o.orderId !== orderId);
-      renderOrders();
+      const localOrders = JSON.parse(localStorage.getItem('admin_orders')) || [];
+      const filtered = localOrders.filter(o => o.orderId !== orderId);
+      localStorage.setItem('admin_orders', JSON.stringify(filtered));
+
+      renderOrders(allOrders);
+      alert("🗑 Order deleted: " + orderId);
     }
 
-    // Listen for live updates
-    globalOrders.map().on((order, id) => {
-      if (!order || !order.orderId) return; // skip deleted/invalid
-      const existing = allOrders.find(o => o.orderId === order.orderId);
-      if (existing) {
-        Object.assign(existing, order);
-      } else {
-        allOrders.push(order);
-      }
-      fuse = new Fuse(allOrders, fuseOptions);
-      renderOrders();
-    });
-
-    // Search box
+    // Search orders
     document.getElementById('searchBox').addEventListener('input', e => {
       const query = e.target.value.trim();
       if (!query) {
-        renderOrders();
+        renderOrders(allOrders);
         return;
       }
       const results = fuse.search(query).map(r => r.item);
       renderOrders(results);
     });
+
+    // Load orders from GunDB
+    function loadOrders() {
+      allOrders = [];
+      globalOrders.map().once(order => {
+        if (order && order.orderId) {
+          if (!allOrders.some(o => o.orderId === order.orderId)) {
+            allOrders.push(order);
+          }
+          renderOrders(allOrders);
+          fuse = new Fuse(allOrders, { keys: ['orderId','shipping.recipient','shipping.email','shipping.phone'], threshold: 0.3 });
+        }
+      });
+
+      // Merge with local backup
+      const localOrders = JSON.parse(localStorage.getItem('admin_orders')) || [];
+      localOrders.forEach(o => {
+        if (!allOrders.some(ord => ord.orderId === o.orderId)) {
+          allOrders.push(o);
+        }
+      });
+      renderOrders(allOrders);
+    }
+
+    // Init
+    loadOrders();
   </script>
 </body>
 </html>
