@@ -237,32 +237,39 @@
 
     // ---------------------------
     // Save to GunDB / local admin storage
-    // ---------------------------
-    function storeToAdmin() {
-      const basket = getBasket();
-      if (!orderId) {
-        alert("❗ Please generate an order ID first.");
-        return;
-      }
-      if (!shipping || !shipping.recipient) {
-        alert("❗ Please collect shipping info first.");
-        return;
-      }
-      if (!basket || basket.length === 0) {
-        alert("❗ Basket is empty.");
-        return;
-      }
+function storeToAdmin() {
+  const basket = getBasket();
+  if (!orderId || Object.keys(shipping).length === 0 || basket.length === 0) {
+    alert("❗ Please collect shipping info, generate order ID, and add items.");
+    return;
+  }
 
-      total = basket.reduce((acc, i) => acc + (Number(i.price || 0) * Number(i.quantity || 0)), 0);
+  total = radash.sum(basket.map(i => i.price * i.quantity));
+  newOrder = {
+    orderId,
+    basket: JSON.parse(JSON.stringify(basket)),
+    shipping: JSON.parse(JSON.stringify(shipping)),
+    total,
+    status: "Order Created",
+    timestamp: Date.now()
+  };
 
-      newOrder = {
-        orderId,
-        basket: JSON.parse(JSON.stringify(basket)),
-        shipping: JSON.parse(JSON.stringify(shipping)),
-        total,
-        status: "Order Created",
-        timestamp: Date.now()
-      };
+  // ✅ Save to GunDB (global distributed)
+  globalOrders.get(orderId).put(newOrder);
+
+  // ✅ Also add into the set for global listing
+  globalOrders.set(newOrder);
+
+  // ✅ Local backup for admin usage
+  const existingOrders = JSON.parse(localStorage.getItem('admin_orders')) || [];
+  existingOrders.push(newOrder);
+  localStorage.setItem('admin_orders', JSON.stringify(existingOrders));
+
+  alert("✅ Order saved to GunDB.");
+  document.getElementById('orderOutput').textContent = JSON.stringify(newOrder, null, 2);
+}
+      
+      
 
       // Save to GunDB under the orderId node
       globalOrders.get(orderId).put(newOrder, ack => {
