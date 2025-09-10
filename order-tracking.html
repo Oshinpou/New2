@@ -1,43 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Order Tracking — imacx</title>
-
-  <!-- GunDB -->
+  <meta charset="UTF-8">
+  <title>Order Tracking - Imacx</title>
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-
+  <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.min.js"></script>
   <style>
-    :root { --accent: #bfa046; --bg: #fafafa; }
-    body { font-family: Arial, sans-serif; background: var(--bg); color:#222; margin:20px; }
-    h1 { color: var(--accent); text-align:center; }
-    #searchRow { display:flex; gap:8px; margin:18px 0; }
-    #searchInput { flex:1; padding:10px; font-size:16px; border:1px solid #ccc; border-radius:6px; }
-    #ordersTable { width:100%; border-collapse:collapse; background:#fff; box-shadow:0 1px 4px rgba(0,0,0,0.06); }
-    th, td { padding:10px; border:1px solid #e6e6e6; vertical-align:top; text-align:left; }
-    th { background:#faf7f0; color:#333; }
-    tr.highlight { background:#fff9d6; }
-    .muted { color:#666; font-size:0.9rem; }
-    .details { font-size:0.95rem; }
-    .btn { background:var(--accent); color:white; border:none; padding:8px 10px; border-radius:6px; cursor:pointer; }
-    .small { font-size:0.9rem; color:#555; }
-    .no-results { padding:20px; text-align:center; color:#666; }
-    .modal { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.45); }
-    .modalCard { background:white; padding:18px; border-radius:8px; width:90%; max-width:800px; max-height:86vh; overflow:auto; }
-    .closeBtn { float:right; background:#eee; border-radius:50%; width:28px; height:28px; border:none; cursor:pointer; }
-    pre { background:#f7f7f7; padding:10px; overflow:auto; max-height:40vh; }
+    body { font-family: Arial, sans-serif; margin: 20px; background: #fafafa; }
+    h1 { text-align: center; color: #333; }
+    #searchBar { width: 100%; padding: 10px; font-size: 16px; margin: 20px 0; border: 1px solid #ccc; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #fff; }
+    th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
+    th { background: #eee; }
+    tr.highlight { background: #fffa9e; }
+    #message { text-align: center; color: #666; margin-top: 20px; }
   </style>
 </head>
 <body>
   <h1>Track Your Order</h1>
+  <input type="text" id="searchBar" placeholder="Enter your Order ID...">
+  
+  <div id="message">Loading orders...</div>
 
-  <div id="searchRow">
-    <input id="searchInput" placeholder="Enter Order ID (e.g. IMXABC123) or recipient email/name" />
-    <button id="clearBtn" class="btn">Clear</button>
-  </div>
-
-  <table id="ordersTable" aria-live="polite">
+  <table id="ordersTable" style="display:none;">
     <thead>
       <tr>
         <th>Order ID</th>
@@ -46,240 +31,94 @@
         <th>Shipping</th>
         <th>Payment Status</th>
         <th>Order Status</th>
-        <th>View</th>
       </tr>
     </thead>
     <tbody id="ordersBody"></tbody>
   </table>
 
-  <div id="noResults" class="no-results" style="display:none">No orders yet. Try again after placing an order (or enter a specific Order ID).</div>
-
-  <!-- Modal for full order -->
-  <div id="modal" style="display:none" class="modal" role="dialog" aria-modal="true">
-    <div class="modalCard">
-      <button class="closeBtn" title="Close" onclick="closeModal()">✕</button>
-      <h3 id="modalTitle"></h3>
-      <div id="modalContent" class="details"></div>
-      <h4>Raw order JSON</h4>
-      <pre id="modalRaw"></pre>
-    </div>
-  </div>
-
   <script>
-  (function () {
-    // Use the SAME GunDB node used by your admin/basket code:
+    // ✅ Connect to the SAME GunDB namespace as basket/admin
     const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
-    const ordersNode = gun.get('imacx_orders'); // IMPORTANT: same namespace
+    const globalOrders = gun.get('imacx_orders');  
 
-    // Local cache (merge partials safely)
-    const ordersById = {}; // orderId -> order object
-    let ordersList = [];   // derived sorted list
+    let orders = [];
+    const fuse = new Fuse(orders, { keys: ['orderId'], threshold: 0.3 });
 
-    const searchInput = document.getElementById('searchInput');
+    const searchBar = document.getElementById('searchBar');
     const ordersBody = document.getElementById('ordersBody');
-    const noResults = document.getElementById('noResults');
+    const ordersTable = document.getElementById('ordersTable');
+    const message = document.getElementById('message');
 
-    // normalize + merge partial order into ordersById
-    function mergeOrder(raw, key) {
-      if (!raw && raw !== null) return;
-      // deletion
-      if (raw === null) {
-        // if key looks like an orderId, remove it. Otherwise try to find by value
-        if (ordersById[key]) {
-          delete ordersById[key];
-        } else {
-          // fallback: scan and remove any that match empty object
-          Object.keys(ordersById).forEach(oid => {
-            if (ordersById[oid] && ordersById[oid]._ && ordersById[oid]._['#'] === key) delete ordersById[oid];
-          });
+    function renderOrders(filteredOrders, highlightId = null) {
+      ordersBody.innerHTML = "";
+
+      if (filteredOrders.length === 0) {
+        ordersTable.style.display = "none";
+        message.textContent = "No orders found.";
+        return;
+      }
+
+      ordersTable.style.display = "table";
+      message.textContent = "";
+
+      filteredOrders.forEach(order => {
+        const row = document.createElement("tr");
+        if (highlightId && order.orderId === highlightId) {
+          row.classList.add("highlight");
         }
-        rebuildList();
-        return;
-      }
-
-      // attempt to find ID from object or fallback to map key
-      const id = raw.orderId || raw.orderID || raw.id || (typeof key === 'string' ? key : null);
-      if (!id) {
-        // nothing we can use as ID — skip (but log for debugging)
-        console.warn('Order missing id; skipping', raw, key);
-        return;
-      }
-
-      const existing = ordersById[id] || {};
-      // merge shallow (existing preserved, raw overwrites)
-      ordersById[id] = Object.assign({}, existing, raw, { orderId: id });
-      rebuildList();
-    }
-
-    function rebuildList() {
-      ordersList = Object.values(ordersById)
-        .filter(Boolean)
-        .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-      renderOrders(ordersList);
-    }
-
-    function renderOrders(list, highlightId = null) {
-      // straightforward rendering (read-only)
-      ordersBody.innerHTML = '';
-      if (!list || list.length === 0) {
-        noResults.style.display = 'block';
-        document.getElementById('ordersTable').style.display = 'none';
-        return;
-      }
-      noResults.style.display = 'none';
-      document.getElementById('ordersTable').style.display = '';
-
-      list.forEach(order => {
-        const tr = document.createElement('tr');
-        if (highlightId && order.orderId && order.orderId.toLowerCase() === highlightId.toLowerCase()) {
-          tr.classList.add('highlight');
-        }
-
-        const itemsText = (order.basket || order.basket || []).map(it => `${it.name} ×${it.quantity || 1}`).join(', ');
-        const shipping = order.shipping || {};
-        const paymentStatus = order.status === 'Payment Done' || order.paymentStatus === 'Paid' ? 'Paid' : (order.status || 'Pending');
-
-        tr.innerHTML = `
-          <td><strong>${escapeHtml(order.orderId || '')}</strong></td>
-          <td class="small">${escapeHtml(itemsText)}</td>
-          <td>${escapeHtml(String(order.total ?? '0'))}</td>
-          <td class="small">${escapeHtml(`${shipping.recipient || ''}${shipping.recipient ? ', ' : ''}${shipping.city || ''}${shipping.city ? ', ' : ''}${shipping.address || ''}`)}</td>
-          <td>${escapeHtml(paymentStatus)}</td>
-          <td>${escapeHtml(order.status || '')}</td>
-          <td><button class="btnView" data-id="${escapeHtml(order.orderId || '')}">View</button></td>
+        row.innerHTML = `
+          <td>${order.orderId}</td>
+          <td>${(order.basket || []).map(i => `${i.name} (x${i.quantity})`).join(", ")}</td>
+          <td>${order.total}</td>
+          <td>${order.shipping?.recipient || ''}, ${order.shipping?.address || ''}, ${order.shipping?.city || ''}</td>
+          <td>${order.paymentStatus || "Pending"}</td>
+          <td>${order.status}</td>
         `;
-        ordersBody.appendChild(tr);
-      });
-
-      // attach view listeners
-      Array.from(document.querySelectorAll('.btnView')).forEach(btn => {
-        btn.addEventListener('click', e => {
-          const id = e.currentTarget.dataset.id;
-          openModalFor(id);
-        });
+        ordersBody.appendChild(row);
       });
     }
 
-    // Simple escaping
-    function escapeHtml(s) {
-      if (s === null || s === undefined) return '';
-      return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
-    }
+    // ✅ Load all orders from GunDB
+    globalOrders.map().on((order, key) => {
+      if (!order || !order.orderId) return;
 
-    // Modal functions
-    const modal = document.getElementById('modal');
-    const modalTitle = document.getElementById('modalTitle');
-    const modalContent = document.getElementById('modalContent');
-    const modalRaw = document.getElementById('modalRaw');
-    window.closeModal = () => { modal.style.display = 'none'; modalRaw.textContent = ''; modalContent.innerHTML = ''; };
+      console.log("Loaded order:", order); // 🔍 Debug log
 
-    function openModalFor(orderId) {
-      const order = ordersById[orderId];
-      if (!order) return alert('Order not found yet.');
-      modalTitle.textContent = `Order: ${orderId}`;
-      // build content
-      const shipping = order.shipping || {};
-      const items = order.basket || [];
-      let html = `<p class="muted">Placed: ${new Date(order.timestamp || Date.now()).toLocaleString()}</p>`;
-      html += `<h4>Items</h4><ul>`;
-      items.forEach(it => html += `<li>${escapeHtml(it.name || '(no name)')} — qty: ${escapeHtml(String(it.quantity||1))} — ₹${escapeHtml(String(it.price||0))}</li>`);
-      html += `</ul>`;
-      html += `<h4>Shipping</h4>`;
-      html += `<p>${escapeHtml(shipping.recipient || '')}<br>${escapeHtml(shipping.address || '')}<br>${escapeHtml((shipping.area || '') + ' ' + (shipping.city || '') + ' ' + (shipping.state || '') )}</p>`;
-      html += `<h4>Status</h4><p>Order: <strong>${escapeHtml(order.status || '')}</strong><br>Payment: <strong>${escapeHtml(order.paymentStatus || (order.status === 'Payment Done' ? 'Paid' : 'Pending'))}</strong></p>`;
-      modalContent.innerHTML = html;
-      modalRaw.textContent = JSON.stringify(order, null, 2);
-      modal.style.display = 'flex';
-    }
-
-    // Listen to Gun map (live updates)
-    ordersNode.map().on((data, key) => {
-      // Gun gives events for metadata sometimes (_ property). ignore non-objects
-      if (data && typeof data === 'object') {
-        mergeOrder(data, key);
-      } else if (data === null) {
-        // deletion event — key may be the orderId
-        if (ordersById[key]) { delete ordersById[key]; rebuildList(); }
+      const existingIndex = orders.findIndex(o => o.orderId === order.orderId);
+      if (existingIndex > -1) {
+        orders[existingIndex] = order;
       } else {
-        // ignore other events
+        orders.push(order);
       }
+
+      fuse.setCollection(orders);
+      renderOrders(orders);
     });
 
-    // Search handling (simple substring on orderId / recipient / email / phone)
-    function searchAndRender(q) {
-      if (!q) return renderOrders(ordersList);
-      const qq = q.trim().toLowerCase();
-      const results = ordersList.filter(o => {
-        if (!o) return false;
-        if ((o.orderId || '').toLowerCase().includes(qq)) return true;
-        const s = (o.shipping && (o.shipping.recipient || '')).toLowerCase();
-        if (s.includes(qq)) return true;
-        const e = (o.shipping && (o.shipping.email || '')).toLowerCase();
-        if (e.includes(qq)) return true;
-        const p = (o.shipping && ((o.shipping.countryCode||'') + (o.shipping.phone||''))).toLowerCase();
-        if (p.includes(qq)) return true;
-        return false;
-      });
-      renderOrders(results, q);
-    }
-
-    // UI wiring
-    document.getElementById('clearBtn').addEventListener('click', () => {
-      searchInput.value = '';
-      renderOrders(ordersList);
-    });
-
-    let searchTimer = null;
-    searchInput.addEventListener('input', (e) => {
-      clearTimeout(searchTimer);
-      searchTimer = setTimeout(() => searchAndRender(e.target.value || ''), 150);
-    });
-
-    // support ?order=IMX... link parameter
-    (function checkQueryParam() {
-      const p = new URLSearchParams(location.search).get('order') || location.search.replace('?', '');
-      if (p) {
-        // wait for data to arrive (orders may load async)
-        searchInput.value = p;
-        const maxWaitMs = 10000;
-        const start = Date.now();
-        const iv = setInterval(() => {
-          // if ordersList contains the id, show it
-          if (ordersById[p]) {
-            clearInterval(iv);
-            searchAndRender(p);
-            // highlight row and open modal after a short delay
-            setTimeout(() => {
-              openModalFor(p);
-            }, 300);
-            return;
-          }
-          if (Date.now() - start > maxWaitMs) {
-            clearInterval(iv);
-            // still show whatever matches
-            searchAndRender(p);
-          }
-        }, 300);
+    // ✅ Search by Order ID
+    searchBar.addEventListener("input", e => {
+      const term = e.target.value.trim();
+      if (!term) {
+        renderOrders(orders);
+        return;
       }
-    })();
+      const results = fuse.search(term).map(r => r.item);
+      renderOrders(results, term);
+    });
 
-    // expose for debugging
-    window._tracking = {
-      ordersById, rebuildList, renderOrders
-    };
-
-    // when ordersList is rebuilt, render uses that
-    function renderOrdersWrapper(list) {
-      // nothing; kept for backwards compatibility
+    // ✅ Support direct tracking link like ?order=IMX12345
+    const urlParams = new URLSearchParams(window.location.search);
+    const orderParam = urlParams.get("order");
+    if (orderParam) {
+      searchBar.value = orderParam;
+      const checkInterval = setInterval(() => {
+        if (orders.length > 0) {
+          clearInterval(checkInterval);
+          const results = fuse.search(orderParam).map(r => r.item);
+          renderOrders(results, orderParam);
+        }
+      }, 500);
     }
-
-    // small helper to keep ordersList up-to-date whenever rebuildList is called
-    const origRebuild = rebuildList;
-    // (rebuildList defined above) — already updates ordersList and renders; nothing else needed
-
-    // initial no-data message
-    // (render will be called by rebuildList after first Gun events)
-  })();
   </script>
 </body>
 </html>
