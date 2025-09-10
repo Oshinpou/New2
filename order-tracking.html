@@ -8,7 +8,7 @@
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; background: #fafafa; }
     h1 { text-align: center; color: #333; }
-    #searchBar { width: 100%; padding: 10px; font-size: 16px; margin: 20px 0; }
+    #searchBar { width: 100%; padding: 10px; font-size: 16px; margin: 20px 0; border: 1px solid #ccc; }
     table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #fff; }
     th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
     th { background: #eee; }
@@ -34,12 +34,12 @@
   </table>
 
   <script>
-    // Connect to GunDB peer
+    // ✅ Connect to the SAME GunDB namespace as basket/admin
     const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
-    const globalOrders = gun.get('orders');
+    const globalOrders = gun.get('imacx_orders');  // fixed
 
     const orders = [];
-    const fuse = new Fuse(orders, { keys: ['id'], threshold: 0.3 });
+    const fuse = new Fuse(orders, { keys: ['orderId'], threshold: 0.3 });
 
     const searchBar = document.getElementById('searchBar');
     const ordersBody = document.getElementById('ordersBody');
@@ -48,35 +48,37 @@
       ordersBody.innerHTML = "";
       filteredOrders.forEach(order => {
         const row = document.createElement("tr");
-        if (highlightId && order.id === highlightId) {
+        if (highlightId && order.orderId === highlightId) {
           row.classList.add("highlight");
         }
         row.innerHTML = `
-          <td>${order.id}</td>
-          <td>${order.items.map(i => `${i.name} (x${i.quantity})`).join(", ")}</td>
+          <td>${order.orderId}</td>
+          <td>${order.basket.map(i => `${i.name} (x${i.quantity})`).join(", ")}</td>
           <td>${order.total}</td>
-          <td>${order.shipping.name}, ${order.shipping.address}, ${order.shipping.city}</td>
-          <td>${order.paymentStatus}</td>
+          <td>${order.shipping?.recipient || ''}, ${order.shipping?.address || ''}, ${order.shipping?.city || ''}</td>
+          <td>${order.paymentStatus || "Pending"}</td>
           <td>${order.status}</td>
         `;
         ordersBody.appendChild(row);
       });
     }
 
-    // Listen for all orders
+    // ✅ Load all orders from GunDB
     globalOrders.map().on(order => {
-      if (!order || !order.id) return;
-      const existingIndex = orders.findIndex(o => o.id === order.id);
+      if (!order || !order.orderId) return;
+
+      const existingIndex = orders.findIndex(o => o.orderId === order.orderId);
       if (existingIndex > -1) {
         orders[existingIndex] = order;
       } else {
         orders.push(order);
       }
+
       fuse.setCollection(orders);
       renderOrders(orders);
     });
 
-    // Search functionality
+    // ✅ Search by Order ID
     searchBar.addEventListener("input", e => {
       const term = e.target.value.trim();
       if (!term) {
@@ -86,6 +88,20 @@
       const results = fuse.search(term).map(r => r.item);
       renderOrders(results, term);
     });
+
+    // ✅ Support direct tracking link like ?order=IMX12345
+    const urlParams = new URLSearchParams(window.location.search);
+    const orderParam = urlParams.get("order");
+    if (orderParam) {
+      searchBar.value = orderParam;
+      const checkInterval = setInterval(() => {
+        if (orders.length > 0) {
+          clearInterval(checkInterval);
+          const results = fuse.search(orderParam).map(r => r.item);
+          renderOrders(results, orderParam);
+        }
+      }, 500);
+    }
   </script>
 </body>
 </html>
