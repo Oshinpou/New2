@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <title>Order Tracking - Imacx</title>
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.min.js"></script>
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; background: #fafafa; }
     h1 { text-align: center; color: #333; }
@@ -37,17 +36,14 @@
   </table>
 
   <script>
-    // ✅ Connect to the SAME GunDB namespace as basket/admin
     const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
     const globalOrders = gun.get('imacx_orders');  
 
     let orders = [];
-    const fuse = new Fuse(orders, { keys: ['orderId'], threshold: 0.3 });
-
-    const searchBar = document.getElementById('searchBar');
     const ordersBody = document.getElementById('ordersBody');
     const ordersTable = document.getElementById('ordersTable');
     const message = document.getElementById('message');
+    const searchBar = document.getElementById('searchBar');
 
     function renderOrders(filteredOrders, highlightId = null) {
       ordersBody.innerHTML = "";
@@ -78,11 +74,14 @@
       });
     }
 
-    // ✅ Load all orders from GunDB
+    // ✅ Load orders from GunDB
     globalOrders.map().on((order, key) => {
-      if (!order || !order.orderId) return;
+      if (!order) return;
 
-      console.log("Loaded order:", order); // 🔍 Debug log
+      // Ensure we always have orderId
+      order.orderId = order.orderId || key;
+
+      console.log("Loaded order:", key, order); // 🔍 Debug
 
       const existingIndex = orders.findIndex(o => o.orderId === order.orderId);
       if (existingIndex > -1) {
@@ -91,18 +90,17 @@
         orders.push(order);
       }
 
-      fuse.setCollection(orders);
       renderOrders(orders);
     });
 
     // ✅ Search by Order ID
     searchBar.addEventListener("input", e => {
-      const term = e.target.value.trim();
+      const term = e.target.value.trim().toUpperCase();
       if (!term) {
         renderOrders(orders);
         return;
       }
-      const results = fuse.search(term).map(r => r.item);
+      const results = orders.filter(o => o.orderId && o.orderId.toUpperCase().includes(term));
       renderOrders(results, term);
     });
 
@@ -114,8 +112,8 @@
       const checkInterval = setInterval(() => {
         if (orders.length > 0) {
           clearInterval(checkInterval);
-          const results = fuse.search(orderParam).map(r => r.item);
-          renderOrders(results, orderParam);
+          const results = orders.filter(o => o.orderId && o.orderId.toUpperCase().includes(orderParam.toUpperCase()));
+          renderOrders(results, orderParam.toUpperCase());
         }
       }, 500);
     }
