@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>imacx Shop - Shopping Page</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Cursive', sans-serif;
+      background-color: #ffffff;
+      color: goldenrod;
+    }
+    .navbar {
+      background: white;
+      padding: 1rem;
+      border-bottom: 1px solid goldenrod;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    .navbar img {
+      height: 40px;
+    }
+    .nav-links a {
+      margin-left: 1rem;
+      text-decoration: none;
+      color: goldenrod;
+    }
+    .search-sort-filter {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      padding: 1rem;
+    }
+    .search-sort-filter input,
+    .search-sort-filter select {
+      margin: 0.5rem;
+      padding: 0.5rem;
+      font-family: 'Cursive', sans-serif;
+    }
+    .products-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+      padding: 1rem;
+    }
+    .product-card {
+      border: 1px solid goldenrod;
+      border-radius: 10px;
+      padding: 0.5rem;
+      text-align: center;
+      font-size: 0.8rem;
+    }
+    .product-card img {
+      width: 100%;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .quantity-controls {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 0.5rem 0;
+    }
+    .quantity-controls button {
+      padding: 0.3rem;
+      background: goldenrod;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    .quantity-controls input {
+      width: 30px;
+      text-align: center;
+      font-size: 0.8rem;
+    }
+    .add-to-basket-btn {
+      background-color: goldenrod;
+      color: white;
+      border: none;
+      padding: 0.3rem 0.5rem;
+      cursor: pointer;
+      font-family: 'Cursive', sans-serif;
+      font-size: 0.8rem;
+      border-radius: 4px;
+    }
+    footer {
+      padding: 1rem;
+      text-align: center;
+      border-top: 1px solid goldenrod;
+      margin-top: 2rem;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar">
+    <img src="logo.png" alt="imacx logo">
+    <div class="nav-links">
+      <a href="basketone.html">Basket</a>
+      <a href="account.html">Account</a>
+      <a href="track-order.html">Track Order</a>
+      <a href="#" onclick="toggleMenu()">Menu</a>
+    </div>
+  </nav>
+
+  <!-- Menu -->
+  <div class="menu-links" id="menu" style="display:none; flex-direction:column; gap:0.5rem; margin-top:1rem;">
+    <a href="about.html">About</a>
+    <a href="privacy.html">Privacy Policy</a>
+    <a href="terms.html">Terms & Conditions</a>
+    <a href="contact.html">Contact Us</a>
+    <a href="faq.html">FAQ</a>
+  </div>
+
+  <!-- Filters -->
+  <div class="search-sort-filter">
+    <input type="text" id="searchBar" placeholder="Search by product name...">
+    <select id="sort">
+      <option value="">Sort By</option>
+      <option value="low">Price: Low to High</option>
+      <option value="high">Price: High to Low</option>
+    </select>
+    <select id="filter-category">
+      <option value="">Filter by Category</option>
+      <option value="food">Food</option>
+    </select>
+    <select id="filter-subcategory">
+      <option value="">Filter by Subcategory</option>
+      <option value="chocolate">Chocolate</option>
+      <option value="breakfast">Breakfast Spread</option>
+    </select>
+  </div>
+
+  <!-- Products -->
+  <div class="products-container" id="products"></div>
+
+  <!-- Product Popup -->
+  <div id="productPopup" style="display:none; position:fixed; inset:0; background-color:rgba(0,0,0,0.8); z-index:9999; justify-content:center; align-items:center;">
+    <div style="background:white; color:black; padding:1rem; border-radius:8px; max-width:500px; width:90%; position:relative; font-family:'Cursive',sans-serif;">
+      <button onclick="closePopup()" style="position:absolute; top:10px; right:15px; background:none; border:none; font-size:20px; color:red;">&times;</button>
+      <img id="popupImage" src="" alt="" style="width:100%; border-radius:6px; margin-bottom:1rem;">
+      <h2 id="popupTitle" style="color:goldenrod;"></h2>
+      <p id="popupDescription" style="margin:1rem 0;"></p>
+      <strong id="popupPrice" style="color:green;"></strong>
+      <div class="quantity-controls" style="margin:1rem 0;">
+        <button onclick="updateQty(this, -1)">-</button>
+        <input type="number" value="1" readonly>
+        <button onclick="updateQty(this, 1)">+</button>
+      </div>
+      <button onclick="addToBasketFromPopup()" class="add-to-basket-btn">Add to Basket</button>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    &copy; 2025 imacx Shop. All rights reserved.
+  </footer>
+
+  <!-- Scripts -->
+  <script src="products-data.js"></script>
+  <script src="softcoded-pages.js"></script>
+  <script>
+    // Menu toggle
+    function toggleMenu() {
+      const menu = document.getElementById('menu');
+      menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
+    }
+
+    // Quantity adjust
+    function updateQty(btn, delta) {
+      const input = btn.parentNode.querySelector('input');
+      let value = parseInt(input.value) + delta;
+      if (value < 0) value = 0;
+      input.value = value;
+    }
+
+    // Generate userId if not present
+    if (!localStorage.getItem('userId')) {
+      localStorage.setItem('userId', 'user_' + Math.random().toString(36).slice(2));
+    }
+    function generateUserId() {
+      return 'user_' + Math.random().toString(36).substring(2, 12);
+    }
+
+    // Add to basket (from card)
+    function addToBasket(button) {
+      const card = button.closest('.product-card');
+      const name = card.getAttribute('data-name');
+      const price = parseFloat(card.getAttribute('data-price'));
+      const qty = parseInt(card.querySelector('input').value);
+      const image = card.querySelector('img').src;
+      const category = card.getAttribute('data-category');
+      const subcategory = card.getAttribute('data-subcategory');
+
+      if (qty <= 0) {
+        alert("Please select quantity before adding to basket.");
+        return;
+      }
+
+      let basket = JSON.parse(localStorage.getItem('basket')) || [];
+      const existingIndex = basket.findIndex(item => item.name === name);
+      if (existingIndex > -1) {
+        basket[existingIndex].quantity += qty;
+      } else {
+        basket.push({ name, price, quantity: qty, image, category, subcategory });
+      }
+      localStorage.setItem('basket', JSON.stringify(basket));
+
+      const userId = localStorage.getItem('userId') || generateUserId();
+      localStorage.setItem('userId', userId);
+
+      const gunBasketRef = gun.get('imacx_user_baskets').get(userId);
+      gunBasketRef.put({ updatedAt: Date.now() });
+      basket.forEach(item => {
+        gunBasketRef.get(item.name).put(item);
+      });
+
+      alert(`${qty} × ${name} added to basket. Total: ₹${qty * price}`);
+    }
+
+    // Search / Sort / Filter
+    function applyFilters() {
+      const cat = document.getElementById('filter-category').value;
+      const sub = document.getElementById('filter-subcategory').value;
+      const search = document.getElementById('searchBar').value.toLowerCase();
+
+      const filtered = allProducts.filter(p => {
+        const catMatch = !cat || p.category === cat;
+        const subMatch = !sub || p.subcategory === sub;
+        const searchMatch = p.name.toLowerCase().includes(search);
+        return catMatch && subMatch && searchMatch;
+      });
+
+      renderProducts(filtered);
+    }
+
+    document.getElementById('searchBar').addEventListener('input', applyFilters);
+    document.getElementById('sort').addEventListener('change', function () {
+      const dir = this.value;
+      let sorted = [...allProducts];
+      if (dir === 'low') sorted.sort((a, b) => a.price - b.price);
+      else if (dir === 'high') sorted.sort((a, b) => b.price - a.price);
+      renderProducts(sorted);
+    });
+    document.getElementById('filter-category').addEventListener('change', applyFilters);
+    document.getElementById('filter-subcategory').addEventListener('change', applyFilters);
+
+    // Render products
+    function renderProducts(products) {
+      const container = document.getElementById("products");
+      container.innerHTML = "";
+      products.forEach(p => {
+        const card = document.createElement("div");
+        card.className = "product-card";
+        card.setAttribute("data-name", p.name);
+        card.setAttribute("data-price", p.price);
+        card.setAttribute("data-category", p.category);
+        card.setAttribute("data-subcategory", p.subcategory);
+
+        card.innerHTML = `
+          <img src="${p.image}" alt="${p.name}">
+          <div class="product-name">${p.name}</div>
+          <div>₹${p.price}</div>
+          <div class="quantity-controls">
+            <button class="qty-minus">-</button>
+            <input type="number" value="0" readonly>
+            <button class="qty-plus">+</button>
+          </div>
+          <button class="add-to-basket-btn">Add to Basket</button>
+        `;
+
+        container.appendChild(card);
+
+        // Listeners
+        card.querySelector("img").addEventListener("click", () => openPopup(p));
+        card.querySelector(".product-name").addEventListener("click", () => openPopup(p));
+        card.querySelector(".qty-minus").addEventListener("click", e => updateQty(e.target, -1));
+        card.querySelector(".qty-plus").addEventListener("click", e => updateQty(e.target, 1));
+        card.querySelector(".add-to-basket-btn").addEventListener("click", e => addToBasket(e.target));
+      });
+    }
+
+    // Popup logic
+    let selectedProduct = null;
+    function openPopup(product) {
+      selectedProduct = product;
+      document.getElementById("popupImage").src = product.image;
+      document.getElementById("popupTitle").textContent = product.name;
+      document.getElementById("popupDescription").textContent = product.description || "No description available.";
+      document.getElementById("popupPrice").textContent = `₹${product.price}`;
+      document.querySelector("#productPopup input").value = 1;
+      document.getElementById("productPopup").style.display = "flex";
+
+      // Update URL without reload
+      history.pushState({ product: product.name }, "", `?product=${encodeURIComponent(product.name)}`);
+    }
+    function closePopup() {
+      document.getElementById("productPopup").style.display = "none";
+    }
+    function addToBasketFromPopup() {
+      const qty = parseInt(document.querySelector("#productPopup input").value);
+      const product = selectedProduct;
+      if (!product || qty <= 0) return;
+
+      let basket = JSON.parse(localStorage.getItem('basket')) || [];
+      const existingIndex = basket.findIndex(item => item.name === product.name);
+      if (existingIndex > -1) {
+        basket[existingIndex].quantity += qty;
+      } else {
+        basket.push({
+          name: product.name,
+          price: product.price,
+          quantity: qty,
+          image: product.image,
+          category: product.category,
+          subcategory: product.subcategory
+        });
+      }
+      localStorage.setItem('basket', JSON.stringify(basket));
+
+      const userId = localStorage.getItem('userId') || generateUserId();
+      localStorage.setItem('userId', userId);
+
+      const gunBasketRef = gun.get('imacx_user_baskets').get(userId);
+      gunBasketRef.put({ updatedAt: Date.now() });
+      basket.forEach(item => {
+        gunBasketRef.get(item.name).put(item);
+      });
+
+      alert(`${qty} × ${product.name} added to basket. Total: ₹${qty * product.price}`);
+      closePopup();
+    }
+
+    // Auto-open popup if ?product= is in URL
+    const productParam = new URLSearchParams(window.location.search).get("product");
+    if (productParam) {
+      const product = allProducts.find(p => p.name === productParam);
+      if (product) openPopup(product);
+    }
+
+    // Initial render
+    renderProducts(allProducts);
+  </script>
+</body>
+</html>
