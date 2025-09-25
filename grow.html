@@ -30,6 +30,64 @@
     #productPopup .carousel button {position:absolute; top:50%; transform:translateY(-50%); background:none; border:none; font-size:24px; color:goldenrod; cursor:pointer;}
     #productPopup .carousel .prev {left:0;}
     #productPopup .carousel .next {right:0;}
+ 
+  .imacx-advertisement {
+  background: #fff8e1;
+  border: 2px solid goldenrod;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 2rem 0;
+  text-align: center;
+  font-family: 'Cursive', sans-serif;
+}
+
+.imacx-advertisement .ad-content h2 {
+  color: goldenrod;
+  font-size: 1.8rem;
+  margin-bottom: 0.5rem;
+}
+
+.imacx-advertisement .ad-content p {
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+.imacx-advertisement .ad-content button {
+  background: goldenrod;
+  color: white;
+  border: none;
+  padding: 0.7rem 1.5rem;
+  border-radius: 6px;
+  font-family: 'Cursive', sans-serif;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background 0.3s ease;
+}
+
+.imacx-advertisement .ad-content button:hover {
+  background: #bfa046;
+}
+
+.imacx-advertisement .ad-images {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.imacx-advertisement .ad-images img {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid goldenrod;
+  transition: transform 0.3s ease;
+}
+
+.imacx-advertisement .ad-images img:hover {
+  transform: scale(1.05);
+}
   </style>
 </head>
 <body>
@@ -51,6 +109,25 @@
     <a href="faq.html">FAQ</a>
   </div>
 
+ <!-- Advertisement Section -->
+<div class="imacx-advertisement">
+  <div class="ad-content">
+    <h2>Discover iMacx – Luxury Redefined</h2>
+    <p>Experience the ultimate in skincare, fashion, and lifestyle products designed to elevate your everyday elegance.</p>
+    <button onclick="window.location.href='shop.html'">Explore iMacx</button>
+  </div>
+  <div class="ad-images">
+    <img src="https://example.com/img1.jpg" alt="iMacx 1">
+    <img src="https://example.com/img2.jpg" alt="iMacx 2">
+    <img src="https://example.com/img3.jpg" alt="iMacx 3">
+    <img src="https://example.com/img4.jpg" alt="iMacx 4">
+    <img src="https://example.com/img5.jpg" alt="iMacx 5">
+    <img src="https://example.com/img6.jpg" alt="iMacx 6">
+    <img src="https://example.com/img7.jpg" alt="iMacx 7">
+  </div>
+</div>
+
+  
   <!-- Search, Sort, Filter -->
   <div class="search-sort-filter">
     <input type="text" id="searchBar" placeholder="Search by product name...">
