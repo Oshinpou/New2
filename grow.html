@@ -134,14 +134,23 @@
      
   </div>  
   
-  <!-- Product Popup Modal -->
+<!-- Product Popup Modal -->
 <div id="productPopup" style="display:none; position:fixed; inset:0; background-color:rgba(0,0,0,0.8); z-index:9999; justify-content:center; align-items:center;">
   <div style="background:white; color:black; padding:1rem; border-radius:8px; max-width:500px; width:90%; position:relative; font-family:'Cursive',sans-serif;">
+
     <button onclick="closePopup()" style="position:absolute; top:10px; right:15px; background:none; border:none; font-size:20px; color:red;">&times;</button>
-    <img id="popupImage" src="" alt="" style="width:100%; border-radius:6px; margin-bottom:1rem;">
+
+    <!-- Carousel -->
+    <div style="position:relative; overflow:hidden; border-radius:6px; margin-bottom:1rem;">
+      <button onclick="prevPopupImage()" style="position:absolute; top:50%; left:0; transform:translateY(-50%); background:none; border:none; font-size:24px; color:goldenrod; cursor:pointer;">&#10094;</button>
+      <img id="popupImage" src="" alt="" style="width:100%; transition: transform 0.3s ease;">
+      <button onclick="nextPopupImage()" style="position:absolute; top:50%; right:0; transform:translateY(-50%); background:none; border:none; font-size:24px; color:goldenrod; cursor:pointer;">&#10095;</button>
+    </div>
+
     <h2 id="popupTitle" style="color:goldenrod;"></h2>
     <p id="popupDescription" style="margin:1rem 0;"></p>
     <strong id="popupPrice" style="color:green;"></strong>
+
     <div class="quantity-controls" style="margin:1rem 0;">
       <button onclick="updateQty(this, -1)">-</button>
       <input type="number" value="1" readonly>
@@ -322,51 +331,52 @@ function generateUserId() {
 </script>
 <script src="softcoded-pages.js"></script>
 <script>
-let currentImages = [];
-let currentIndex = 0;
+let popupImages = [];
+let popupIndex = 0;
+let selectedProduct = null;
 
-function openSoftPopup(pageId) {
-  const page = softcodedPages[pageId];
-  if (!page) return;
+function openPopup(product) {
+  selectedProduct = product;
+  popupImages = product.images || [product.image]; // multiple images fallback
+  popupIndex = 0;
 
-  currentImages = page.images;
-  currentIndex = 0;
+  document.getElementById("popupTitle").textContent = product.name;
+  document.getElementById("popupDescription").textContent = product.description || "No description available.";
+  document.getElementById("popupPrice").textContent = `₹${product.price}`;
+  document.getElementById("popupImage").src = popupImages[popupIndex];
+  document.querySelector("#productPopup input").value = 1;
 
-  document.getElementById("softPopupTitle").textContent = page.title;
-  document.getElementById("softPopupDescription").textContent = page.description;
-  document.getElementById("softPopupPrice").textContent = page.price;
-  document.getElementById("softPopupImage").src = currentImages[currentIndex];
+  document.getElementById("productPopup").style.display = "flex";
 
-  document.getElementById("softPopup").style.display = "flex";
+  // Update URL
+  history.pushState({ product: product.name }, "", `?product=${encodeURIComponent(product.name)}`);
 }
 
-function closeSoftPopup() {
-  document.getElementById("softPopup").style.display = "none";
+function closePopup() {
+  document.getElementById("productPopup").style.display = "none";
 }
 
-function nextImage() {
-  if (!currentImages.length) return;
-  currentIndex = (currentIndex + 1) % currentImages.length;
-  document.getElementById("softPopupImage").src = currentImages[currentIndex];
+function nextPopupImage() {
+  if (!popupImages.length) return;
+  popupIndex = (popupIndex + 1) % popupImages.length;
+  document.getElementById("popupImage").src = popupImages[popupIndex];
 }
 
-function prevImage() {
-  if (!currentImages.length) return;
-  currentIndex = (currentIndex - 1 + currentImages.length) % currentImages.length;
-  document.getElementById("softPopupImage").src = currentImages[currentIndex];
+function prevPopupImage() {
+  if (!popupImages.length) return;
+  popupIndex = (popupIndex - 1 + popupImages.length) % popupImages.length;
+  document.getElementById("popupImage").src = popupImages[popupIndex];
 }
 
-// Optional: swipe support for mobile
+// Swipe support
+const popupImgEl = document.getElementById("popupImage");
 let startX = 0;
-const imgEl = document.getElementById("softPopupImage");
-
-imgEl.addEventListener("touchstart", e => startX = e.touches[0].clientX);
-imgEl.addEventListener("touchend", e => {
+popupImgEl.addEventListener("touchstart", e => startX = e.touches[0].clientX);
+popupImgEl.addEventListener("touchend", e => {
   const endX = e.changedTouches[0].clientX;
-  if (endX - startX > 50) prevImage(); // swipe right
-  else if (startX - endX > 50) nextImage(); // swipe left
+  if (endX - startX > 50) prevPopupImage();
+  else if (startX - endX > 50) nextPopupImage();
 });
-  
 </script>
   
   
