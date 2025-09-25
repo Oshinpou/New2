@@ -393,8 +393,14 @@ if (productParam) {
   if (product) openPopup(product);
 }
 
+  
+  document.addEventListener("DOMContentLoaded", () => {
+    if (typeof allProducts !== "undefined" && Array.isArray(allProducts)) {
+      renderProducts(allProducts);
+    } else {
+      console.error("allProducts not found. Check products-data.js");
+    }
+  });
 </script>
-
-
 </body>
 </html>
