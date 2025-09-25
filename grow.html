@@ -162,7 +162,12 @@
       document.getElementById("productPopup").style.display="flex";
       history.pushState({product:product.name},"",`?product=${encodeURIComponent(product.name)}`);
     }
-    function closePopup(){document.getElementById("productPopup").style.display="none";}
+    function closePopup() {
+  const popup = document.getElementById("productPopup");
+  if (popup) popup.style.display = "none";
+  history.pushState("", document.title, window.location.pathname); // remove ?product= from URL
+  selectedProduct = null;
+}
     function nextPopupImage(){popupIndex=(popupIndex+1)%popupImages.length; document.getElementById("popupImage").src=popupImages[popupIndex];}
     function prevPopupImage(){popupIndex=(popupIndex-1+popupImages.length)%popupImages.length; document.getElementById("popupImage").src=popupImages[popupIndex];}
 
