@@ -37,12 +37,6 @@
       border-radius: 5px;
       cursor: pointer;
     }
-    #orderOutput {
-      border: 1px solid goldenrod;
-      padding: 1rem;
-      margin-top: 1rem;
-      white-space: pre-wrap;
-    }
     #searchBox {
       width: 100%;
       padding: 0.5rem;
@@ -69,22 +63,14 @@
     <label>Country: <input type="text" id="country" required></label>
     <label>Zip: <input type="text" id="zip" required></label><br>
 
-    <button type="button" onclick="collectOrderDetails()">📋 Collect Order Info</button>
-    <button type="button" onclick="generateOrderId()">🔐 Generate Order ID</button>
-    <button type="button" onclick="storeToAdmin()">💾 Save Order</button>
-    <button type="button" onclick="startPaymentFlow()">💳 Pay Now</button>
+    <button type="submit">💳 Pay Now</button>
   </form>
-
-  <div id="orderOutput"></div>
 
   <script>
     // GunDB setup
     const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
     const globalOrders = gun.get('imacx_orders');
 
-    let orderId = '';
-    let shipping = {};
-    let newOrder = {};
     let total = 0;
 
     // Basket helpers
@@ -145,9 +131,14 @@
       renderBasket();
     }
 
-    // Order functions
-    function collectOrderDetails() {
-      shipping = {
+    // Payment flow directly on form submit
+    document.getElementById("shippingForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const basket = getBasket();
+      if (!basket.length) return alert("Basket empty.");
+
+      const shipping = {
         recipient: document.getElementById('recipient').value,
         email: document.getElementById('email').value,
         countryCode: document.getElementById('countryCode').value,
@@ -160,35 +151,19 @@
         zip: document.getElementById('zip').value
       };
 
-      total = getBasket().reduce((sum, i) => sum + i.price * i.quantity, 0);
-
-      document.getElementById('orderOutput').textContent = JSON.stringify({
-        orderId, shipping, basket: getBasket(), total
-      }, null, 2);
-    }
-
-    function generateOrderId() {
-      orderId = 'IMX' + Math.random().toString(36).substr(2, 9).toUpperCase();
-      alert("Order ID generated: " + orderId);
-    }
-
-    function storeToAdmin() {
-      const basket = getBasket();
-      if (!basket.length) return alert("❗ Basket is empty.");
-      if (!orderId) generateOrderId();
-      if (!shipping.recipient) return alert("❗ Collect shipping info first.");
-
       total = basket.reduce((sum, i) => sum + i.price * i.quantity, 0);
+      const orderId = 'IMX' + Math.random().toString(36).substr(2, 9).toUpperCase();
 
-      newOrder = {
+      const newOrder = {
         orderId,
-        basket: JSON.parse(JSON.stringify(basket)),
-        shipping: JSON.parse(JSON.stringify(shipping)),
+        basket,
+        shipping,
         total,
-        status: "Order Created",
+        status: "Pending Payment",
         timestamp: Date.now()
       };
 
+      // Save to GunDB + local
       try {
         globalOrders.get(orderId).put(newOrder);
         globalOrders.set(newOrder);
@@ -200,19 +175,7 @@
       localOrders.push(newOrder);
       localStorage.setItem('admin_orders', JSON.stringify(localOrders));
 
-      alert("✅ Order saved.");
-      document.getElementById('orderOutput').textContent = JSON.stringify(newOrder, null, 2);
-    }
-
-    function startPaymentFlow() {
-      const basket = getBasket();
-      if (!basket.length) return alert("Basket empty.");
-      if (!orderId) generateOrderId();
-      if (!shipping.recipient) return alert("Collect shipping info first.");
-      if (!newOrder.orderId) storeToAdmin();
-
-      total = basket.reduce((sum, i) => sum + i.price * i.quantity, 0);
-
+      // Razorpay
       const options = {
         key: "rzp_test_xxxxx", // Replace with your Razorpay key
         amount: Math.round(total * 100),
@@ -222,6 +185,7 @@
         notes: { orderId, ...shipping },
         handler: function (response) {
           alert("✅ Payment successful: " + response.razorpay_payment_id);
+
           globalOrders.get(orderId).get('status').put('Payment Done');
 
           localStorage.setItem('orderData', JSON.stringify({
@@ -242,7 +206,7 @@
       };
 
       new Razorpay(options).open();
-    }
+    });
 
     // Search basket
     document.getElementById('searchBox').addEventListener('input', e => {
