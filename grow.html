@@ -401,6 +401,15 @@ if (productParam) {
       console.error("allProducts not found. Check products-data.js");
     }
   });
+
+function closePopup() {
+  document.getElementById("productPopup").style.display = "none";
+
+  // Optional: also remove the ?product=... from URL when closing
+  if (window.history.state && window.history.state.product) {
+    history.pushState({}, "", window.location.pathname);
+  }
+}
 </script>
 </body>
 </html>
