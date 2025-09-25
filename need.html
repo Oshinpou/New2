@@ -1,120 +1,213 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>imacx Shop - Shopping Page</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
   <style>
+    :root{
+      --gold: goldenrod;
+      --bg: #ffffff;
+      --muted: #333;
+    }
+    *{box-sizing:border-box}
     body {
       margin: 0;
-      font-family: 'Cursive', sans-serif;
-      background-color: #ffffff;
-      color: goldenrod;
+      font-family: "Cursive", sans-serif;
+      background-color: var(--bg);
+      color: var(--gold);
     }
     .navbar {
       background: white;
-      padding: 1rem;
-      border-bottom: 1px solid goldenrod;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--gold);
       display: flex;
       justify-content: space-between;
       align-items: center;
       position: sticky;
       top: 0;
       z-index: 1000;
+      gap: 1rem;
+    }
+    .brand {
+      display:flex;
+      align-items:center;
+      gap:0.5rem;
     }
     .navbar img {
       height: 40px;
+      width:40px;
+      object-fit:cover;
+      border-radius:6px;
     }
     .nav-links a {
       margin-left: 1rem;
       text-decoration: none;
-      color: goldenrod;
+      color: var(--gold);
+      font-weight:600;
+    }
+    .menu-links {
+      display:none;
+      flex-direction:column;
+      gap:0.5rem;
+      margin:0.5rem 1rem;
     }
     .search-sort-filter {
       display: flex;
       justify-content: space-between;
+      gap: 0.5rem;
       flex-wrap: wrap;
       padding: 1rem;
     }
     .search-sort-filter input,
     .search-sort-filter select {
-      margin: 0.5rem;
+      margin: 0.25rem 0;
       padding: 0.5rem;
-      font-family: 'Cursive', sans-serif;
+      font-family: "Cursive", sans-serif;
+      border:1px solid #eee;
+      border-radius:6px;
     }
     .products-container {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       gap: 1rem;
       padding: 1rem;
+      align-items:start;
     }
     .product-card {
-      border: 1px solid goldenrod;
+      border: 1px solid var(--gold);
       border-radius: 10px;
       padding: 0.5rem;
       text-align: center;
-      font-size: 0.8rem;
+      font-size: 0.9rem;
+      background: #fffdf6;
+      color: var(--muted);
+      display:flex;
+      flex-direction:column;
+      gap:0.5rem;
+      min-height: 260px;
     }
     .product-card img {
       width: 100%;
-      height: 100px;
+      height: 130px;
       object-fit: cover;
-      border-radius: 5px;
+      border-radius: 6px;
+      cursor:pointer;
+    }
+    .product-name {
+      font-weight:700;
+      color:var(--gold);
+      cursor:pointer;
     }
     .quantity-controls {
       display: flex;
       justify-content: center;
       align-items: center;
-      margin: 0.5rem 0;
+      margin: 0.25rem 0;
+      gap:0.5rem;
     }
     .quantity-controls button {
-      padding: 0.3rem;
-      background: goldenrod;
+      padding: 0.3rem 0.5rem;
+      background: var(--gold);
       color: white;
       border: none;
       cursor: pointer;
+      border-radius:4px;
     }
     .quantity-controls input {
-      width: 30px;
+      width: 44px;
       text-align: center;
-      font-size: 0.8rem;
+      font-size: 0.9rem;
+      border-radius:4px;
+      border:1px solid #ddd;
+      padding:4px;
+      background: #fff;
     }
     .add-to-basket-btn {
-      background-color: goldenrod;
+      background-color: var(--gold);
       color: white;
       border: none;
-      padding: 0.3rem 0.5rem;
+      padding: 0.45rem 0.6rem;
       cursor: pointer;
-      font-family: 'Cursive', sans-serif;
-      font-size: 0.8rem;
-      border-radius: 4px;
+      font-family: "Cursive", sans-serif;
+      font-size: 0.9rem;
+      border-radius: 6px;
+      width:100%;
     }
     footer {
       padding: 1rem;
       text-align: center;
-      border-top: 1px solid goldenrod;
+      border-top: 1px solid var(--gold);
       margin-top: 2rem;
       font-size: 0.9rem;
+      background:#fff;
+      color:var(--muted);
+    }
+    /* popup */
+    #productPopup {
+      display:none;
+      position:fixed;
+      inset:0;
+      background-color:rgba(0,0,0,0.6);
+      z-index:9999;
+      justify-content:center;
+      align-items:center;
+      padding:1rem;
+    }
+    #productPopup .popup-inner{
+      background:white;
+      color:black;
+      padding:1rem;
+      border-radius:8px;
+      max-width:600px;
+      width:100%;
+      position:relative;
+      font-family:"Cursive",sans-serif;
+    }
+    #productPopup .close-btn{
+      position:absolute;
+      top:10px;
+      right:14px;
+      background:none;
+      border:none;
+      font-size:24px;
+      color:#d33;
+      cursor:pointer;
+    }
+    /* small responsive tweaks */
+    @media (max-width:520px){
+      .navbar {flex-direction:column; align-items:flex-start; gap:0.5rem;}
+      .nav-links {display:flex; gap:0.5rem; flex-wrap:wrap;}
+      .products-container{grid-template-columns:repeat(2,1fr)}
     }
   </style>
 </head>
 <body>
   <nav class="navbar">
-    <img src="logo.png" alt="imacx logo">
-    <div class="nav-links">
-      <a href="basket.html">Basket</a>
+    <div class="brand">
+      <img src="logo.png" alt="imacx logo" onerror="this.style.display='none'">
+      <div style="font-weight:800; color:goldenrod;">imacx Shop</div>
+    </div>
+    <div class="nav-links" id="navlinks">
+      <a id="basketLink" href="basketone.html">Basket</a>
       <a href="account.html">Account</a>
       <a href="track-order.html">Track Order</a>
-      <a href="#" onclick="toggleMenu()">Menu</a>
+      <a href="#" id="menuToggle">Menu</a>
     </div>
-  </nav>  <div class="menu-links" id="menu" style="display:none; flex-direction:column; gap:0.5rem; margin-top:1rem;">
+  </nav>
+
+  <div class="menu-links" id="menu">
     <a href="about.html">About</a>
     <a href="privacy.html">Privacy Policy</a>
     <a href="terms.html">Terms & Conditions</a>
     <a href="contact.html">Contact Us</a>
     <a href="faq.html">FAQ</a>
-  </div>  <div class="search-sort-filter">
-    <input type="text" id="searchBar" placeholder="Search by product name...">
+  </div>
+
+  <div class="search-sort-filter">
+    <input type="text" id="searchBar" placeholder="Search by product name..." />
     <select id="sort">
       <option value="">Sort By</option>
       <option value="low">Price: Low to High</option>
@@ -123,153 +216,348 @@
     <select id="filter-category">
       <option value="">Filter by Category</option>
       <option value="food">Food</option>
+      <option value="beauty">Beauty</option>
+      <option value="furniture">Furniture</option>
     </select>
     <select id="filter-subcategory">
       <option value="">Filter by Subcategory</option>
       <option value="chocolate">Chocolate</option>
       <option value="breakfast">Breakfast Spread</option>
+      <option value="serum">Serum</option>
     </select>
-  </div>  <div class="products-container" id="products">
-    <div class="product-card" data-name="Soleme Cheese" data-price="1" data-category="food" data-subcategory="breakfast">
-      <a href="product-soleme-cheese.html">
-        <img src="soleme-cheese.jpg" alt="Soleme Cheese">
-        <div>Soleme Cheese</div>
-        <div>₹1</div>
-      </a>
-      <div class="quantity-controls">
-        <button onclick="updateQty(this, -1)">-</button>
-        <input type="number" value="0" readonly>
-        <button onclick="updateQty(this, 1)">+</button>
+  </div>
+
+  <div class="products-container" id="products"></div>
+
+  <!-- Product Popup Modal -->
+  <div id="productPopup" aria-hidden="true">
+    <div class="popup-inner" role="dialog" aria-modal="true" aria-labelledby="popupTitle">
+      <button class="close-btn" onclick="closePopup()" aria-label="Close popup">&times;</button>
+      <img id="popupImage" src="" alt="" style="width:100%; border-radius:6px; margin-bottom:1rem;">
+      <h2 id="popupTitle" style="color:goldenrod; margin:0 0 0.5rem 0;"></h2>
+      <p id="popupDescription" style="margin:0.25rem 0 0.75rem 0; color:#333;"></p>
+      <strong id="popupPrice" style="color:green;"></strong>
+
+      <div class="quantity-controls" style="margin:1rem 0; justify-content:center;">
+        <button onclick="updatePopupQty(-1)">-</button>
+        <input id="popupQty" type="number" value="1" min="1">
+        <button onclick="updatePopupQty(1)">+</button>
       </div>
-      <button class="add-to-basket-btn" onclick="addToBasket(this)">Add to Basket</button>
+      <button onclick="addToBasketFromPopup()" class="add-to-basket-btn">Add to Basket</button>
     </div>
- 
-  <div class="product-card" data-name="Iconic Blue Chocolate" data-price="499" data-category="food" data-subcategory="chocolate">
-  <a href="product-iconic-blue-chocolate.html">
-    <img src="iconic-blue-chocolate.jpg" alt="Iconic Blue Chocolate">
-    <div>Iconic Blue Chocolate</div>
-    <div>₹499</div>
-  </a>
-  <div class="quantity-controls">
-    <button onclick="updateQty(this, -1)">-</button>
-    <input type="number" value="0" readonly>
-    <button onclick="updateQty(this, 1)">+</button>
   </div>
-  <button class="add-to-basket-btn" onclick="addToBasket(this)">Add to Basket</button>
-</div>
- <div class="product-card" data-name="Iconic Blue Chocolate" data-price="499" data-category="food" data-subcategory="chocolate">
-  <a href="product-iconic-blue-chocolate.html">
-    <img src="iconic-blue-chocolate.jpg" alt="Iconic Blue Chocolate">
-    <div>Iconic Blue Chocolate</div>
-    <div>₹499</div>
-  </a>
-  <div class="quantity-controls">
-    <button onclick="updateQty(this, -1)">-</button>
-    <input type="number" value="0" readonly>
-    <button onclick="updateQty(this, 1)">+</button>
-  </div>
-  <button class="add-to-basket-btn" onclick="addToBasket(this)">Add to Basket</button>
-</div>
-  <div class="product-card" data-name="Iconic Blue Chocolate" data-price="499" data-category="food" data-subcategory="chocolate">
-  <a href="product-iconic-blue-chocolate.html">
-    <img src="iconic-blue-chocolate.jpg" alt="Iconic Blue Chocolate">
-    <div>Iconic Blue Chocolate</div>
-    <div>₹499</div>
-  </a>
-  <div class="quantity-controls">
-    <button onclick="updateQty(this, -1)">-</button>
-    <input type="number" value="0" readonly>
-    <button onclick="updateQty(this, 1)">+</button>
-  </div>
-  <button class="add-to-basket-btn" onclick="addToBasket(this)">Add to Basket</button>
-</div>
-  
-  </div>  <footer>
+
+  <footer>
     &copy; 2025 imacx Shop. All rights reserved.
-  </footer>  <script>
-    function toggleMenu() {
-      const menu = document.getElementById('menu');
-      menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
+  </footer>
+
+  <!-- Optional external data (if you have it) -->
+  <script src="products-data.js"></script>
+  <script src="softcoded-pages.js"></script>
+
+  <script>
+    // ---------- GunDB init ----------
+    let gun = null;
+    try {
+      if (typeof Gun !== 'undefined') {
+        gun = Gun();
+      }
+    } catch (e) {
+      console.warn('GunDB failed to initialize:', e);
+      gun = null;
     }
 
-    function updateQty(btn, delta) {
+    // ---------- safe sample products fallback ----------
+    if (typeof allProducts === 'undefined') {
+      var allProducts = [
+        {
+          name: "Imacx Blue Chocolate (200g)",
+          price: 249,
+          category: "food",
+          subcategory: "chocolate",
+          image: "https://via.placeholder.com/600x400?text=Blue+Chocolate",
+          description: "Creamy blue chocolate made for imacx fans."
+        },
+        {
+          name: "Iconic Face Serum (30ml)",
+          price: 1800,
+          category: "beauty",
+          subcategory: "serum",
+          image: "https://via.placeholder.com/600x400?text=Face+Serum",
+          description: "Luxury iconic face definition serum."
+        },
+        {
+          name: "Giant 3m Pillow (Demo)",
+          price: 3499,
+          category: "furniture",
+          subcategory: "pillows",
+          image: "https://via.placeholder.com/600x400?text=Giant+Pillow",
+          description: "A giant comfy pillow for dreamy nights."
+        }
+      ];
+    }
+
+    // ---------- Utilities ----------
+    function generateUserId() {
+      return 'user_' + Math.random().toString(36).substring(2, 12);
+    }
+
+    // Ensure userId exists
+    if (!localStorage.getItem('userId')) {
+      localStorage.setItem('userId', generateUserId());
+    }
+
+    // ---------- Render / UI logic ----------
+    const productsContainer = document.getElementById('products');
+    let selectedProduct = null;
+
+    function renderProducts(products) {
+      productsContainer.innerHTML = '';
+      if (!products || products.length === 0) {
+        productsContainer.innerHTML = '<div style="grid-column:1/-1; padding:1rem; background:#fffbea; border:1px solid #ffefbf; border-radius:6px;">No products match your search/filters.</div>';
+        return;
+      }
+
+      products.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'product-card';
+        card.setAttribute('data-name', p.name);
+        card.setAttribute('data-price', p.price);
+        card.setAttribute('data-category', p.category || '');
+        card.setAttribute('data-subcategory', p.subcategory || '');
+
+        card.innerHTML = `
+          <img src="${p.image || 'https://via.placeholder.com/600x400?text=No+Image'}" alt="${p.name}" class="product-image">
+          <div class="product-name">${p.name}</div>
+          <div style="font-weight:700; color:green;">₹${p.price}</div>
+          <div class="quantity-controls">
+            <button class="qty-minus" aria-label="decrease">-</button>
+            <input type="number" value="0" readonly min="0">
+            <button class="qty-plus" aria-label="increase">+</button>
+          </div>
+          <button class="add-to-basket-btn">Add to Basket</button>
+        `;
+        productsContainer.appendChild(card);
+
+        // listeners
+        card.querySelector('.product-image').addEventListener('click', () => openPopup(p));
+        card.querySelector('.product-name').addEventListener('click', () => openPopup(p));
+        card.querySelector('.qty-minus').addEventListener('click', e => updateCardQty(e.target, -1));
+        card.querySelector('.qty-plus').addEventListener('click', e => updateCardQty(e.target, 1));
+        card.querySelector('.add-to-basket-btn').addEventListener('click', e => addToBasket(e.target));
+      });
+    }
+
+    function updateCardQty(btn, delta) {
       const input = btn.parentNode.querySelector('input');
-      let value = parseInt(input.value) + delta;
+      let value = parseInt(input.value || '0', 10) + delta;
       if (value < 0) value = 0;
       input.value = value;
     }
 
-    
-  function addToBasket(button) {
-    const card = button.closest('.product-card');
-    const name = card.getAttribute('data-name');
-    const price = parseFloat(card.getAttribute('data-price'));
-    const qty = parseInt(card.querySelector('input').value);
-    const image = card.querySelector('img').src;
-    const category = card.getAttribute('data-category');
-    const subcategory = card.getAttribute('data-subcategory');
+    // popup qty update (separate to handle different DOM)
+    function updatePopupQty(delta) {
+      const input = document.getElementById('popupQty');
+      let v = parseInt(input.value || '1', 10) + delta;
+      if (v < 1) v = 1;
+      input.value = v;
+    }
 
-    if (qty > 0) {
+    function openPopup(product) {
+      selectedProduct = product;
+      document.getElementById('popupImage').src = product.image || 'https://via.placeholder.com/600x400?text=No+Image';
+      document.getElementById('popupTitle').textContent = product.name;
+      document.getElementById('popupDescription').textContent = product.description || 'No description available.';
+      document.getElementById('popupPrice').textContent = `₹${product.price}`;
+      document.getElementById('popupQty').value = 1;
+      document.getElementById('productPopup').style.display = 'flex';
+      document.getElementById('productPopup').setAttribute('aria-hidden', 'false');
+
+      // Add product param to url without reload
+      const encoded = encodeURIComponent(product.name);
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.set('product', product.name);
+      history.pushState({ product: product.name }, '', newUrl.toString());
+    }
+
+    function closePopup() {
+      document.getElementById('productPopup').style.display = 'none';
+      document.getElementById('productPopup').setAttribute('aria-hidden', 'true');
+      selectedProduct = null;
+
+      // Remove product param from url (but keep other params)
+      const url = new URL(window.location.href);
+      url.searchParams.delete('product');
+      history.pushState({}, '', url.toString());
+    }
+
+    // Add to basket from card button
+    function addToBasket(button) {
+      const card = button.closest('.product-card');
+      const name = card.getAttribute('data-name');
+      const price = parseFloat(card.getAttribute('data-price')) || 0;
+      const qty = parseInt(card.querySelector('input').value || '0', 10);
+      const image = card.querySelector('img').src;
+      const category = card.getAttribute('data-category');
+      const subcategory = card.getAttribute('data-subcategory');
+
+      if (qty <= 0) {
+        alert('Please select quantity before adding to basket.');
+        return;
+      }
+
       let basket = JSON.parse(localStorage.getItem('basket')) || [];
 
-      // Check if product already exists
       const existingIndex = basket.findIndex(item => item.name === name);
       if (existingIndex > -1) {
         basket[existingIndex].quantity += qty;
       } else {
-        basket.push({
-          name,
-          price,
-          quantity: qty,
-          image,
-          category,
-          subcategory
-        });
+        basket.push({ name, price, quantity: qty, image, category, subcategory });
       }
 
       localStorage.setItem('basket', JSON.stringify(basket));
+      syncBasketToGun(basket);
+
       alert(`${qty} × ${name} added to basket. Total: ₹${qty * price}`);
-    } else {
-      alert('Please select quantity before adding to basket.');
-    }
-  }
-
-
-    document.getElementById('searchBar').addEventListener('input', function () {
-      const search = this.value.toLowerCase();
-      document.querySelectorAll('.product-card').forEach(card => {
-        const name = card.getAttribute('data-name').toLowerCase();
-        card.style.display = name.includes(search) ? 'block' : 'none';
-      });
-    });
-
-    document.getElementById('sort').addEventListener('change', function () {
-      const direction = this.value;
-      const container = document.getElementById('products');
-      const cards = Array.from(container.children);
-      cards.sort((a, b) => {
-        const priceA = parseFloat(a.getAttribute('data-price'));
-        const priceB = parseFloat(b.getAttribute('data-price'));
-        return direction === 'low' ? priceA - priceB : priceB - priceA;
-      });
-      cards.forEach(card => container.appendChild(card));
-    });
-
-    document.getElementById('filter-category').addEventListener('change', filterCards);
-    document.getElementById('filter-subcategory').addEventListener('change', filterCards);
-
-    function filterCards() {
-      const cat = document.getElementById('filter-category').value;
-      const sub = document.getElementById('filter-subcategory').value;
-      document.querySelectorAll('.product-card').forEach(card => {
-        const cardCat = card.getAttribute('data-category');
-        const cardSub = card.getAttribute('data-subcategory');
-        const catMatch = !cat || cardCat === cat;
-        const subMatch = !sub || cardSub === sub;
-        card.style.display = catMatch && subMatch ? 'block' : 'none';
-      });
+      renderBasket();
     }
 
+    // Add to basket from popup
+    function addToBasketFromPopup() {
+      const qty = parseInt(document.getElementById('popupQty').value || '1', 10);
+      const product = selectedProduct;
+      if (!product || qty <= 0) return;
+
+      let basket = JSON.parse(localStorage.getItem('basket')) || [];
+      const existingIndex = basket.findIndex(item => item.name === product.name);
+      if (existingIndex > -1) {
+        basket[existingIndex].quantity += qty;
+      } else {
+        basket.push({
+          name: product.name,
+          price: product.price,
+          quantity: qty,
+          image: product.image,
+          category: product.category,
+          subcategory: product.subcategory
+        });
+      }
+      localStorage.setItem('basket', JSON.stringify(basket));
+      syncBasketToGun(basket);
+
+      alert(`${qty} × ${product.name} added to basket. Total: ₹${qty * product.price}`);
+      closePopup();
+      renderBasket();
+    }
+
+    // GunDB sync helper (best-effort; will skip if gun not available)
+    function syncBasketToGun(basket) {
+      try {
+        if (!gun) return;
+        const userId = localStorage.getItem('userId') || generateUserId();
+        localStorage.setItem('userId', userId);
+        const gunBasketRef = gun.get('imacx_user_baskets').get(userId);
+        gunBasketRef.put({ updatedAt: Date.now() });
+        basket.forEach(item => {
+          gunBasketRef.get(item.name).put(item);
+        });
+      } catch (e) {
+        console.warn('Failed to sync basket to GunDB', e);
+      }
+    }
+
+    // Render basket count in navbar
+    function renderBasket() {
+      const basket = JSON.parse(localStorage.getItem('basket')) || [];
+      const totalItems = basket.reduce((s, it) => s + (parseInt(it.quantity || 0, 10)), 0);
+      const basketLink = document.getElementById('basketLink');
+      if (totalItems > 0) {
+        basketLink.textContent = `Basket (${totalItems})`;
+      } else {
+        basketLink.textContent = 'Basket';
+      }
+    }
+
+    // ---------- Controls: search/sort/filter ----------
+    const searchBar = document.getElementById('searchBar');
+    const sortSelect = document.getElementById('sort');
+    const catSelect = document.getElementById('filter-category');
+    const subSelect = document.getElementById('filter-subcategory');
+
+    function applyAllControls() {
+      let results = [...allProducts];
+      const search = searchBar.value.trim().toLowerCase();
+      if (search) {
+        results = results.filter(p => p.name.toLowerCase().includes(search));
+      }
+      const cat = catSelect.value;
+      if (cat) results = results.filter(p => p.category === cat);
+      const sub = subSelect.value;
+      if (sub) results = results.filter(p => p.subcategory === sub);
+
+      const dir = sortSelect.value;
+      if (dir === 'low') results.sort((a,b) => a.price - b.price);
+      else if (dir === 'high') results.sort((a,b) => b.price - a.price);
+
+      renderProducts(results);
+    }
+
+    searchBar.addEventListener('input', applyAllControls);
+    sortSelect.addEventListener('change', applyAllControls);
+    catSelect.addEventListener('change', applyAllControls);
+    subSelect.addEventListener('change', applyAllControls);
+
+    // ---------- Menu toggle ----------
+    document.getElementById('menuToggle').addEventListener('click', function(e){
+      e.preventDefault();
+      const menu = document.getElementById('menu');
+      menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
+    });
+
+    // ---------- Softcoded page handling (if present) ----------
+    (function handleSoftcodedPage() {
+      const params = new URLSearchParams(window.location.search);
+      const pageID = params.get('page');
+      if (pageID && typeof softcodedPages !== 'undefined' && softcodedPages[pageID]) {
+        const data = softcodedPages[pageID];
+        document.body.innerHTML = `
+          <div class="soft-page" style="padding:1rem;">
+            <h1>${data.title}</h1>
+            <img src="${data.image}" style="max-width:300px; display:block; margin-bottom:1rem" />
+            <p>${data.description}</p>
+            <strong>${data.price}</strong>
+          </div>
+        `;
+      }
+    })();
+
+    // If URL has ?product=... open popup (runs after products render)
+    window.addEventListener('popstate', function(e){
+      // If history popstate occurs and product param exists, open popup; else close popup
+      const productParam = new URLSearchParams(window.location.search).get('product');
+      if (productParam) {
+        const product = allProducts.find(p=>p.name === productParam);
+        if (product) openPopup(product);
+      } else {
+        closePopup();
+      }
+    });
+
+    // ---------- Startup render ----------
+    renderProducts(allProducts);
     renderBasket();
-  </script></body>
+
+    // If URL minted with product param, open popup
+    (function openProductFromURL() {
+      const productParam = new URLSearchParams(window.location.search).get('product');
+      if (productParam) {
+        const product = allProducts.find(p => p.name === productParam);
+        if (product) {
+          // small delay ensures DOM is ready
+          setTimeout(()=>openPopup(product), 200);
+        }
+      }
+    })();
+  </script>
+</body>
 </html>
