@@ -322,6 +322,55 @@ function generateUserId() {
 </script>
 <script src="softcoded-pages.js"></script>
 <script>
+let currentImages = [];
+let currentIndex = 0;
+
+function openSoftPopup(pageId) {
+  const page = softcodedPages[pageId];
+  if (!page) return;
+
+  currentImages = page.images;
+  currentIndex = 0;
+
+  document.getElementById("softPopupTitle").textContent = page.title;
+  document.getElementById("softPopupDescription").textContent = page.description;
+  document.getElementById("softPopupPrice").textContent = page.price;
+  document.getElementById("softPopupImage").src = currentImages[currentIndex];
+
+  document.getElementById("softPopup").style.display = "flex";
+}
+
+function closeSoftPopup() {
+  document.getElementById("softPopup").style.display = "none";
+}
+
+function nextImage() {
+  if (!currentImages.length) return;
+  currentIndex = (currentIndex + 1) % currentImages.length;
+  document.getElementById("softPopupImage").src = currentImages[currentIndex];
+}
+
+function prevImage() {
+  if (!currentImages.length) return;
+  currentIndex = (currentIndex - 1 + currentImages.length) % currentImages.length;
+  document.getElementById("softPopupImage").src = currentImages[currentIndex];
+}
+
+// Optional: swipe support for mobile
+let startX = 0;
+const imgEl = document.getElementById("softPopupImage");
+
+imgEl.addEventListener("touchstart", e => startX = e.touches[0].clientX);
+imgEl.addEventListener("touchend", e => {
+  const endX = e.changedTouches[0].clientX;
+  if (endX - startX > 50) prevImage(); // swipe right
+  else if (startX - endX > 50) nextImage(); // swipe left
+});
+  
+</script>
+  
+  
+  <script>
   const params = new URLSearchParams(window.location.search);
   const pageID = params.get('page');
 
